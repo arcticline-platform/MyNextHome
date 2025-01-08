@@ -244,12 +244,12 @@ SOCIALACCOUNT_PROVIDERS = {
             'profile',
             'email',
         ],
-        'AUTH_PRAMS': {
+        'AUTH_PARAMS': {
             'access_type': 'online',
         },
         'APP': {
-            'client_id': '510680543205-2vjojfeh872v7gr3v93124uk45a2m8bm.apps.googleusercontent.com',
-            'secret': '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',
+            'client_id': env('GOOGLE_CLIENT_ID'),
+            'secret': env('GOOGLE_SECRET'),
             'key': ''
         }
     }
