@@ -230,7 +230,9 @@ Thanks to all contributors who make **MyNextHome** better! 🚀
 
 ---
 ## Sponsors 
+
 MyNextHome is powered by Daraza and maintained by Arcticline Technologies
+
 ---
 ## Contact
 
