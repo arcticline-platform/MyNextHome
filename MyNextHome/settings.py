@@ -68,6 +68,9 @@ INSTALLED_APPS = [
     'finance',
 
     # Third Party Apps
+    'ckeditor',
+    'phonenumbers',
+
 ]
 
 MIDDLEWARE = [
@@ -114,8 +117,12 @@ AUTHENTICATION_BACKENDS = [
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.contrib.gis.db.backends.postgis',
+        'NAME': env('POSTGRES_DBNAME'),
+        'USER': env('POSTGRES_USER'),
+        'PASSWORD': env('POSTGRES_PASS'),
+        'HOST': env('PG_HOST'),
+        'PORT': env('PG_PORT'),
     }
 }
 
@@ -149,10 +156,6 @@ CHANNEL_LAYERS = {
 #         },
 #     }
 # }
-
-CELERY_BROKER_URL = "redis://localhost:6379/0"
-CELERY_RESULT_BACKEND = "redis://localhost:6379/0"
-CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 
 
 
@@ -208,7 +211,7 @@ ROOT_EMAIL = 'noreply@daraza.net'
 EMAIL_HOST = 'smtp.zoho.com'
 EMAIL_HOST_USER = ROOT_EMAIL
 DEFAULT_FROM_EMAIL = ROOT_EMAIL
-EMAIL_HOST_PASSWORD = os.environ['ZOHOMAIL_HOST_PASSWORD']
+EMAIL_HOST_PASSWORD = env('ZOHOMAIL_HOST_PASSWORD')
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 ADMINS = [
@@ -216,7 +219,7 @@ ADMINS = [
 ]
 
 
-DARAZA_API_KEY = os.environ['DARAZA_API_KEY']
+DARAZA_API_KEY = env('DARAZA_API_KEY')
 
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = '/'
@@ -259,7 +262,7 @@ SOCIALACCOUNT_FORMS = {
     'disconnect': 'allauth.socialaccount.forms.DisconnectForm',
     'signup': 'accounts.forms.UserSignUpForm',
 }
-# ACCOUNT_AUTHENTICATION_METHOD = 'email' Brings Assertion Error
+# ACCOUNT_AUTHENTICATION_METHOD = 'email' causes Assertion Error
 
 #CK editor
 # CKEDITOR_BASEPATH = "/static/ckeditor/ckeditor/"
@@ -286,12 +289,12 @@ MESSAGE_TAGS = {
 GEOIP_PATH =  (os.path.join(BASE_DIR, 'GEOIP_Database'))
 
 # TWILIO
-TWILIO_ACCOUNT_SID = os.environ['TWILIO_ACCOUNT_SID']
-TWILIO_AUTH_TOKEN = os.environ['TWILIO_AUTH_TOKEN']
-TWILIO_PHONE_NUMBER =os.environ['TWILIO_PHONE_NUMBER']
+TWILIO_ACCOUNT_SID = env('TWILIO_ACCOUNT_SID')
+TWILIO_AUTH_TOKEN = env('TWILIO_AUTH_TOKEN')
+TWILIO_PHONE_NUMBER =env('TWILIO_PHONE_NUMBER')
 
 # Africa's Talking
-AFRICAS_TALKING_APIKEY = os.environ['AFRICAS_TALKING_APIKEY']
-AFRICAS_TALKING_USERNAME = os.environ['AFRICAS_TALKING_USERNAME']
-AFRICAS_TALKING_SENDER_ID = os.environ['AFRICAS_TALKING_SENDER_ID']
+AFRICAS_TALKING_APIKEY = env('AFRICAS_TALKING_APIKEY')
+AFRICAS_TALKING_USERNAME = env('AFRICAS_TALKING_USERNAME')
+AFRICAS_TALKING_SENDER_ID = env('AFRICAS_TALKING_SENDER_ID')
 
