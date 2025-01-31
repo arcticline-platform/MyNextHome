@@ -4,6 +4,7 @@ import uuid
 import random
 # import string
 import datetime
+import requests
 from datetime import date, datetime, timedelta
 
 from django.db import models
@@ -17,12 +18,13 @@ from django.utils.text import slugify
 # from django.shortcuts import redirect
 from django.utils.timezone import now
 from django_countries.fields import CountryField
+from django.core.exceptions import ValidationError
 from django.contrib.auth.models import AbstractUser
 from core.image_processor import CompressedImageField
-from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
+from django.contrib.gis.db import models as gis_models
 # from django.db.models.signals import pre_save, post_save
-from django.core.validators import FileExtensionValidator, RegexValidator, MinValueValidator
+from django.core.validators import FileExtensionValidator, RegexValidator, MinValueValidator, MaxValueValidator
 
 import django_filters
 from .managers import CustomUserManager
@@ -291,18 +293,6 @@ class Portfolio(models.Model):
         return self.business_name
 
 
-class ProfileFilter(django_filters.FilterSet):
-    class Meta:
-        model = UserProfile
-        fields = ['country', ]#'is_verified'
-   
-
-class SearchFilter(django_filters.FilterSet):
-    class Meta:
-        model = UserProfile
-        fields = ['country', 'city']
-
-
 class Receipt(models.Model):
     transaction_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     payer = models.CharField(max_length=255)
@@ -364,3 +354,109 @@ class OTPVerification(models.Model):
 
     def is_valid(self):
         return now() < self.expires_at
+    
+# Property Listings
+class PropertyType(models.Model):
+    name = models.CharField(max_length=50)
+
+    def __str__(self):
+        return self.name
+
+class Amenity(models.Model):
+    name = models.CharField(max_length=50)
+
+    def __str__(self):
+        return self.name
+
+class Address(models.Model):
+    street_address = models.CharField(max_length=255)
+    city = models.CharField(max_length=100)
+    state = models.CharField(max_length=100)
+    country = models.CharField(max_length=100)
+    zip_code = models.CharField(max_length=10)
+    latitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
+    location = gis_models.PointField(geography=True, blank=True, null=True)
+    address_verified = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"{self.street_address}, {self.city}, {self.state}, {self.country}"
+
+    def verify_address(self):
+        """
+        Verify address using Google Maps API and update latitude, longitude, and location fields.
+        """
+        api_key = 'YOUR_GOOGLE_MAPS_API_KEY'
+        address_query = f"{self.street_address}, {self.city}, {self.state}, {self.country}, {self.zip_code}"
+        url = f"https://maps.googleapis.com/maps/api/geocode/json?address={address_query}&key={api_key}"
+        response = requests.get(url)
+        if response.status_code == 200:
+            data = response.json()
+            if data['status'] == 'OK':
+                location_data = data['results'][0]['geometry']['location']
+                self.latitude = location_data['lat']
+                self.longitude = location_data['lng']
+                from django.contrib.gis.geos import Point
+                self.location = Point(self.longitude, self.latitude)
+                self.address_verified = True
+                self.save()
+        else:
+            raise Exception("Error verifying the address.")
+
+    def google_maps_url(self):
+        if self.latitude and self.longitude:
+            return f"https://www.google.com/maps/search/?api=1&query={self.latitude},{self.longitude}"
+        return ""
+
+class Property(models.Model):
+    title = models.CharField(max_length=255)
+    slug = models.SlugField(unique=True, blank=True)
+    description = models.TextField()
+    property_type = models.ForeignKey(PropertyType, on_delete=models.SET_NULL, null=True)
+    address = models.OneToOneField(Address, on_delete=models.CASCADE)
+    price = models.DecimalField(max_digits=12, decimal_places=2, validators=[MinValueValidator(0)])
+    bedrooms = models.PositiveIntegerField(validators=[MinValueValidator(0)])
+    bathrooms = models.PositiveIntegerField(validators=[MinValueValidator(0)])
+    square_feet = models.PositiveIntegerField(validators=[MinValueValidator(0)])
+    lot_size = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    amenities = models.ManyToManyField(Amenity, blank=True)
+    listed_date = models.DateTimeField(auto_now_add=True)
+    is_published = models.BooleanField(default=False)
+    listed_by = models.ForeignKey(User, on_delete=models.CASCADE)
+    rating = models.DecimalField(max_digits=3, decimal_places=2, validators=[MinValueValidator(0.0), MaxValueValidator(5.0)], default=0.0)
+
+    def __str__(self):
+        return self.title
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.title)
+        super(Property, self).save(*args, **kwargs)
+
+class PropertyImage(models.Model):
+    property = models.ForeignKey(Property, on_delete=models.CASCADE, related_name='images')
+    image = models.ImageField(upload_to='property_images/')
+    caption = models.CharField(max_length=255, blank=True, null=True)
+
+    def __str__(self):
+        return f"Image for {self.property.title}"
+
+class Favorites(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    property = models.ForeignKey(Property, on_delete=models.CASCADE)
+    added_date = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'property')
+
+    def __str__(self):
+        return f"{self.user.username} - {self.property.title}"
+
+class PropertyView(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, blank=True, null=True)
+    property = models.ForeignKey(Property, on_delete=models.CASCADE)
+    view_date = models.DateTimeField(auto_now_add=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.property.title} viewed on {self.view_date}"
