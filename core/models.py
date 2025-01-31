@@ -1,4 +1,5 @@
-from collections.abc import Iterable
+# from collections.abc import Iterable
+
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.contrib.contenttypes.models import ContentType
@@ -7,6 +8,7 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from accounts.models import User
 from ckeditor.fields import RichTextField
 from phonenumber_field.modelfields import PhoneNumberField
+
 
 class SystemUtility(models.Model):
 	root_email = models.EmailField(help_text=_('Management Email for the System'))

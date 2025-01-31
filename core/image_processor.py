@@ -1,11 +1,12 @@
-from io import BytesIO
 import os
-from django.core.files import File
-from django.db import models
-from django.db.models.fields.files import ImageFieldFile
-from PIL import Image, ImageOps
+from io import BytesIO
 
-from .validators import validate_image_with_face
+from django.db import models
+from PIL import Image, ImageOps
+from django.core.files import File
+from django.db.models.fields.files import ImageFieldFile
+
+# from .validators import validate_image_with_face
 
 
 class CompressedImageFieldFile(ImageFieldFile):

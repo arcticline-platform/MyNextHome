@@ -6,14 +6,14 @@ from django.contrib.sites.models import Site
 from django.shortcuts import render, redirect
 from django.views.generic.edit import CreateView
 from django.urls import path, reverse, reverse_lazy
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponseRedirect #,HttpResponse
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.admin.views.decorators import staff_member_required
 
+# from core.models import SEOMetaData
+# from core.utils import send_sms_alert
 # from seo.admin import register_seo_admin
-from core.models import SEOMetaData 
 from core.tasks import send_sms_alert_task
-from core.utils import send_sms_alert
 from .forms import NewsLetterForm, BroadcastForm
 from .models import Action, File, SystemUtility, FAQ, EmailSubscription, NewsLetter, PhoneNumber, SystemEmail, SMS_Subscription, SMS_Broadcast, ErrorLogs, Update, User_Inquiry, Notification
 

@@ -1,10 +1,10 @@
-import uuid
+# import uuid
 import logging
-import requests
+# import requests
 
 from datetime import timedelta
 
-from django.conf import settings
+# from django.conf import settings
 from django.utils import timezone
 from django.utils.timezone import now
 from django.db import models, transaction
@@ -12,9 +12,9 @@ from django.utils.translation import gettext_lazy as _
 
 from phonenumber_field.modelfields import PhoneNumberField
 
-from core.utils import send_email_alert
-from core.tasks import send_email_task, send_sms_alert_task
+# from core.utils import send_email_alert
 from accounts.models import User, UserProfile
+# from core.tasks import send_email_task, send_sms_alert_task
 
 
 logger = logging.getLogger(__name__)
@@ -30,34 +30,6 @@ class BillingAddress(models.Model):
     class Meta:
         verbose_name = 'Billing Address'
         verbose_name_plural = "Billing Addresses"
-
-
-class Ledger(models.Model):
-    user_to = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name=_('user_to'), editable=False)
-    user_from = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name=_('user_from'), editable=False)
-    transaction_id = models.UUIDField(unique=True, null=False, blank=False, default=uuid.uuid4(), verbose_name=_("Transaction Id"), editable=False)
-    billing_address = models.ForeignKey(BillingAddress, on_delete=models.SET_NULL, null=True, blank=True, editable=False)
-    amount = models.DecimalField(decimal_places=2, max_digits=9, editable=False)
-    is_credit = models.BooleanField(default=False, editable=False)
-    is_debit = models.BooleanField(default=False, editable=False)
-    is_valid = models.BooleanField(default=False)
-    is_active = models.BooleanField(default=True) # Set ledger for another transaction
-    is_merged = models.BooleanField(default=False, editable=False)
-    notes = models.CharField(max_length=150, null=True, blank=True)
-    timestamp = models.DateTimeField(auto_now_add=True)
-
-    def save(self, *args, **kwargs):
-        self.transaction_id = uuid.uuid4()
-        if self.is_merged == True:
-            self.is_active = False
-        super(Ledger, self).save(*args, **kwargs)
-
-    # def delete(self):
-    #     self.is_valid = False
-    #     self.save()
-
-    def __str__(self):
-        return str(f'Transaction of {self.amount} with ID {self.transaction_id} on {self.timestamp}')
 
 
 class PaymentMethods(models.Model):
@@ -128,7 +100,6 @@ class Payments(models.Model):
 class Remittance(models.Model):
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name=_('remittance_user'))
     unique_number = models.PositiveIntegerField(null=True, blank=True)
-    ledger = models.ForeignKey(Ledger, on_delete=models.RESTRICT, null=True, blank=True, related_name='remittance_ledger')
     phone = PhoneNumberField(null=True, blank=True)
     amount = models.DecimalField(decimal_places=2, max_digits=9)
     reason = models.CharField(max_length=255)
@@ -152,18 +123,9 @@ class Remittance(models.Model):
             process_remittance.apply_async((self.id,), eta=now() + timedelta(hours=24))
 
 
-class MainWallet(models.Model):
-    amount = models.DecimalField(max_digits=13, decimal_places=3)
-    updated = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return f'Main Wallet as of {self.updated}'
-
-
 class UserWallet(models.Model):
     owner = models.OneToOneField(UserProfile, on_delete=models.CASCADE, related_name='user_wallet')
     amount = models.DecimalField(max_digits=9, decimal_places=2, default=0)
-    points = models.DecimalField(max_digits=7, decimal_places=2)
     is_active = models.BooleanField(default=False)
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
@@ -171,19 +133,6 @@ class UserWallet(models.Model):
     def __str__(self):
         return f"{self.owner.username}'s Wallet"
 
-
-class Tip(models.Model):
-    sender = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, null=True, related_name='tip_sender')
-    receiver = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, null=True, related_name='tip_receiver')
-    amount = models.DecimalField(max_digits=8, decimal_places=2)
-    narrative = models.CharField(max_length=150)
-    is_active = models.BooleanField(default=False)
-    is_held = models.BooleanField(default=False)
-    timestamp = models.DateTimeField(auto_now_add=True)
-    updated = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return f"{self.sender}'s tip to {self.receiver}"
 
 
 class SubscriptionPlan(models.Model):

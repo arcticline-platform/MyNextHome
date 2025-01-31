@@ -2,7 +2,7 @@ import re
 from celery import shared_task
 
 from core.utils import send_email_alert
-from .models import Payments, Ledger, Remittance
+from .models import Payments, Remittance
 from .utils import send_payment_request, update_payment_status
 
 def import_django_instance():
@@ -26,15 +26,6 @@ def process_and_update_payment(payment_id):
         if response['status'] == 'success':
             payment.is_successful = True
             payment.note = response['message']
-            Ledger.objects.create(
-                user_from=payment.initiated_by,
-                user_to=payment.cleared_by,
-                is_credit=True,
-                amount=payment.amount,
-                is_valid=True,
-                is_active=True,
-                notes='Inbound User Payment'
-            )
             Remittance.objects.create(
                 user=payment.initiated_by,
                 unique_number=payment_id,
@@ -76,12 +67,6 @@ def process_remittance(remittance_id):
                        "Call or email user support at paylink@daraza.net for further help\n\n PayLink")
             send_email_alert(remittance.user.email, subject, message)
         elif remittance.is_successful:
-            create_ledger = Ledger.objects.create(
-                user_to=remittance.user, amount=remittance.amount,
-                is_valid=True, is_active=True, is_debit=True,
-                notes=f'Remittance'
-            )
-            remittance.ledger = create_ledger
             # Mark as processed
             remittance.is_processed = True
             remittance.save(update_fields=["is_processed"])

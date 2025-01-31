@@ -1,4 +1,4 @@
-import requests
+# import requests
 
 from django.core.mail import send_mail
 
@@ -6,7 +6,7 @@ import africastalking
 from twilio.rest import Client
 
 from django.conf import settings
-from .models import Action, SystemUtility, ErrorLogs
+from .models import Action, ErrorLogs #,SystemUtility
 
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer

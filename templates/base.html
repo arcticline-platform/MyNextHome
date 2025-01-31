@@ -4,15 +4,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MyNextHome - Finding your next home</title>
+    <title>|MyNextHome - Finding your next home</title>
     <!-- SEO Meta Tags -->
     <meta name="description" content="MyNextHome is an open-source property search platform in Uganda that empowers users with access to comfortable housing through transparent property discovery tools.">
     <meta name="keywords" content="Real Estate, Property Search, Open Source, Housing Platform, GeoDjango, MyNextHome, Real Estate in Uganda, Housing in Uganda, Find home, Rentals, Property Listings, House Finder">
     <meta name="author" content="Arcticline Technologies">
-
-    <!-- Favicons -->
-    <link rel="icon" type="image/x-icon" href="./static/img/mynexthome.png">
-    <link rel="apple-touch-icon" href="./static/img/mynexthome.png">
 
     <!-- Open Graph Meta Tags -->
     <meta property="og:title" content="MyNextHome - Free Property Search for Everyone">
@@ -31,24 +27,16 @@
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
     <style>
         /* Custom Styling */
+        *:root{
+            --base-clr: #057153;
+        }
+
         .icon {
             width: 24px;
             height: 24px;
         }
+        
     </style>
-
-    <!-- Structured Data -->
-    <script type="application/ld+json">
-        {
-            "@context": "http://schema.org",
-            "@type": "WebApplication",
-            "name": "MyNextHome",
-            "applicationCategory": "Productivity, Real Estate",
-            "operatingSystem": "Web",
-            "description": "MyNextHome is an open-source property search platform in Uganda that empowers users with access to comfortable housing through transparent property discovery tools.",
-            "url": "{{ request.build_absolute_uri }}"
-        }
-        </script>
 </head>
 
 <body class="min-h-screen bg-gray-50">
@@ -57,7 +45,7 @@
         <div class="container mx-auto px-6 py-24">
             <div class="flex flex-col items-center text-center">
                 <h1 class="text-5xl font-bold mb-6">MyNextHome</h1>
-                <img src="./static/img/mynexthome.png" alt="MyNextHome" style="max-width: 200px; max-height: 200px;">
+                <img src="./static/img/mynexthome.png" alt="MyNextHome" style="max-width: 300px; max-height: 300px;">
                 <p class="text-xl mb-8 max-w-2xl">
                     A property search for everyone. Access to comfortable housing is everyone's right, no one should capitalize on that!
                     <!-- Empowering everyone with a fair and transparent property search platform—because access to comfortable housing is a right, not a privilege. -->
@@ -216,6 +204,10 @@
     </footer>
 
     <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+
         // Modal Handling
         document.getElementById('view-homes-btn').addEventListener('click', function (e) {
             e.preventDefault();
@@ -225,9 +217,6 @@
         document.getElementById('close-modal').addEventListener('click', function () {
             document.getElementById('modal').classList.add('hidden');
         });
-
-        // Initialize Lucide icons
-        lucide.createIcons();
     </script>
 </body>
 

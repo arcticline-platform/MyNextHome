@@ -2,23 +2,23 @@ import json
 
 from django.conf import settings
 from django.utils import timezone
-from django.core import serializers
+# from django.core import serializers
 from django.contrib import messages
 from django.core.mail import send_mail
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, redirect, get_object_or_404, HttpResponseRedirect
-from django.http import HttpResponse, HttpRequest, JsonResponse, HttpResponseBadRequest
+from django.shortcuts import render, redirect #,get_object_or_404, HttpResponseRedirect
+from django.http import  JsonResponse, HttpResponseBadRequest #,HttpResponse, HttpRequest,
 
 from google_currency import convert 
 from currency_converter import CurrencyConverter
 from forex_python.converter import CurrencyRates
 
-from core.models import SystemUtility
-from .forms import DepositForm, TipForm
+# from .forms import DepositForm
+# from core.models import SystemUtility
 from accounts.models import User, UserProfile
-from core.tasks import resend_payment_alert_sms, send_sms_alert_task
-from core.utils import info_message, create_action, send_email_alert, send_sms_alert
-from .models import PaymentMethods, Payments, MainWallet, UserWallet, Ledger, Subscription, SubscriptionPlan
+# from core.tasks import resend_payment_alert_sms, send_sms_alert_task
+# from core.utils import info_message, create_action, send_email_alert, send_sms_alert
+from .models import PaymentMethods, Payments, UserWallet, Subscription, SubscriptionPlan
 
 @login_required
 def checkout(request, plan_id):

@@ -9,7 +9,7 @@ from django.utils.text import slugify
 from django.core.exceptions import ValidationError
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 
-from accounts.models import User, UserProfile, ReportUser, ReportEvidence, PayLink, Portfolio
+from accounts.models import User, UserProfile, ReportUser, ReportEvidence, Portfolio
 
 from django_countries.widgets import CountrySelectWidget
 from dobwidget import DateOfBirthWidget
@@ -149,33 +149,6 @@ class ReportEvidenceForm(forms.ModelForm):
 	class Meta:
 		model = ReportEvidence
 		fields = ('file',)
-
-class PayLinkForm(forms.ModelForm):
-    class Meta:
-        model = PayLink
-        fields = ['name', 'link_type', 'image', 'description', 'amount']
-        widgets = {
-            'name': forms.TextInput(attrs={
-                'placeholder': "Enter link name e.g. Alesi's Welcome Party Contribution",
-                'required': True
-            }),
-            'link_type': forms.Select(attrs={
-                'placeholder': "Select link type",
-                'required': True
-            }),
-            'description': forms.Textarea(attrs={
-                'rows': 3,
-                'placeholder': "Describe your link e.g. Contribute UGX 5,000 for Alesi's Welcome Party or You are paying UGX 20,000 for designer heels from Cynthia's Closets"
-            }),
-            'amount': forms.NumberInput(attrs={
-                'step': '0.01',
-                'placeholder': "Enter product/service amount",
-                'required': True
-            }),
-            'image': forms.ClearableFileInput(attrs={
-                'placeholder': "Provide a product/service image or graphics"
-            }),
-        }
 
 
 class PortfolioForm(forms.ModelForm):
