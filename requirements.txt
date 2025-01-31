@@ -18,7 +18,7 @@ click-plugins==1.1.1
 click-repl==0.3.0
 colorama==0.4.6
 diff-match-patch==20241021
-Django==5.1.4
+Django==5.1.5
 django-ckeditor==6.7.2
 django-countries==7.6.1
 django-dob-widget==1.2.0
