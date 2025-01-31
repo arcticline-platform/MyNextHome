@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
 from .forms import CustomUserCreationForm, CustomUserChangeForm
-from .models import User, UserProfile, ReportUser, ReportEvidence, PayLink, LoginAttempt, LinkType, Portfolio, PortfolioType, OTPVerification
+from .models import User, UserProfile, ReportUser, ReportEvidence, LoginAttempt, Portfolio, PortfolioType, OTPVerification
 
 
 from import_export.admin import ExportActionMixin
@@ -43,7 +43,7 @@ class ReportEvidenceInline(admin.TabularInline):
     raw_id_fields = ['report']
 
 class ReportUserAdmin(ExportActionMixin, admin.ModelAdmin):
-    list_display = ('reported_user', 'link', 'timestamp')
+    list_display = ('reported_user', 'timestamp')
     list_per_page = 50
     search_fields = ('complaints',)
     list_filter = ('is_attended_to',)
@@ -57,8 +57,6 @@ class LoginAttemptAdmin(admin.ModelAdmin):
     search_fields = ('username', 'ip_address')
 
 
-admin.site.register(PayLink)
-admin.site.register(LinkType)
 admin.site.register(Portfolio)
 admin.site.register(PortfolioType)
 admin.site.register(OTPVerification)

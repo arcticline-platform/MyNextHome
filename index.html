@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyNextHome - Finding your next home</title>
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="MyNextHome is an open-source property search platform in Uganda that empowers users with access to comfortable housing through transparent property discovery tools.">
+    <meta name="keywords" content="Real Estate, Property Search, Open Source, Housing Platform, GeoDjango, MyNextHome, Real Estate in Uganda, Housing in Uganda, Find home, Rentals, Property Listings, House Finder">
+    <meta name="author" content="Arcticline Technologies">
+
+    <!-- Favicons -->
+    <link rel="icon" type="image/x-icon" href="./static/img/mynexthome.png">
+    <link rel="apple-touch-icon" href="./static/img/mynexthome.png">
+
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="MyNextHome - Free Property Search for Everyone">
+    <meta property="og:description" content="Find your next home free, fair and transparent with MyNextHome Finder">
+    <meta property="og:image" content="./static/img/og_image.png">
+    <meta property="og:url" content="https://mynexthome.daraza.net">
+    <meta property="og:type" content="website">
+
+    <!-- Twitter Card Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="MyNextHome - Free Property Search for Everyone">
+    <meta name="twitter:description" content="Find your next home free, fair and transparent with MyNextHome Finder">
+    <meta name="twitter:image" content="./static/img/og_image.png">
+    
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <style>
+        /* Custom Styling */
+        .icon {
+            width: 24px;
+            height: 24px;
+        }
+    </style>
+
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+        {
+            "@context": "http://schema.org",
+            "@type": "WebApplication",
+            "name": "MyNextHome",
+            "applicationCategory": "Productivity, Real Estate",
+            "operatingSystem": "Web",
+            "description": "MyNextHome is an open-source property search platform in Uganda that empowers users with access to comfortable housing through transparent property discovery tools.",
+            "url": "{{ request.build_absolute_uri }}"
+        }
+        </script>
+</head>
+
+<body class="min-h-screen bg-gray-50">
+    <!-- Hero Section -->
+    <header class="bg-gradient-to-r from-green-700 to-green-900 text-white">
+        <div class="container mx-auto px-6 py-24">
+            <div class="flex flex-col items-center text-center">
+                <h1 class="text-5xl font-bold mb-6">MyNextHome</h1>
+                <img src="./static/img/mynexthome.png" alt="MyNextHome" style="max-width: 200px; max-height: 200px;">
+                <p class="text-xl mb-8 max-w-2xl">
+                    A property search for everyone. Access to comfortable housing is everyone's right, no one should capitalize on that!
+                    <!-- Empowering everyone with a fair and transparent property search platform—because access to comfortable housing is a right, not a privilege. -->
+                </p>
+                <div class="flex gap-4">
+                    <a href='#' id='view-homes-btn'
+                        class='bg-white text-blue-800 px-6 py-2 rounded-lg font-semibold hover:bg-blue-50 transition-colors'>View
+                        Homes</a>
+                    <!-- Modal -->
+                    <div id='modal'
+                        class='hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center'>
+                        <div class='bg-white p-6 rounded-lg shadow-lg text-center'>
+                            <h2 class='text-2xl font-bold mb-4'>Under Construction</h2>
+                            <p class='text-gray-600 mb-4'>This feature is currently under development. Stay tuned!</p>
+                            <button id='close-modal'
+                                class='bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700'>Close</button>
+                        </div>
+                    </div>
+                    <a href='https://github.com/arcticline-platform/MyNextHome'
+                        class='border-2 border-white px-6 py-2 rounded-lg font-semibold hover:bg-white hover:text-blue-800 transition-colors flex items-center gap-2'
+                        target="_blank"><svg class='icon' data-lucide='github'></svg>GitHub</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Features Grid -->
+    <section class="py-20 px-6">
+        <div class="container mx-auto">
+            <h2 class="text-3xl font-bold text-center mb-16 text-gray-800">Key Features</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div class="bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow">
+                    <div class="text-green-600 mb-4">
+                        <svg class="icon" data-lucide="home"></svg>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3 text-gray-800">Property Listings</h3>
+                    <p class="text-gray-600">Comprehensive platform for listing and browsing properties with detailed
+                        information and high-quality images.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow">
+                    <div class="text-green-600 mb-4">
+                        <svg class="icon" data-lucide="map"></svg>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3 text-gray-800">Geolocation Support</h3>
+                    <p class="text-gray-600">Advanced spatial search powered by GeoDjango and PostGIS for accurate
+                        location-based property discovery.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow">
+                    <div class="text-green-600 mb-4">
+                        <svg class="icon" data-lucide="search"></svg>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3 text-gray-800">Advanced Search Filters</h3>
+                    <p class="text-gray-600">Fine-tune your property search with filters for price, location, property
+                        type, and amenities.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow">
+                    <div class="text-green-600 mb-4">
+                        <svg class="icon" data-lucide="bell"></svg>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3 text-gray-800">Real-time Notifications</h3>
+                    <p class="text-gray-600">Stay updated with instant alerts for new listings matching your criteria.
+                    </p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow">
+                    <div class="text-green-600 mb-4">
+                        <svg class="icon" data-lucide="bar-chart2"></svg>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3 text-gray-800">Analytics Dashboard</h3>
+                    <p class="text-gray-600">Data-driven insights into property trends, demand patterns, and market
+                        analysis.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow">
+                    <div class="text-green-600 mb-4">
+                        <svg class="icon" data-lucide="users"></svg>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3 text-gray-800">User Authentication</h3>
+                    <p class="text-gray-600">Secure and seamless user experience with robust authentication system.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Technology Stack -->
+    <section class="bg-white py-20 px-6">
+        <div class="container mx-auto">
+            <h2 class="text-3xl font-bold text-center mb-16 text-gray-800">Technology Stack</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
+                <div class="text-center">
+                    <div class="bg-green-50 rounded-full w-20 h-20 mx-auto mb-4 flex items-center justify-center">
+                        <span class="text-2xl font-bold text-green-600">D</span>
+                    </div>
+                    <h3 class="font-semibold text-gray-800 mb-1">Django</h3>
+                    <p class="text-gray-600 text-sm">Web Framework</p>
+                </div>
+                <div class="text-center">
+                    <div class="bg-green-50 rounded-full w-20 h-20 mx-auto mb-4 flex items-center justify-center">
+                        <span class="text-2xl font-bold text-green-600">G</span>
+                    </div>
+                    <h3 class="font-semibold text-gray-800 mb-1">GeoDjango</h3>
+                    <p class="text-gray-600 text-sm">Geographic Framework</p>
+                </div>
+                <div class="text-center">
+                    <div class="bg-green-50 rounded-full w-20 h-20 mx-auto mb-4 flex items-center justify-center">
+                        <span class="text-2xl font-bold text-green-600">P</span>
+                    </div>
+                    <h3 class="font-semibold text-gray-800 mb-1">PostgreSQL</h3>
+                    <p class="text-gray-600 text-sm">Database</p>
+                </div>
+                <div class="text-center">
+                    <div class="bg-green-50 rounded-full w-20 h-20 mx-auto mb-4 flex items-center justify-center">
+                        <span class="text-2xl font-bold text-green-600">P</span>
+                    </div>
+                    <h3 class="font-semibold text-gray-800 mb-1">PostGIS</h3>
+                    <p class="text-gray-600 text-sm">Spatial Database Extension</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Call to Action -->
+    <section class="bg-green-900 text-white py-20 px-6">
+        <div class="container mx-auto text-center">
+            <h2 class="text-3xl font-bold mb-6">Ready to Get Started?</h2>
+            <p class="mb-8 max-w-2xl mx-auto">
+                Join our growing community of developers and real estate professionals.
+                Contribute to the future of property search technology.
+            </p>
+            <div class="flex gap-4 justify-center">
+                <a href='https://github.com/arcticline-platform/MyNextHome/blob/main/Readme.Md'
+                    class='bg-white text-blue-900 px-8 py-3 rounded-lg font-semibold hover:bg-blue-50 transition-colors'>Documentation</a>
+                <a href='https://github.com/arcticline-platform/MyNextHome'
+                    class='border-2 border-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-blue-900 transition-colors'>GitHub
+                    Repository</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-gray-300 py-12 px-6">
+        <div class="container mx-auto">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-6 md:mb-0">
+                    <h2 class="text-2xl font-bold text-white mb-2">MyNextHome</h2>
+                    <p class="text-sm">Open-source real estate platform</p>
+                </div>
+                <div class="flex gap-6">
+                    <a href="https://github.com/arcticline-platform/MyNextHome/blob/main/Readme.Md"
+                        class="hover:text-white transition-colors">Documentation</a>
+                    <a href="https://github.com/arcticline-platform/MyNextHome"
+                        class="hover:text-white transition-colors">GitHub</a>
+                    <a href="https://github.com/arcticline-platform/MyNextHome/discussions"
+                        class="hover:text-white transition-colors">Community</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Modal Handling
+        document.getElementById('view-homes-btn').addEventListener('click', function (e) {
+            e.preventDefault();
+            document.getElementById('modal').classList.remove('hidden');
+        });
+
+        document.getElementById('close-modal').addEventListener('click', function () {
+            document.getElementById('modal').classList.add('hidden');
+        });
+
+        // Initialize Lucide icons
+        lucide.createIcons();
+    </script>
+</body>
+
+</html>

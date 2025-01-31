@@ -1,8 +1,8 @@
-import os
-import math
+# import os
+# import math
 import uuid
 import random
-import string
+# import string
 import datetime
 from datetime import date, datetime, timedelta
 
@@ -12,16 +12,16 @@ from django.conf import settings
 from django.utils import timezone
 from django.contrib import messages
 from django.core.cache import cache
-from django.dispatch import receiver
+# from django.dispatch import receiver
 from django.utils.text import slugify
-from django.shortcuts import redirect
+# from django.shortcuts import redirect
 from django.utils.timezone import now
 from django_countries.fields import CountryField
 from django.contrib.auth.models import AbstractUser
 from core.image_processor import CompressedImageField
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
-from django.db.models.signals import pre_save, post_save
+# from django.db.models.signals import pre_save, post_save
 from django.core.validators import FileExtensionValidator, RegexValidator, MinValueValidator
 
 import django_filters
@@ -123,6 +123,7 @@ class LoginAttempt(models.Model):
     def __str__(self):
         return f"{self.username or 'Unknown'} - {'Success' if self.success else 'Failed'}"
 
+
 class UserProfile(models.Model):
     user = models.OneToOneField(AUTH_USER_MODEL, models.CASCADE, related_name="user_profile")
     username = models.CharField(max_length=75, unique=True)
@@ -174,33 +175,6 @@ class UserProfile(models.Model):
         
     def number_of_likes(self):
         return self.user_likes.count()
-    
-    def match_profiles(self):
-        # Get all other profiles excluding the user's own profile
-        if self.gender is not None:
-            if self.gender == 'M':
-                search_gender = 'F'
-            elif self.gender == 'F':
-                search_gender = 'M'
-            other_profiles = UserProfile.objects.filter(user__is_active=True, user__is_banned=False, is_banned=False, country=self.country, gender__iexact=search_gender).exclude(user=self.user)
-            age = self.age()
-            # Example algorithm: Matching based on common interests and age difference
-            matches = []
-            for profile in other_profiles:
-                if self.interests is not None:
-                    user_age = profile.age()
-                    age_difference = abs(age - user_age)
-                    if profile.interests:
-                        common_interests = set(self.interests) & set(profile.interests)
-                        # Customize the matching criteria based on your requirements
-                        if len(common_interests) >= 2 and age_difference <= 5:
-                            matches.append(profile)
-                    else:
-                        if age_difference <= 5:
-                            matches.append(profile)
-            return matches
-        else:
-            return redirect('update_profile', self.id)
     
 
     def age(self):
@@ -316,11 +290,12 @@ class Portfolio(models.Model):
     def __str__(self):
         return self.business_name
 
+
 class ProfileFilter(django_filters.FilterSet):
     class Meta:
         model = UserProfile
         fields = ['country', ]#'is_verified'
-    
+   
 
 class SearchFilter(django_filters.FilterSet):
     class Meta:
@@ -328,49 +303,11 @@ class SearchFilter(django_filters.FilterSet):
         fields = ['country', 'city']
 
 
-class LinkType(models.Model):
-    name = models.CharField(max_length=255)
-    created = models.DateTimeField(auto_now_add=True)
-    updated = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return self.name  
-
-
-class PayLink(models.Model):
-    STATUS_CHOICES = (
-        ('active', 'Active'),
-        ('inactive', 'Inactive'),
-        ('expired', 'Expired'),
-    )
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="payment_links")
-    name = models.CharField(max_length=255)
-    link_type = models.ForeignKey(LinkType, on_delete=models.SET_NULL, null=True)
-    image = models.ImageField(null=True, blank=True, upload_to="Pay/%Y/%M/%d")
-    description = models.TextField(blank=True, verbose_name="Being Payment for")
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
-    collected_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    link_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
-    is_active = models.BooleanField(default=True)
-    created = models.DateTimeField(auto_now_add=True)
-    updated = models.DateTimeField(auto_now=True)
-    is_archived = models.BooleanField(default=False)
-    is_banned = models.BooleanField(default=False)
-    is_analyzed = models.BooleanField(default=False)
-
-    def get_payment_url(self):
-        return f"https://paylink.daraza.net/pay/{self.link_id}"
-
-    def __str__(self):
-        return self.name  
-
-
 class Receipt(models.Model):
     transaction_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     payer = models.CharField(max_length=255)
     payee = models.ForeignKey(User, on_delete=models.CASCADE)
-    pay_link = models.ForeignKey(PayLink, on_delete=models.SET_NULL, null=True)
+    # pay_link = models.ForeignKey(PayLink, on_delete=models.SET_NULL, null=True)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     date = models.DateTimeField(auto_now_add=True)
     payment_method = models.CharField(max_length=50)
@@ -391,7 +328,6 @@ class Receipt(models.Model):
 
 class ReportUser(models.Model):
     reported_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reported_user')
-    link = models.ForeignKey(PayLink, on_delete=models.SET_NULL, null=True, blank=True, related_name='reported_link')
     complaint = models.TextField()
     is_attended_to = models.BooleanField(default=False)
     timestamp = models.DateTimeField(auto_now_add=True)
@@ -414,8 +350,10 @@ class ReportEvidence(models.Model):
     def __str__(self):
         return str(f'Report Evidence {self.id}')
 
+
 def default_expiration_time():
     return now() + timedelta(minutes=10)
+
 
 class OTPVerification(models.Model):
     email = models.EmailField(null=True, blank=True)

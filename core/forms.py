@@ -1,8 +1,8 @@
 from django import forms
-from django.db import transaction
-from django.utils.text import slugify
+# from django.db import transaction
+# from django.utils.text import slugify
 from django.forms.utils import ErrorList
-from django.core.validators import MaxValueValidator, MinValueValidator
+# from django.core.validators import MaxValueValidator, MinValueValidator
 
 from .models import Contact, FAQ, NewsLetter, SystemUtility, SMS_Broadcast, User_Inquiry
 

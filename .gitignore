@@ -1,15 +1,14 @@
 ########## Custom ##############
 Notes.txt
 rootgmail.txt
-RSA_KEY_PAIR.pem
 media
 staticfiles
 __pycache__
-db.sqlite3
 celerybeat-schedule.bak
 celerybeat-schedule.dat
 celerybeat-schedule.dir
 .whl
+.pem
 ########### Python #############
 # Byte-compiled / optimized / DLL files
 __pycache__/

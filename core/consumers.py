@@ -1,9 +1,10 @@
 # your_project/consumers.py
 
 import json
-from channels.generic.websocket import AsyncWebsocketConsumer
+
+# from asgiref.sync import sync_to_async
 from channels.db import database_sync_to_async
-from asgiref.sync import sync_to_async
+from channels.generic.websocket import AsyncWebsocketConsumer
 
 from accounts.models import User
 
@@ -36,6 +37,7 @@ class OnlineStatusConsumer(AsyncWebsocketConsumer):
             'user_id': user_id,
             'is_online': is_online
         }))
+
 
 class NotificationConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -81,6 +83,7 @@ class UserNotificationConsumer(AsyncWebsocketConsumer):
 
     async def send_notification(self, event):
         await self.send(text_data=json.dumps({ 'message': event['message'] }))
+
 
 class PaymentStatusConsumer(AsyncWebsocketConsumer):
     async def connect(self):

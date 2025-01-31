@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User, UserProfile, PayLink, Portfolio, PortfolioType, Receipt
+from .models import User, UserProfile, Portfolio, PortfolioType, Receipt
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -34,11 +34,6 @@ class PortfolioSerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = ('user',)
 
-class PayLinkSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = PayLink
-        fields = '__all__'
-        read_only_fields = ('user', 'link_id')
 
 class ReceiptSerializer(serializers.ModelSerializer):
     class Meta:
