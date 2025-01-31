@@ -354,6 +354,7 @@ class OTPVerification(models.Model):
 
     def is_valid(self):
         return now() < self.expires_at
+ 
     
 # Property Listings
 class PropertyType(models.Model):
@@ -362,11 +363,13 @@ class PropertyType(models.Model):
     def __str__(self):
         return self.name
 
+
 class Amenity(models.Model):
     name = models.CharField(max_length=50)
 
     def __str__(self):
         return self.name
+
 
 class Address(models.Model):
     street_address = models.CharField(max_length=255)
@@ -408,6 +411,7 @@ class Address(models.Model):
             return f"https://www.google.com/maps/search/?api=1&query={self.latitude},{self.longitude}"
         return ""
 
+
 class Property(models.Model):
     title = models.CharField(max_length=255)
     slug = models.SlugField(unique=True, blank=True)
@@ -433,6 +437,7 @@ class Property(models.Model):
             self.slug = slugify(self.title)
         super(Property, self).save(*args, **kwargs)
 
+
 class PropertyImage(models.Model):
     property = models.ForeignKey(Property, on_delete=models.CASCADE, related_name='images')
     image = models.ImageField(upload_to='property_images/')
@@ -440,6 +445,7 @@ class PropertyImage(models.Model):
 
     def __str__(self):
         return f"Image for {self.property.title}"
+
 
 class Favorites(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -451,6 +457,7 @@ class Favorites(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.property.title}"
+
 
 class PropertyView(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, blank=True, null=True)
