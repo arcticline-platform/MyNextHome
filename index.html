@@ -302,46 +302,46 @@
         </div>
     </footer>
     <script>
-        // // Disable right-click context menu
-        // document.addEventListener('contextmenu', (e) => e.preventDefault());
+        // Disable right-click context menu
+        document.addEventListener('contextmenu', (e) => e.preventDefault());
 
-        // // Disable keyboard shortcuts
-        // document.addEventListener('keydown', (e) => {
-        //     // Prevent F12, Ctrl+Shift+I, Cmd+Option+I
-        //     if (
-        //         e.key === 'F12' ||
-        //         (e.ctrlKey && e.shiftKey && e.key === 'I') ||
-        //         (e.metaKey && e.altKey && e.key === 'i')
-        //     ) {
-        //         e.preventDefault();
-        //     }
+        // Disable keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            // Prevent F12, Ctrl+Shift+I, Cmd+Option+I
+            if (
+                e.key === 'F12' ||
+                (e.ctrlKey && e.shiftKey && e.key === 'I') ||
+                (e.metaKey && e.altKey && e.key === 'i')
+            ) {
+                e.preventDefault();
+            }
 
-        //     // Prevent Ctrl+U, Cmd+U (view source)
-        //     if ((e.ctrlKey || e.metaKey) && e.key === 'u') {
-        //         e.preventDefault();
-        //     }
-        // });
+            // Prevent Ctrl+U, Cmd+U (view source)
+            if ((e.ctrlKey || e.metaKey) && e.key === 'u') {
+                e.preventDefault();
+            }
+        });
 
-        // // Prevent text selection
-        // document.addEventListener('selectstart', (e) => e.preventDefault());
+        // Prevent text selection
+        document.addEventListener('selectstart', (e) => e.preventDefault());
 
-        // // Clear console on open
-        // console.clear();
-        // setInterval(console.clear, 1000);
+        // Clear console on open
+        console.clear();
+        setInterval(console.clear, 1000);
 
-        // // Disable developer tools detection
-        // function detectDevTools() {
-        //     const threshold = 160;
-        //     const widthThreshold = window.outerWidth - window.innerWidth > threshold;
-        //     const heightThreshold = window.outerHeight - window.innerHeight > threshold;
+        // Disable developer tools detection
+        function detectDevTools() {
+            const threshold = 160;
+            const widthThreshold = window.outerWidth - window.innerWidth > threshold;
+            const heightThreshold = window.outerHeight - window.innerHeight > threshold;
 
-        //     if (widthThreshold || heightThreshold) {
-        //         document.body.innerHTML = '<h1>Developer Tools detected. Please close them to continue.</h1>';
-        //     }
-        // }
+            if (widthThreshold || heightThreshold) {
+                document.body.innerHTML = '<h1>Developer Tools detected. Please close them to continue.</h1>';
+            }
+        }
 
-        // window.addEventListener('resize', detectDevTools);
-        // setInterval(detectDevTools, 1000);
+        window.addEventListener('resize', detectDevTools);
+        setInterval(detectDevTools, 1000);
     </script>
 
     <script>
@@ -412,7 +412,6 @@
 
                 const result = await response.json();
                 document.getElementById('loading-indicator').classList.remove('show');
-                console.log("Result: ", result);
                 if (response.ok) {
                     if (result.code === "Success") {
                         alertMessage.textContent = `✅ ${result.response_details}. Thank you for your support!`;
@@ -441,7 +440,11 @@
                         //     document.getElementById('contribution-modal').classList.add('hidden');
                         // }, 10000);
                     } else if (result.code === "Error") {
-                        alertMessage.textContent = `⚠️ Payment failed: ${result.message}`;
+                        if (result.details === "Insufficient Balance") {
+                            alertMessage.textContent = `⚠️ Payment failed: You do not enough account balance for your request`;
+                        } else {
+                            alertMessage.textContent = `⚠️ Payment failed: ${result.message}`;
+                        }
                         alertMessage.className = "error";
                         alertMessage.style.display = 'block';
                     }
