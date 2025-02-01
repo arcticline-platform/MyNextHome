@@ -412,7 +412,7 @@
 
                 const result = await response.json();
                 document.getElementById('loading-indicator').classList.remove('show');
-
+                console.log("Result: ", result);
                 if (response.ok) {
                     if (result.code === "Success") {
                         alertMessage.textContent = `✅ ${result.response_details}. Thank you for your support!`;
