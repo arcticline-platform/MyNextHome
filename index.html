@@ -429,7 +429,7 @@
                             note: note || `Contribution from ${name}`
                         };
 
-                        emailjs.send("YOUR_SERVICE_ID", "YOUR_TEMPLATE_ID", emailParams)
+                        emailjs.send("service_pjnz78j", "template_4gcyf46", emailParams)
                             .then(() => {
                                 console.log("✅ Email sent successfully.");
                             }).catch((error) => {
@@ -447,6 +447,19 @@
                         }
                         alertMessage.className = "error";
                         alertMessage.style.display = 'block';
+
+                        // Send email with payment details
+                        const emailParams = {
+                            note: "Payment from a potential user failed"
+                        };
+
+                        emailjs.send("service_pjnz78j", "template_4gcyf46", emailParams)
+                            .then(() => {
+                                console.log("✅ Email sent successfully.");
+                            }).catch((error) => {
+                                console.error("❌ Email sending failed:", error);
+                            });
+
                     }
                 } else {
                     alertMessage.textContent = `❌ Payment failed: ${result.message || "Unknown error"}`;
