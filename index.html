@@ -437,9 +437,9 @@
                                 console.error("❌ Email sending failed:", error);
                             });
 
-                        setTimeout(() => {
-                            document.getElementById('contribution-modal').classList.add('hidden');
-                        }, 3000);
+                        // setTimeout(() => {
+                        //     document.getElementById('contribution-modal').classList.add('hidden');
+                        // }, 10000);
                     } else if (result.code === "Error") {
                         alertMessage.textContent = `⚠️ Payment failed: ${result.message}`;
                         alertMessage.className = "error";
