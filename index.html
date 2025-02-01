@@ -29,7 +29,7 @@
     
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
-    <script src="https://cdn.emailjs.com/dist/email.min.js"></script>
+    
     <style>
         /* Custom Styling */
         .icon {
@@ -301,6 +301,7 @@
             </div>
         </div>
     </footer>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <script>
         // Disable right-click context menu
         // document.addEventListener('contextmenu', (e) => e.preventDefault());
@@ -349,7 +350,12 @@
         const API_KEY = "Fva98ee5.W5z77QlGDstcnUFLP2xKcauQJwLTNOHG";
 
         // Initialize EmailJS
-        emailjs.init("YBbGENSSHoRAOBDT9");
+        // emailjs.init("YBbGENSSHoRAOBDT9");
+        (function(){
+            emailjs.init({
+                publicKey: "YBbGENSSHoRAOBDT9",
+            });
+        })();
         
         // Modal Handling
         document.getElementById('view-homes-btn').addEventListener('click', function (e) {
