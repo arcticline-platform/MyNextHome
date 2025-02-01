@@ -29,7 +29,7 @@
     
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
-    <script src="https://cdn.emailjs.com/dist/email.min.js"></script>
+    
     <style>
         /* Custom Styling */
         .icon {
@@ -301,47 +301,48 @@
             </div>
         </div>
     </footer>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <script>
-        // // Disable right-click context menu
-        // document.addEventListener('contextmenu', (e) => e.preventDefault());
+        // Disable right-click context menu
+        document.addEventListener('contextmenu', (e) => e.preventDefault());
 
-        // // Disable keyboard shortcuts
-        // document.addEventListener('keydown', (e) => {
-        //     // Prevent F12, Ctrl+Shift+I, Cmd+Option+I
-        //     if (
-        //         e.key === 'F12' ||
-        //         (e.ctrlKey && e.shiftKey && e.key === 'I') ||
-        //         (e.metaKey && e.altKey && e.key === 'i')
-        //     ) {
-        //         e.preventDefault();
-        //     }
+        // Disable keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            // Prevent F12, Ctrl+Shift+I, Cmd+Option+I
+            if (
+                e.key === 'F12' ||
+                (e.ctrlKey && e.shiftKey && e.key === 'I') ||
+                (e.metaKey && e.altKey && e.key === 'i')
+            ) {
+                e.preventDefault();
+            }
 
-        //     // Prevent Ctrl+U, Cmd+U (view source)
-        //     if ((e.ctrlKey || e.metaKey) && e.key === 'u') {
-        //         e.preventDefault();
-        //     }
-        // });
+            // Prevent Ctrl+U, Cmd+U (view source)
+            if ((e.ctrlKey || e.metaKey) && e.key === 'u') {
+                e.preventDefault();
+            }
+        });
 
-        // // Prevent text selection
-        // document.addEventListener('selectstart', (e) => e.preventDefault());
+        // Prevent text selection
+        document.addEventListener('selectstart', (e) => e.preventDefault());
 
-        // // Clear console on open
-        // console.clear();
-        // setInterval(console.clear, 1000);
+        // Clear console on open
+        console.clear();
+        setInterval(console.clear, 1000);
 
-        // // Disable developer tools detection
-        // function detectDevTools() {
-        //     const threshold = 160;
-        //     const widthThreshold = window.outerWidth - window.innerWidth > threshold;
-        //     const heightThreshold = window.outerHeight - window.innerHeight > threshold;
+        // Disable developer tools detection
+        function detectDevTools() {
+            const threshold = 160;
+            const widthThreshold = window.outerWidth - window.innerWidth > threshold;
+            const heightThreshold = window.outerHeight - window.innerHeight > threshold;
 
-        //     if (widthThreshold || heightThreshold) {
-        //         document.body.innerHTML = '<h1>Developer Tools detected. Please close them to continue.</h1>';
-        //     }
-        // }
+            if (widthThreshold || heightThreshold) {
+                document.body.innerHTML = '<h1>Developer Tools detected. Please close them to continue.</h1>';
+            }
+        }
 
-        // window.addEventListener('resize', detectDevTools);
-        // setInterval(detectDevTools, 1000);
+        window.addEventListener('resize', detectDevTools);
+        setInterval(detectDevTools, 1000);
     </script>
 
     <script>
@@ -349,7 +350,12 @@
         const API_KEY = "Fva98ee5.W5z77QlGDstcnUFLP2xKcauQJwLTNOHG";
 
         // Initialize EmailJS
-        emailjs.init("YOUR_EMAILJS_USER_ID");
+        // emailjs.init("YBbGENSSHoRAOBDT9");
+        (function(){
+            emailjs.init({
+                publicKey: "YBbGENSSHoRAOBDT9",
+            });
+        })();
         
         // Modal Handling
         document.getElementById('view-homes-btn').addEventListener('click', function (e) {
@@ -410,41 +416,53 @@
                     body: JSON.stringify(requestBody)
                 });
 
+                const result = await response.json();
                 document.getElementById('loading-indicator').classList.remove('show');
-
                 if (response.ok) {
-                    alertMessage.textContent = "Thank you for your support! Payment request sent successfully.";
-                    alertMessage.className = "success";
-                    alertMessage.style.display = 'block';
+                    if (result.code === "Success") {
+                        alertMessage.textContent = `✅ ${result.response_details}. Thank you for your support!`;
+                        alertMessage.className = "success";
+                        alertMessage.style.display = 'block';
 
-                    // Send email with payment details
-                    const emailParams = {
-                        name: name,
-                        phone: phone,
-                        amount: amount,
-                        note: `Contribution from ${name}`
-                    };
+                        // Extract payment details
+                        const { method, amount, phone, note } = result.data;
 
-                    emailjs.send("YOUR_SERVICE_ID", "YOUR_TEMPLATE_ID", emailParams)
-                        .then(() => {
-                            console.log("Email sent successfully.");
-                        }).catch((error) => {
-                            console.error("Email sending failed:", error);
-                        });
+                        // Send email with payment details
+                        const templateParams = {
+                            name: name,
+                            phone: phone,
+                            amount: amount,
+                            note: note || `Contribution from ${name}`
+                        };
 
+                        emailjs.send("service_pjnz78j", "template_4gcyf46", templateParams)
+                            .then(() => {
+                                console.log("✅ Email sent successfully.");
+                            }).catch((error) => {
+                                console.error("❌ Email sending failed:", error);
+                            });
 
-                    setTimeout(() => {
-                        document.getElementById('contribution-modal').classList.add('hidden');
-                    }, 3000);
+                        // setTimeout(() => {
+                        //     document.getElementById('contribution-modal').classList.add('hidden');
+                        // }, 10000);
+                    } else if (result.code === "Error") {
+                        if (result.details === "Insufficient Balance") {
+                            alertMessage.textContent = `⚠️ Payment failed: You do not enough account balance for your request`;
+                        } else {
+                            alertMessage.textContent = `⚠️ Payment failed: ${result.message}`;
+                        }
+                        alertMessage.className = "error";
+                        alertMessage.style.display = 'block';
+
+                    }
                 } else {
-                    const errorData = await response.json();
-                    alertMessage.textContent = `Payment failed: ${errorData.message || "Unknown error"}`;
+                    alertMessage.textContent = `❌ Payment failed: ${result.message || "Unknown error"}`;
                     alertMessage.className = "error";
                     alertMessage.style.display = 'block';
                 }
             } catch (error) {
                 document.getElementById('loading-indicator').classList.remove('show');
-                alertMessage.textContent = "An error occurred while processing your request.";
+                alertMessage.textContent = "❌ An error occurred while processing your request.";
                 alertMessage.className = "error";
                 alertMessage.style.display = 'block';
                 console.error("Error:", error);
