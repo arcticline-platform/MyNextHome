@@ -441,7 +441,7 @@ class Property(models.Model):
         ('semi-Furnished', 'Semi Furnished'),
         ('unfurnished', 'Unfurnished'),
     )
-    furnish_status = models.CharField(max_length=-20, choices=PROPERTY_FURNISH_CHOICE, default='unfurnished')
+    furnish_status = models.CharField(max_length=20, choices=PROPERTY_FURNISH_CHOICE, default='unfurnished')
     PROPERTY_AVAILABILITY_CHOICE = (
         ('available','Available'),
         ('sold','Sold'),
