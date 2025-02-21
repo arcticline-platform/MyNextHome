@@ -359,6 +359,7 @@ class OTPVerification(models.Model):
 # Property Listings
 class PropertyType(models.Model):
     name = models.CharField(max_length=50)
+    description = models.TextField(blank=True)
 
     def __str__(self):
         return self.name
@@ -366,6 +367,9 @@ class PropertyType(models.Model):
 
 class Amenity(models.Model):
     name = models.CharField(max_length=50)
+
+    class Meta:
+        verbose_name_plural = 'Amenities'
 
     def __str__(self):
         return self.name
@@ -380,6 +384,8 @@ class Address(models.Model):
     latitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
     longitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
     location = gis_models.PointField(geography=True, blank=True, null=True)
+    nearby_landmarks = models.TextField(blank=True)
+    map_url = models.URLField(blank=True)  
     address_verified = models.BooleanField(default=False)
 
     def __str__(self):
@@ -428,6 +434,21 @@ class Property(models.Model):
     is_published = models.BooleanField(default=False)
     listed_by = models.ForeignKey(User, on_delete=models.CASCADE)
     rating = models.DecimalField(max_digits=3, decimal_places=2, validators=[MinValueValidator(0.0), MaxValueValidator(5.0)], default=0.0)
+    parking_spaces = models.PositiveIntegerField(default=0)
+    internet_included = models.BooleanField(default=False)
+    PROPERTY_FURNISH_CHOICE = (
+        ('furnished', 'Furnished'),
+        ('semi-Furnished', 'Semi Furnished'),
+        ('unfurnished', 'Unfurnished'),
+    )
+    furnish_status = models.CharField(max_length=-20, choices=PROPERTY_FURNISH_CHOICE, default='unfurnished')
+    PROPERTY_AVAILABILITY_CHOICE = (
+        ('available','Available'),
+        ('sold','Sold'),
+        ('rented','Rented'),
+        ('under_construction','Under Construction'),
+    )
+    availability_status = models.CharField(max_length=20, choices=PROPERTY_AVAILABILITY_CHOICE, default='available')
 
     def __str__(self):
         return self.title
@@ -467,3 +488,20 @@ class PropertyView(models.Model):
 
     def __str__(self):
         return f"{self.property.title} viewed on {self.view_date}"
+    
+
+class PropertyPayment(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    property = models.ForeignKey(Property, on_delete=models.CASCADE)
+    currency = models.CharField(max_length=3,default='USD',help_text="ISO 4217 currency code (e.g., USD, EUR, GBP)")
+    usd_price = models.DecimalField(max_digits=12,decimal_places=2,validators=[MinValueValidator(0)],help_text="Price converted to USD")# All currencies are automatically converted to USD
+    exchange_rate = models.DecimalField(max_digits=10,decimal_places=6,help_text="Exchange rate when price was converted to USD")# Exchange rate at the time of conversion
+    conversion_date = models.DateTimeField(auto_now=True)# Conversion timestamp
+    PAYMENT_TYPE_CHOICE = (
+        ('cash', 'Cash'),
+        ('installments', 'Installments'),
+        ('rent_to_own', 'Rent-to-Own'),
+    )
+    payment_type = models.CharField(max_length=20, choices=PAYMENT_TYPE_CHOICE, default='cash')
+    price = models.DecimalField(max_digits=12, decimal_places=2, validators=[MinValueValidator(0)])
+    down_payment = models.DecimalField(max_digits=12, decimal_places=2, validators=[MinValueValidator(0)], blank=True, null=True)
