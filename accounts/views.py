@@ -22,8 +22,8 @@ from django.views.generic import CreateView, TemplateView, UpdateView, DeleteVie
 
 from .tokens import account_activation_token
 from tracking_analyzer.models import Tracker
-from .models import User, UserProfile, PayLink, Portfolio, PortfolioType,  Receipt
-from .forms import AboutMeForm, CoverPhotoForm, UserSignUpForm, ProfileChangeForm, PortfolioForm, ImageForm, ReportUserForm, ReportEvidenceForm, PayLinkForm
+from .models import User, UserProfile, Portfolio, PortfolioType,  Receipt
+from .forms import AboutMeForm, CoverPhotoForm, UserSignUpForm, ProfileChangeForm, PortfolioForm, ImageForm, ReportUserForm, ReportEvidenceForm
 
 
 class LogInView(LoginView):
@@ -124,33 +124,21 @@ def check_user_email(request):
 
 
 @login_required
-def gotomyaccount(request):
-	return render(request, 'accounts/myaccount.html', {})
-
-
-@login_required
-def account_page(request):
-	return render(request, 'accounts/profile_account_overview.html')
-
-
-@login_required
 def profile(request, id, username, template_name='accounts/user_profile.html'):
 	portfolio = None
 	try:
 		profile = UserProfile.objects.get(user__id=id, username=username)
-		pay_links = PayLink.objects.filter(user=request.user).order_by('-updated')
 	except UserProfile.DoesNotExist:
 		messages.error(request, 'User profile could not be found!')
 		return redirect(request.META.get('HTTP_REFERER', 'redirect_if_referer_not_found'))
 	current_user = request.user
-	form = PayLinkForm()
 	try:
 		portfolio = Portfolio.objects.get(user=profile)
 		portfolio_form = PortfolioForm(instance=portfolio)
 	except Portfolio.DoesNotExist:
 		messages.info(request, 'You need to set up a business portfolio to continue')
 		return redirect('create_or_update_portfolio', profile.id)
-	context = {'profile': profile, 'current_user':current_user, 'pay_links': pay_links, 'form':form, 'portfolio': portfolio, 'portfolio_form':portfolio_form}
+	context = {'profile': profile, 'current_user':current_user, 'portfolio': portfolio, 'portfolio_form':portfolio_form}
 	Tracker.objects.create_from_request(request, profile)
 	return render(request, template_name, context)
 
@@ -301,7 +289,6 @@ def account_settings(request):
 def report_user(request, id, link_id):
     try:
         # Fetch the PayLink and the user to report
-        link = get_object_or_404(PayLink, id=link_id)
         user_to_report = User.objects.get(id=id)
 
         if request.method == 'POST':
@@ -312,7 +299,6 @@ def report_user(request, id, link_id):
                 # Save the report
                 report = form.save(commit=False)
                 report.reported_user = user_to_report
-                report.link = link
                 report.save()
 
                 # Save the evidence file if provided
@@ -347,42 +333,6 @@ def report_user(request, id, link_id):
     })
 
 
-	
-
-def create_pay_link(request):
-    if request.method == 'POST':
-        form = PayLinkForm(request.POST, request.FILES)
-        if form.is_valid():
-            pay_link = form.save(commit=False)
-            pay_link.user = request.user
-            pay_link.save()
-            messages.success(request, 'PayLink generated successfully!')
-            return redirect('profile', request.user.id, request.user.username)
-        else:
-            messages.error(request, 'There was an error creating your PayLink.')
-    else:
-        form = PayLinkForm()
-    return render(request, 'accounts/user_profile.html', {'form': form})
-
-
-def pay_view(request, link_id):
-	try:
-		pay_link = PayLink.objects.get(link_id=link_id, is_active=True)
-	except PayLink.DoesNotExist:
-		pass
-	return render(request, 'accounts/pay.html', {'pay_link': pay_link})
-
-
-def edit_pay_link(request):
-    if request.method == 'POST':
-        pay_link_id = request.POST.get('pay_link_id')
-        pay_link = get_object_or_404(PayLink, id=pay_link_id, user=request.user)
-        pay_link.name = request.POST.get('name')
-        pay_link.description = request.POST.get('description')
-        pay_link.save()
-        messages.success(request, "PayLink edited successfully!")
-        return redirect('profile', request.user.id, request.user.username)
-
 
 def view_receipt(request, transaction_id):
     """
@@ -405,13 +355,3 @@ def view_receipt(request, transaction_id):
     except Receipt.DoesNotExist:
         messages.error(request, "Receipt not found.")
         return redirect('dashboard')
-
-
-def delete_pay_link(request):
-    if request.method == 'POST':
-        pay_link_id = request.POST.get('pay_link_id')
-        pay_link = get_object_or_404(PayLink, id=pay_link_id, user=request.user)
-        pay_link.delete()
-        messages.success(request, "PayLink deleted successfully!")
-        return redirect('profile', request.user.id, request.user.username)
-	

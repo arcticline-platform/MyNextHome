@@ -10,8 +10,8 @@ from django.utils.http import urlsafe_base64_encode
 
 from .tokens import account_activation_token
 from tracking_analyzer.models import Tracker
-from .models import User, UserProfile, PayLink, Portfolio, PortfolioType,  Receipt
-from .serializers import UserSerializer, UserProfileSerializer, PayLinkSerializer, PortfolioSerializer, ReceiptSerializer
+from .models import User, UserProfile, Portfolio, PortfolioType,  Receipt
+from .serializers import UserSerializer, UserProfileSerializer, PortfolioSerializer, ReceiptSerializer
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
@@ -85,17 +85,6 @@ class PortfolioViewSet(viewsets.ModelViewSet):
     
     def perform_create(self, serializer):
         serializer.save(user=self.request.user.user_profile)
-
-class PayLinkViewSet(viewsets.ModelViewSet):
-    queryset = PayLink.objects.all()
-    serializer_class = PayLinkSerializer
-    permission_classes = [IsAuthenticated]
-    
-    def get_queryset(self):
-        return self.queryset.filter(user=self.request.user)
-    
-    def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
 
 class ReceiptViewSet(viewsets.ModelViewSet):
     queryset = Receipt.objects.all()
