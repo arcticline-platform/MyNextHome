@@ -10,7 +10,6 @@ router = DefaultRouter()
 router.register(r'users', apis.UserViewSet)
 router.register(r'profiles', apis.UserProfileViewSet)
 router.register(r'portfolios', apis.PortfolioViewSet)
-router.register(r'paylinks', apis.PayLinkViewSet)
 router.register(r'receipts', apis.ReceiptViewSet)
 
 
@@ -27,7 +26,6 @@ urlpatterns = [
     path('activate/<uidb64>/<token>', views.activate, name='activate'),
     path('account_activation_sent/', views.account_activation_sent, name='account_activation_sent'),
     path('resend-activation-email/', views.resend_activation_email, name='resend_activation_email'),
-	path('account_page/', views.account_page, name='account_page'),
 	path('profile/<id>/<username>/',  views.profile, name='profile'),
     path('<id>/upload_photo', views.upload_photo, name='upload_photo'),
     path('<id>/upload_cover_photo', views.upload_cover_photo, name='upload_cover_photo'),
@@ -39,10 +37,6 @@ urlpatterns = [
 	# Account Delete
 	path('int:<id>/delete_account/', views.delete_user_account, name='delete_buyer_account'),
     # PayLink update
-	path('create-pay-link/', views.create_pay_link, name='create_pay_link'),
-    path('pay/<uuid:link_id>/', views.pay_view, name='pay_view'),
-    path('edit-pay_link/', views.edit_pay_link, name='edit_pay_link'),
-    path('delete-pay_link/', views.delete_pay_link, name='delete_pay_link'),
 
     path('send-otp/', utils.send_otp, name='send_otp'),
     path('verify-otp/', utils.verify_otp, name='verify_otp'),

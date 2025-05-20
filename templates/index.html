@@ -1,0 +1,466 @@
+{% load static %}
+{% load humanize %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyNextHome | Find Your Dream Home</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            200: '#bbf7d0',
+                            300: '#86efac',
+                            400: '#4ade80',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            800: '#166534',
+                            900: '#14532d',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .property-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        #filterSidebar {
+            transition: all 0.3s ease;
+        }
+        
+        .heart-icon {
+            transition: all 0.2s ease;
+        }
+        
+        .heart-icon:hover {
+            transform: scale(1.2);
+        }
+        
+        .heart-icon.active {
+            color: #ef4444;
+            fill: #ef4444;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 flex items-center">
+                        <i class="fas fa-home text-primary-600 text-2xl mr-2"></i>
+                        <span class="text-xl font-bold text-primary-800">MyNextHome</span>
+                    </div>
+                    <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
+                        <a href="#" class="border-primary-500 text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                            Buy
+                        </a>
+                        <a href="#" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                            Rent
+                        </a>
+                        <a href="#" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                            Sell
+                        </a>
+                        <a href="#" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                            Agents
+                        </a>
+                    </div>
+                </div>
+                <div class="hidden sm:ml-6 sm:flex sm:items-center">
+                    <button class="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+                        List Your Property
+                    </button>
+                    <div class="ml-3 relative">
+                        <!-- Profile dropdown -->
+                    </div>
+                </div>
+                <div class="-mr-2 flex items-center sm:hidden">
+                    <!-- Mobile menu button -->
+                    <button type="button" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500" aria-controls="mobile-menu" aria-expanded="false">
+                        <span class="sr-only">Open main menu</span>
+                        <i class="fas fa-bars"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <div class="relative bg-primary-700">
+        <div class="absolute inset-0">
+            <img class="w-full h-full object-cover opacity-20" src="https://images.unsplash.com/photo-1512917774080-9991f1c4c750?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" alt="">
+            <div class="absolute inset-0 bg-primary-700 mix-blend-multiply" aria-hidden="true"></div>
+        </div>
+        <div class="relative max-w-7xl mx-auto py-24 px-4 sm:py-32 sm:px-6 lg:px-8">
+            <h1 class="text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl">
+                Find Your Dream Home
+            </h1>
+            <p class="mt-6 text-xl text-primary-100 max-w-3xl">
+                Discover the perfect property from our extensive collection of homes, apartments, and commercial spaces.
+            </p>
+            <div class="mt-10 sm:flex">
+                <div class="relative w-full">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-search text-gray-400"></i>
+                    </div>
+                    <input id="search" name="search" class="block w-full pl-10 pr-3 py-4 border border-transparent rounded-md leading-5 bg-white/90 placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 focus:border-transparent sm:text-sm" placeholder="Search by location, property type, or keyword" type="search">
+                </div>
+                <button class="mt-3 w-full px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-primary-600 shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:mt-0 sm:ml-3 sm:flex-shrink-0 sm:inline-flex sm:items-center sm:w-auto">
+                    Search
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="flex flex-col md:flex-row">
+            <!-- Filters Sidebar -->
+            <div id="filterSidebar" class="w-full md:w-64 flex-shrink-0 md:mr-8 mb-6 md:mb-0">
+                <div class="bg-white p-4 rounded-lg shadow-md sticky top-4">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg font-medium text-gray-900">Filters</h2>
+                        <button id="toggleFilters" class="md:hidden text-primary-600 hover:text-primary-800">
+                            <i class="fas fa-sliders-h"></i>
+                        </button>
+                    </div>
+                    
+                    <div id="filtersContent" class="md:block">
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Price Range</label>
+                            <div class="flex items-center space-x-2">
+                                <input type="number" placeholder="Min" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500">
+                                <span>-</span>
+                                <input type="number" placeholder="Max" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500">
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Property Type</label>
+                            <select class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md">
+                                <option>All Types</option>
+                                <option>House</option>
+                                <option>Apartment</option>
+                                <option>Condo</option>
+                                <option>Townhouse</option>
+                                <option>Land</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Bedrooms</label>
+                            <div class="flex space-x-2">
+                                <button class="px-3 py-1 border rounded-md hover:bg-primary-100">Any</button>
+                                <button class="px-3 py-1 border rounded-md hover:bg-primary-100">1+</button>
+                                <button class="px-3 py-1 border rounded-md hover:bg-primary-100">2+</button>
+                                <button class="px-3 py-1 border rounded-md hover:bg-primary-100">3+</button>
+                                <button class="px-3 py-1 border rounded-md hover:bg-primary-100">4+</button>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Bathrooms</label>
+                            <div class="flex space-x-2">
+                                <button class="px-3 py-1 border rounded-md hover:bg-primary-100">Any</button>
+                                <button class="px-3 py-1 border rounded-md hover:bg-primary-100">1+</button>
+                                <button class="px-3 py-1 border rounded-md hover:bg-primary-100">2+</button>
+                                <button class="px-3 py-1 border rounded-md hover:bg-primary-100">3+</button>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Amenities</label>
+                            <div class="space-y-2">
+                                <div class="flex items-center">
+                                    <input id="parking" name="parking" type="checkbox" class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
+                                    <label for="parking" class="ml-2 block text-sm text-gray-700">Parking</label>
+                                </div>
+                                <div class="flex items-center">
+                                    <input id="pool" name="pool" type="checkbox" class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
+                                    <label for="pool" class="ml-2 block text-sm text-gray-700">Pool</label>
+                                </div>
+                                <div class="flex items-center">
+                                    <input id="garden" name="garden" type="checkbox" class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
+                                    <label for="garden" class="ml-2 block text-sm text-gray-700">Garden</label>
+                                </div>
+                                <div class="flex items-center">
+                                    <input id="furnished" name="furnished" type="checkbox" class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
+                                    <label for="furnished" class="ml-2 block text-sm text-gray-700">Furnished</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button class="w-full bg-primary-600 hover:bg-primary-700 text-white py-2 px-4 rounded-md">
+                            Apply Filters
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Property Listings -->
+            <div class="flex-1">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-900">Available Properties</h2>
+                    <div class="flex items-center">
+                        <span class="text-sm text-gray-500 mr-2">Sort by:</span>
+                        <select class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md">
+                            <option>Most Recent</option>
+                            <option>Price: Low to High</option>
+                            <option>Price: High to Low</option>
+                            <option>Most Popular</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {% for property in properties %}
+                    <div class="property-card bg-white rounded-lg overflow-hidden shadow-md transition duration-300 ease-in-out">
+                        <div class="relative">
+                            <img class="w-full h-48 object-cover" src="{{ property.image_url }}" alt="{{ property.title }}">
+                            <div class="absolute top-2 right-2">
+                                <button class="heart-icon p-2 bg-white rounded-full shadow-md text-gray-400 hover:text-red-500">
+                                    <i class="far fa-heart"></i>
+                                </button>
+                            </div>
+                            <div class="absolute bottom-2 left-2 bg-primary-600 text-white text-xs font-bold px-2 py-1 rounded">
+                                {{ property.listing_type }}
+                            </div>
+                        </div>
+                        <div class="p-4">
+                            <div class="flex justify-between items-start">
+                                <h3 class="text-lg font-bold text-gray-900">UGX {{ property.price|intcomma }}</h3>
+                                <span class="text-xs text-gray-500">{{ property.date_listed|date:"M d, Y" }}</span>
+                            </div>
+                            <h4 class="text-md font-semibold text-gray-800 mt-1">{{ property.title }}</h4>
+                            <p class="text-sm text-gray-600 mt-1"><i class="fas fa-map-marker-alt text-primary-500 mr-1"></i> {{ property.location }}</p>
+                            <div class="flex mt-3 text-sm text-gray-500">
+                                <span class="flex items-center mr-3">
+                                    <i class="fas fa-bed text-primary-500 mr-1"></i> {{ property.bedrooms }} beds
+                                </span>
+                                <span class="flex items-center mr-3">
+                                    <i class="fas fa-bath text-primary-500 mr-1"></i> {{ property.bathrooms }} baths
+                                </span>
+                                <span class="flex items-center">
+                                    <i class="fas fa-ruler-combined text-primary-500 mr-1"></i> {{ property.area }} sqft
+                                </span>
+                            </div>
+                            <button class="mt-4 w-full bg-primary-100 hover:bg-primary-200 text-primary-800 py-2 px-4 rounded-md transition duration-200">
+                                View Details
+                            </button>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="col-span-3 text-center py-12">
+                        <i class="fas fa-home text-gray-300 text-5xl mb-4"></i>
+                        <h3 class="text-lg font-medium text-gray-900">No properties found</h3>
+                        <p class="mt-1 text-sm text-gray-500">Try adjusting your search or filter to find what you're looking for.</p>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- Pagination -->
+                <div class="mt-8 flex justify-center">
+                    <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                        <a href="#" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                            <span class="sr-only">Previous</span>
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                        <a href="#" aria-current="page" class="z-10 bg-primary-50 border-primary-500 text-primary-600 relative inline-flex items-center px-4 py-2 border text-sm font-medium">
+                            1
+                        </a>
+                        <a href="#" class="bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium">
+                            2
+                        </a>
+                        <a href="#" class="bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium">
+                            3
+                        </a>
+                        <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
+                            ...
+                        </span>
+                        <a href="#" class="bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium">
+                            8
+                        </a>
+                        <a href="#" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                            <span class="sr-only">Next</span>
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Call to Action -->
+    <div class="bg-primary-700 mt-12">
+        <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:py-16 lg:px-8 lg:flex lg:items-center lg:justify-between">
+            <h2 class="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+                <span class="block">Ready to find your dream home?</span>
+                <span class="block text-primary-200">List your property with us today.</span>
+            </h2>
+            <div class="mt-8 flex lg:mt-0 lg:flex-shrink-0">
+                <div class="inline-flex rounded-md shadow">
+                    <a href="#" class="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-primary-600 bg-white hover:bg-primary-50">
+                        Get started
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-white">
+        <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:py-16 lg:px-8">
+            <div class="grid grid-cols-2 gap-8 md:grid-cols-4">
+                <div>
+                    <h3 class="text-sm font-semibold text-gray-500 tracking-wider uppercase">Buying</h3>
+                    <ul class="mt-4 space-y-4">
+                        <li><a href="#" class="text-base text-gray-600 hover:text-primary-500">Homes for Sale</a></li>
+                        <li><a href="#" class="text-base text-gray-600 hover:text-primary-500">Foreclosures</a></li>
+                        <li><a href="#" class="text-base text-gray-600 hover:text-primary-500">New Construction</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-sm font-semibold text-gray-500 tracking-wider uppercase">Renting</h3>
+                    <ul class="mt-4 space-y-4">
+                        <li><a href="#" class="text-base text-gray-600 hover:text-primary-500">Apartments for Rent</a></li>
+                        <li><a href="#" class="text-base text-gray-600 hover:text-primary-500">Houses for Rent</a></li>
+                        <li><a href="#" class="text-base text-gray-600 hover:text-primary-500">All Rental Listings</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-sm font-semibold text-gray-500 tracking-wider uppercase">Resources</h3>
+                    <ul class="mt-4 space-y-4">
+                        <li><a href="#" class="text-base text-gray-600 hover:text-primary-500">Blog</a></li>
+                        <li><a href="#" class="text-base text-gray-600 hover:text-primary-500">Guides</a></li>
+                        <li><a href="#" class="text-base text-gray-600 hover:text-primary-500">FAQ</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-sm font-semibold text-gray-500 tracking-wider uppercase">Company</h3>
+                    <ul class="mt-4 space-y-4">
+                        <li><a href="#" class="text-base text-gray-600 hover:text-primary-500">About Us</a></li>
+                        <li><a href="#" class="text-base text-gray-600 hover:text-primary-500">Careers</a></li>
+                        <li><a href="#" class="text-base text-gray-600 hover:text-primary-500">Contact</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="mt-12 border-t border-gray-200 pt-8">
+                <p class="text-base text-gray-400 text-center">
+                    &copy; 2023 MyNextHome Properties. All rights reserved.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Toggle favorite heart icon
+        document.querySelectorAll('.heart-icon').forEach(icon => {
+            icon.addEventListener('click', function(e) {
+                e.preventDefault();
+                this.classList.toggle('active');
+                const heart = this.querySelector('i');
+                if (heart.classList.contains('far')) {
+                    heart.classList.remove('far');
+                    heart.classList.add('fas');
+                } else {
+                    heart.classList.remove('fas');
+                    heart.classList.add('far');
+                }
+            });
+        });
+
+        // Mobile filters toggle
+        document.getElementById('toggleFilters').addEventListener('click', function() {
+            const filters = document.getElementById('filtersContent');
+            filters.classList.toggle('hidden');
+        });
+
+        // Simulate property data (in a real app, this would come from Django)
+        const properties = [
+            {
+                title: "Modern Downtown Apartment",
+                price: 450000,
+                location: "Downtown, Austin, TX",
+                bedrooms: 2,
+                bathrooms: 2,
+                area: 1200,
+                listing_type: "For Sale",
+                date_listed: "2023-05-15",
+                image_url: "https://images.unsplash.com/photo-1493809842364-78817add7ffb?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80"
+            },
+            {
+                title: "Luxury Villa with Pool",
+                price: 1200000,
+                location: "Westlake, Austin, TX",
+                bedrooms: 4,
+                bathrooms: 3.5,
+                area: 3200,
+                listing_type: "For Sale",
+                date_listed: "2023-05-10",
+                image_url: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80"
+            },
+            {
+                title: "Cozy Suburban Home",
+                price: 325000,
+                location: "Round Rock, TX",
+                bedrooms: 3,
+                bathrooms: 2,
+                area: 1800,
+                listing_type: "For Sale",
+                date_listed: "2023-05-05",
+                image_url: "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80"
+            },
+            {
+                title: "Stylish Condo Near Downtown",
+                price: 275000,
+                location: "South Lamar, Austin, TX",
+                bedrooms: 1,
+                bathrooms: 1,
+                area: 850,
+                listing_type: "For Sale",
+                date_listed: "2023-05-01",
+                image_url: "https://images.unsplash.com/photo-1484154218962-a197022b5858?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80"
+            },
+            {
+                title: "Spacious Family Home",
+                price: 575000,
+                location: "Cedar Park, TX",
+                bedrooms: 4,
+                bathrooms: 3,
+                area: 2800,
+                listing_type: "For Sale",
+                date_listed: "2023-04-28",
+                image_url: "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80"
+            },
+            {
+                title: "Charming Bungalow",
+                price: 395000,
+                location: "Hyde Park, Austin, TX",
+                bedrooms: 2,
+                bathrooms: 1,
+                area: 1100,
+                listing_type: "For Sale",
+                date_listed: "2023-04-25",
+                image_url: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80"
+            }
+        ];
+
+        // In a real Django app, you would pass this data through the context
+        // This is just for demonstration
+        console.log("Loaded properties:", properties);
+    </script>
+</body>
+</html>
