@@ -22,6 +22,8 @@ from django.contrib.messages import constants as messages
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
+
+
 # Environ
 env = environ.Env(
     # set casting, default value
@@ -129,6 +131,9 @@ DATABASES = {
     }
 }
 
+#GDAL
+GDAL_LIBRARY_PATH = fr'{env("GDAL_LIBRARY_PATH")}'
+GEOS_LIBRARY_PATH = fr'{env("GEOS_LIBRARY_PATH")}'
 # Celery backend
 CELERY_BROKER_URL = "redis://localhost:6379/0"
 CELERY_RESULT_BACKEND = "redis://localhost:6379/0"

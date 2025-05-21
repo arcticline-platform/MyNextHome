@@ -355,17 +355,6 @@ class OTPVerification(models.Model):
     def is_valid(self):
         return now() < self.expires_at
  
-    
-# Property Listings
-from django.db import models
-from django.contrib.gis.db import models as gis_models
-from django.contrib.auth import get_user_model
-from django.core.validators import MinValueValidator, MaxValueValidator
-from django.utils.text import slugify
-import requests
-from django.conf import settings
-
-User = get_user_model()
 
 class TimeStampedModel(models.Model):
     """Abstract base model for tracking creation and modification times."""
@@ -416,6 +405,9 @@ class Amenity(models.Model):
         verbose_name_plural = "Amenities"
         ordering = ['category__name', 'name']
 
+    class Meta:
+        verbose_name_plural = 'Amenities'
+
     def __str__(self):
         return self.name
 
@@ -461,6 +453,8 @@ class Address(TimeStampedModel):
     latitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
     longitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
     location = gis_models.PointField(geography=True, blank=True, null=True)
+    nearby_landmarks = models.TextField(blank=True)
+    map_url = models.URLField(blank=True)  
     address_verified = models.BooleanField(default=False)
     timezone = models.CharField(max_length=50, blank=True, null=True)
     neighborhood = models.CharField(max_length=100, blank=True, null=True)
@@ -704,16 +698,24 @@ class Property(TimeStampedModel):
     )
     favorite_count = models.PositiveIntegerField(default=0)
 
-    class Meta:
-        verbose_name = "Property"
-        verbose_name_plural = "Properties"
-        ordering = ['-created']
-        indexes = [
-            models.Index(fields=['status']),
-            models.Index(fields=['price']),
-            models.Index(fields=['bedrooms']),
-            models.Index(fields=['property_type']),
-        ]
+    is_published = models.BooleanField(default=False)
+    listed_by = models.ForeignKey(User, on_delete=models.CASCADE)
+    rating = models.DecimalField(max_digits=3, decimal_places=2, validators=[MinValueValidator(0.0), MaxValueValidator(5.0)], default=0.0)
+    parking_spaces = models.PositiveIntegerField(default=0)
+    internet_included = models.BooleanField(default=False)
+    PROPERTY_FURNISH_CHOICE = (
+        ('furnished', 'Furnished'),
+        ('semi-Furnished', 'Semi Furnished'),
+        ('unfurnished', 'Unfurnished'),
+    )
+    furnish_status = models.CharField(max_length=20, choices=PROPERTY_FURNISH_CHOICE, default='unfurnished')
+    PROPERTY_AVAILABILITY_CHOICE = (
+        ('available','Available'),
+        ('sold','Sold'),
+        ('rented','Rented'),
+        ('under_construction','Under Construction'),
+    )
+    availability_status = models.CharField(max_length=20, choices=PROPERTY_AVAILABILITY_CHOICE, default='available')
 
     def __str__(self):
         return f"{self.title} - {self.address.city}"
@@ -733,6 +735,17 @@ class Property(TimeStampedModel):
         
         super().save(*args, **kwargs)
 
+    class Meta:
+        verbose_name = "Property"
+        verbose_name_plural = "Properties"
+        ordering = ['-created']
+        indexes = [
+            models.Index(fields=['status']),
+            models.Index(fields=['price']),
+            models.Index(fields=['bedrooms']),
+            models.Index(fields=['property_type']),
+        ]
+
     def update_view_count(self):
         """Update the view count for the property."""
         self.view_count = self.views.count()
@@ -746,7 +759,6 @@ class Property(TimeStampedModel):
     def get_primary_image(self):
         """Get the primary image for the property."""
         return self.images.filter(is_primary=True).first() or self.images.first()
-
 
 class PropertyImage(models.Model):
     """Images associated with a property listing"""
@@ -902,3 +914,21 @@ class PropertyContact(TimeStampedModel):
 
     def __str__(self):
         return f"Contact request for {self.property.title} from {self.name}"
+        return f"{self.property.title} viewed on {self.view_date}"
+    
+
+class PropertyPayment(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    property = models.ForeignKey(Property, on_delete=models.CASCADE)
+    currency = models.CharField(max_length=3,default='USD',help_text="ISO 4217 currency code (e.g., USD, EUR, GBP)")
+    usd_price = models.DecimalField(max_digits=12,decimal_places=2,validators=[MinValueValidator(0)],help_text="Price converted to USD")# All currencies are automatically converted to USD
+    exchange_rate = models.DecimalField(max_digits=10,decimal_places=6,help_text="Exchange rate when price was converted to USD")# Exchange rate at the time of conversion
+    conversion_date = models.DateTimeField(auto_now=True)# Conversion timestamp
+    PAYMENT_TYPE_CHOICE = (
+        ('cash', 'Cash'),
+        ('installments', 'Installments'),
+        ('rent_to_own', 'Rent-to-Own'),
+    )
+    payment_type = models.CharField(max_length=20, choices=PAYMENT_TYPE_CHOICE, default='cash')
+    price = models.DecimalField(max_digits=12, decimal_places=2, validators=[MinValueValidator(0)])
+    down_payment = models.DecimalField(max_digits=12, decimal_places=2, validators=[MinValueValidator(0)], blank=True, null=True)
