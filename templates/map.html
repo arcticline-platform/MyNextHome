@@ -217,12 +217,35 @@
             fill: #ef4444;
         }
 
+        #directionsPanelHeader.grab {
+            cursor: grab;
+        }
+
+        #directionsPanelHeader.grabbing {
+            cursor: grabbing;
+        }
+
         .directions-step {
             transition: background-color 0.2s ease;
         }
 
         .directions-step:hover {
             background-color: #f0fdf4; /* primary-50 */
+        }
+
+        .get-directions-btn {
+            transition: all 0.2s ease;
+            transform-origin: center;
+        }
+
+        .get-directions-btn:active {
+            transform: scale(0.95);
+        }
+
+        .get-directions-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            background-color: #ccc;
         }
     </style>
 </head>
@@ -345,6 +368,7 @@
             
             <!-- Property Details or List View -->
             <div class="divide-y divide-gray-200">
+                <div class="property-detials" id="property_details"></div>
                 {% if selected_property %}
                 <!-- Single Property View -->
                 <div class="p-4">
@@ -513,16 +537,62 @@
         </div>
 
         <!-- Directions Panel -->
-        <div id="directionsPanel" class="hidden absolute bottom-4 left-0 right-0 mx-auto bg-white rounded-lg shadow-xl z-10 max-w-md max-h-[70vh] overflow-hidden">
-            <div class="p-4 border-b flex justify-between items-center">
+        <div id="directionsPanel"
+            class=" hidden fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-white rounded-lg shadow-xl z-50 max-w-md w-full overflow-hidden transition-all duration-300 overflow-hidden"
+            style="max-height: 50vh">
+            <!-- Header (Draggable & Collapsible) -->
+            <div id="directionsPanelHeader"
+                class="p-2 bg-gray-100 border-b flex justify-between items-center cursor-move grab">
                 <h3 class="font-medium text-lg">Directions</h3>
-                <button id="closeDirections" class="text-gray-500 hover:text-gray-700">
-                    <i class="fas fa-times"></i>
-                </button>
+                <div class="flex items-center space-x-2">
+                    <button id="collapseDirections" class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-chevron-down transition-transform duration-300"></i>
+                    </button>
+                    <button id="closeDirections" class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
             </div>
-            <div id="directions" class="p-4 overflow-y-auto"></div>
+
+            <!-- Content -->
+            <div id="directionsPanelContent" class="transition-all duration-300 overflow-y-auto">
+                <!-- Directions -->
+                <div id="directions" class="p-4">
+                    <!-- Route Summary -->
+                    <div id="route-summary" class="mb-4 p-3 bg-primary-50 rounded-lg">
+                        <div class="flex justify-between mb-2">
+                            <span class="font-medium text-primary-700">Total Distance:</span>
+                            <span id="total-distance" class="text-primary-600">...</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="font-medium text-primary-700">Estimated Time:</span>
+                            <span id="total-duration" class="text-primary-600">...</span>
+                        </div>
+                    </div>
+
+                    <!-- Step-by-step -->
+                    <div id="step-by-step" class="space-y-3">
+                        <div class="animate-pulse text-center text-gray-500">
+                            <i class="fas fa-route text-2xl mb-2"></i>
+                            <p>Calculating route...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="p-4 border-t bg-gray-50">
+                    <button id="startNavigation"
+                        class="w-full bg-primary-600 text-white py-2 px-4 rounded-lg hover:bg-primary-700 flex items-center justify-center">
+                        <i class="fas fa-location-arrow mr-2"></i>
+                        Start Navigation
+                    </button>
+                </div>
+            </div>
+
+            <!-- Resize Handle -->
+            <div id="resizeHandle" class="h-2 cursor-row-resize bg-gray-300 w-full"></div>
         </div>
-        
+
         <!-- Mobile Sidebar Toggle -->
         <button id="showSidebar" class="md:hidden absolute bottom-4 left-4 z-10 p-3 bg-primary-600 text-white rounded-full shadow-lg">
             <i class="fas fa-list"></i>
@@ -543,13 +613,91 @@
             // Add controls
             map.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
             
+            // Set up geocoder with search suggestions
+            const searchInput = document.getElementById('search');
             const geocoder = new MapboxGeocoder({
                 accessToken: mapboxgl.accessToken,
                 mapboxgl: mapboxgl,
-                placeholder: 'Search for places',
-                marker: false
+                marker: false,
+                placeholder: 'Search locations...',
+                countries: 'UG,KE,TZ,RW,BI,CD,SS,ET,SO,DJ', // East African countries
+                types: 'place,address,region,locality,neighborhood,poi,postcode', // More location types
+                bbox: [28.0, -12.0, 42.0, 5.0], // Boundary box for East Africa
+                autocomplete: true, // Enable autocomplete
+                flyTo: false, // Disable automatic flying to result
+                minLength: 2, // Show suggestions after 2 characters
+                localGeocoder: function(query) {
+                    // Custom suggestions including property-related terms
+                    const suggestions = [
+                        { text: "Houses for sale in Gulu", coordinates: [32.2998, 2.7747] },
+                        { text: "Apartments for rent in Kampala", coordinates: [32.5825, 0.3476] },
+                        { text: "Properties in Entebbe", coordinates: [32.4633, 0.0512] },
+                        { text: "Real estate in Jinja", coordinates: [33.2032, 0.4478] },
+                        { text: "Homes in Mbarara", coordinates: [30.6482, -0.6066] }
+                    ];
+                    
+                    return suggestions
+                        .filter(item => item.text.toLowerCase().includes(query.toLowerCase()))
+                        .map(item => ({
+                            place_name: item.text,
+                            center: item.coordinates,
+                            place_type: ['query'],
+                            text: item.text
+                        }));
+                }
             });
-            map.addControl(geocoder, 'top-right');
+
+            // Create suggestions container
+            const suggestionsContainer = document.createElement('div');
+            suggestionsContainer.className = 'suggestions-container absolute w-full bg-white mt-1 rounded-md shadow-lg z-50 max-h-48 overflow-y-auto hidden';
+            searchInput.parentNode.appendChild(suggestionsContainer);
+
+            // Add geocoder to map but hide default UI
+            geocoder.addTo(map);
+            document.querySelector('.mapboxgl-ctrl-geocoder').style.display = 'none';
+
+            // Handle search input
+            searchInput.addEventListener('input', (e) => {
+                const query = e.target.value;
+                if (query && query.length >= 2) {
+                    geocoder.query(query);
+                    suggestionsContainer.classList.remove('hidden');
+                } else {
+                    suggestionsContainer.classList.add('hidden');
+                }
+            });
+
+            // Handle geocoder results
+            geocoder.on('results', (e) => {
+                suggestionsContainer.innerHTML = '';
+                
+                e.features.forEach(feature => {
+                    const div = document.createElement('div');
+                    div.className = 'p-2 hover:bg-gray-100 cursor-pointer flex items-center';
+                    div.innerHTML = `
+                        <i class="fas fa-map-marker-alt text-primary-500 mr-2"></i>
+                        <span>${feature.place_name}</span>
+                    `;
+                    
+                    div.addEventListener('click', () => {
+                        searchInput.value = feature.place_name;
+                        map.flyTo({
+                            center: feature.center,
+                            zoom: 14
+                        });
+                        suggestionsContainer.classList.add('hidden');
+                    });
+                    
+                    suggestionsContainer.appendChild(div);
+                });
+            });
+
+            // Close suggestions when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!searchInput.contains(e.target) && !suggestionsContainer.contains(e.target)) {
+                    suggestionsContainer.classList.add('hidden');
+                }
+            });
 
             const directions = new MapboxDirections({
                 accessToken: mapboxgl.accessToken,
@@ -647,7 +795,7 @@
         };
 
         // Property Markers Management
-        const setupPropertyMarkers = (map, state, properties) => {
+        const setupPropertyMarkers = (map, state, properties, directionsHandlers) => {
             const createBeautifulMarker = (color = 'primary') => {
                 const el = document.createElement('div');
                 el.className = 'marker';
@@ -695,9 +843,114 @@
                         .setLngLat(property.coordinates)
                         .setPopup(new mapboxgl.Popup({ offset: 25 }).setDOMContent(popupContent))
                         .addTo(map);
+
+                    // Add click handler for the directions button
+                    const directionsBtn = popupContent.querySelector('.get-directions-btn');
+                    directionsBtn.addEventListener('click', async (e) => {
+                        e.stopPropagation();
+                        if (state.userLocation) {
+                            directionsBtn.disabled = true;
+                            directionsBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Routing...';
+
+                            try {
+                                await directionsHandlers.showRoute(state.userLocation, property.coordinates);
+                            } catch (error) {
+                                alert('Could not calculate route. Please try again later.');
+                                console.error('Routing error:', error);
+                            } finally {
+                                directionsBtn.innerHTML = '<i class="fas fa-directions mr-1"></i> Navigate';
+                                directionsBtn.disabled = false;
+                            }
+
+                            // Reset button state
+                            directionsBtn.innerHTML = '<i class="fas fa-directions mr-1"></i> Navigate';
+                            directionsBtn.disabled = false;
+                        } else {
+                            alert('Please enable location services first by clicking the location button');
+                        }
+                    });
                     
+                    // Details button handler
                     popupContent.querySelector('.property-details-btn').addEventListener('click', () => {
-                        console.log('Show details for property:', property.id);
+                        const propertyDetailsDiv = document.getElementById('property_details');
+                        propertyDetailsDiv.innerHTML = `
+                            <div class="p-4">
+                                <div class="relative">
+                                    <img src="${property.image_url}" alt="${property.title}" class="w-full h-48 object-cover rounded-lg">
+                                    <div class="absolute top-2 right-2">
+                                        <button class="heart-icon p-2 bg-white rounded-full shadow-md text-gray-400 hover:text-red-500">
+                                            <i class="far fa-heart"></i>
+                                        </button>
+                                    </div>
+                                    <div class="absolute bottom-2 left-2 bg-primary-600 text-white text-xs font-bold px-2 py-1 rounded">
+                                        ${property.listing_type}
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-4">
+                                    <div class="flex justify-between items-start">
+                                        <h3 class="text-xl font-bold text-gray-900">UGX ${property.price.toLocaleString()}</h3>
+                                        <span class="text-xs text-gray-500">${property.date_listed}</span>
+                                    </div>
+                                    <h4 class="text-lg font-semibold text-gray-800 mt-1">${property.title}</h4>
+                                    <p class="text-sm text-gray-600 mt-1"><i class="fas fa-map-marker-alt text-primary-500 mr-1"></i> ${property.address}</p>
+                                    
+                                    <div class="mt-4 grid grid-cols-3 gap-2 text-center border rounded-lg p-2">
+                                        <div>
+                                            <div class="text-sm text-gray-500">Bedrooms</div>
+                                            <div class="font-semibold text-primary-600">${property.bedrooms}</div>
+                                        </div>
+                                        <div>
+                                            <div class="text-sm text-gray-500">Bathrooms</div>
+                                            <div class="font-semibold text-primary-600">${property.bathrooms}</div>
+                                        </div>
+                                        <div>
+                                            <div class="text-sm text-gray-500">Area</div>
+                                            <div class="font-semibold text-primary-600">${property.area} sqft</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="mt-4">
+                                        <h5 class="font-medium text-gray-900">Description</h5>
+                                        <p class="mt-1 text-sm text-gray-600">${property.description}</p>
+                                    </div>
+
+                                    <div class="mt-6 space-y-2">
+                                        <button class="w-full bg-primary-600 hover:bg-primary-700 text-white py-3 px-4 rounded-md font-medium get-directions-btn">
+                                            <i class="fas fa-directions mr-2"></i> Get Directions
+                                        </button>
+                                        <button class="w-full bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 py-3 px-4 rounded-md font-medium">
+                                            <i class="fas fa-phone mr-2"></i> Contact Agent
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+
+                        // Add click handler for the directions button
+                        propertyDetailsDiv.querySelector('.get-directions-btn').addEventListener('click', async (e) => {
+                            e.stopPropagation();
+                            if (state.userLocation) {
+                                directionsBtn.disabled = true;
+                                directionsBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Routing...';
+
+                                try {
+                                    await directionsHandlers.showRoute(state.userLocation, property.coordinates);
+                                } catch (error) {
+                                    alert('Could not calculate route. Please try again later.');
+                                    console.error('Routing error:', error);
+                                } finally {
+                                    directionsBtn.innerHTML = '<i class="fas fa-directions mr-1"></i> Navigate';
+                                    directionsBtn.disabled = false;
+                                }
+
+                                // Reset button state
+                                directionsBtn.innerHTML = '<i class="fas fa-directions mr-1"></i> Navigate';
+                                directionsBtn.disabled = false;
+                            } else {
+                                alert('Please enable location services first by clicking the location button');
+                            }
+                        });
                     });
 
                     return { id: property.id, marker, coordinates: property.coordinates };
@@ -731,12 +984,15 @@
                     state.selectedMarker = markerObj;
                     
                     // Smooth fly to property
-                    map.flyTo({ 
-                        center: property.coordinates, 
-                        zoom: 16, 
+                    map.flyTo({
+                        center: property.coordinates,
+                        zoom: 16,
                         essential: true,
-                        speed: 0.5,
-                        curve: 1
+                        speed: 0.9,
+                        curve: 1,
+                        easing(t) {
+                            return t * (2 - t);
+                        }
                     });
                     
                     // Open popup with animation
@@ -751,47 +1007,118 @@
 
         // Directions Management
         const setupDirections = (map, directions, state) => {
-            const showRoute = (start, end) => {
+            // Listen for the 'route' event from MapboxDirections
+            directions.on('route', (e) => {
+                if (!e.route || e.route.length === 0) {
+                    console.warn('No route found.');
+                    return;
+                }
+
+                const route = e.route[0];
                 state.directionsPanel.classList.remove('hidden');
-                document.querySelector('.mapboxgl-ctrl-directions').style.display = 'block';
                 
-                directions.setOrigin(start);
-                directions.setDestination(end);
+                // Format the distance and duration
+                const distance = (route.distance / 1000).toFixed(1);
+                const duration = Math.floor(route.duration / 60);
                 
-                map.on('route', (e) => {
-                    const route = e.route[0];
-                    state.directionsContent.innerHTML = `
-                        <div class="mb-3 p-3 bg-gray-50 rounded-lg">
-                            <div class="flex justify-between">
-                                <span class="font-medium">Distance:</span>
-                                <span>${(route.distance / 1000).toFixed(1)} km</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="font-medium">Duration:</span>
-                                <span>${Math.floor(route.duration / 60)} min</span>
-                            </div>
+                // Update the directions panel content
+                state.directionsContent.innerHTML = `
+                    <div class="mb-3 p-3 bg-gray-50 rounded-lg">
+                        <div class="flex justify-between">
+                            <span class="font-medium">Distance:</span>
+                            <span>${distance} km</span>
                         </div>
-                        <div class="space-y-2 max-h-64 overflow-y-auto">
-                            ${route.legs[0].steps.map((step, i) => `
-                                <div class="flex items-start p-2 hover:bg-gray-50 rounded">
-                                    <div class="flex-shrink-0 mt-1 mr-3 w-6 h-6 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center text-xs font-bold">
-                                        ${i+1}
-                                    </div>
-                                    <div class="flex-1">
-                                        <div class="text-sm">${step.maneuver.instruction}</div>
-                                        ${step.distance > 0 ? `<div class="text-xs text-gray-500 mt-1">${(step.distance / 1000).toFixed(1)} km</div>` : ''}
-                                    </div>
+                        <div class="flex justify-between">
+                            <span class="font-medium">Duration:</span>
+                            <span>${duration} min</span>
+                        </div>
+                    </div>
+                    <div class="space-y-2 max-h-64 overflow-y-auto">
+                        ${route.legs[0].steps.map((step, i) => `
+                            <div class="flex items-start p-2 hover:bg-gray-50 rounded">
+                                <div class="flex-shrink-0 mt-1 mr-3 w-6 h-6 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center text-xs font-bold">
+                                    ${i+1}
                                 </div>
-                            `).join('')}
-                        </div>
-                    `;
-                });
+                                <div class="flex-1">
+                                    <div class="text-sm">${step.maneuver.instruction}</div>
+                                    ${step.distance > 0 ? `<div class="text-xs text-gray-500 mt-1">${(step.distance / 1000).toFixed(1)} km</div>` : ''}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            });
+
+            // Error handling for directions
+            directions.on('error', (e) => {
+                console.error('Directions error:', e.error);
+                alert('Could not calculate route. Please try again later.');
+            });
+
+            const showRoute = async (start, end) => {
+                try {
+                    state.directionsPanel.classList.remove('hidden');
+                    document.querySelector('.mapboxgl-ctrl-directions').style.display = 'block';
+                    
+                    // Set origin and destination
+                    directions.setOrigin(start);
+                    directions.setDestination(end);
+                    
+                    // Wait for the route to be calculated
+                    await new Promise((resolve) => {
+                        const checkRoute = () => {
+                            if (directions.getOrigin() && directions.getDestination()) {
+                                resolve();
+                            } else {
+                                setTimeout(checkRoute, 100);
+                            }
+                        };
+                        checkRoute();
+                    });
+                    
+                    // Center the map on the route
+                    const bounds = new mapboxgl.LngLatBounds()
+                        .extend(start)
+                        .extend(end);
+                    map.fitBounds(bounds, {
+                        padding: 100,
+                        maxZoom: 15
+                    });
+                    
+                } catch (error) {
+                    console.error('Error showing route:', error);
+                    alert('Failed to calculate route. Please try again.');
+                }
             };
 
             document.getElementById('closeDirections').addEventListener('click', () => {
                 state.directionsPanel.classList.add('hidden');
                 document.querySelector('.mapboxgl-ctrl-directions').style.display = 'none';
                 directions.removeRoutes();
+            });
+
+            // Start navigation button handler
+            document.getElementById('startNavigation').addEventListener('click', () => {
+                if (!directions.getOrigin() || !directions.getDestination()) {
+                    alert('Please calculate a route first');
+                    return;
+                }
+                
+                // Here you would typically integrate with a navigation SDK
+                // For this example, we'll just zoom to the route
+                const origin = directions.getOrigin().geometry.coordinates;
+                const destination = directions.getDestination().geometry.coordinates;
+                
+                const bounds = new mapboxgl.LngLatBounds()
+                    .extend(origin)
+                    .extend(destination);
+                
+                map.fitBounds(bounds, {
+                    padding: 50,
+                    maxZoom: 15
+                });
+                
+                alert('Navigation started! In a real app, this would launch turn-by-turn navigation.');
             });
 
             return { showRoute };
@@ -873,9 +1200,15 @@
             ];
 
             // Setup property markers and handlers
-            const { initPropertyMarkers, handlePropertyClick } = setupPropertyMarkers(map, state, properties);
             const { showRoute } = setupDirections(map, directions, state);
 
+            // Pass showRoute to the markers setup
+            const { initPropertyMarkers, handlePropertyClick } = setupPropertyMarkers(
+                map,
+                state,
+                properties,
+                setupDirections(map, directions, state) // Pass the entire object
+            );
             // Initialize when map loads
             map.on('load', () => {
 
@@ -905,6 +1238,95 @@
 
         // Start the application
         document.addEventListener('DOMContentLoaded', initApp);
+
+        const panel = document.getElementById("directionsPanel");
+        const header = document.getElementById("directionsPanelHeader");
+        const content = document.getElementById("directionsPanelContent");
+        const collapseBtn = document.getElementById("collapseDirections");
+        const closeBtn = document.getElementById("closeDirections");
+        const resizeHandle = document.getElementById("resizeHandle");
+
+        // COLLAPSE toggle
+        collapseBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            const icon = collapseBtn.querySelector("i");
+            const isCollapsed = content.style.display === "none";
+            content.style.display = isCollapsed ? "block" : "none";
+            icon.classList.toggle("fa-chevron-down", !isCollapsed);
+            icon.classList.toggle("fa-chevron-up", isCollapsed);
+        });
+
+        // CLOSE panel
+        closeBtn.addEventListener("click", () => {
+            panel.style.display = "none";
+        });
+
+        // DRAGGABLE header
+        let offsetX,
+        offsetY,
+        dragging = false;
+
+        header.addEventListener("mousedown", (e) => {
+            dragging = true;
+            offsetX = e.clientX - panel.offsetLeft;
+            offsetY = e.clientY - panel.offsetTop;
+            header.classList.remove("grab");
+            header.classList.add("grabbing");
+        });
+
+        document.addEventListener("mousemove", (e) => {
+            if (!dragging) return;
+                panel.style.left = `${e.clientX - offsetX}px`;
+                panel.style.top = `${e.clientY - offsetY}px`;
+                panel.style.bottom = "auto";
+            });
+
+            document.addEventListener("mouseup", () => {
+            if (dragging) {
+                dragging = false;
+                header.classList.add("grab");
+                header.classList.remove("grabbing");
+                localStorage.setItem(
+                "panelPosition",
+                JSON.stringify({
+                    left: panel.style.left,
+                    top: panel.style.top,
+                })
+                );
+            }
+        });
+
+        // Restore saved position
+        window.addEventListener("DOMContentLoaded", () => {
+            const saved = localStorage.getItem("panelPosition");
+            if (saved) {
+                const { left, top } = JSON.parse(saved);
+                panel.style.left = left;
+                panel.style.top = top;
+                panel.style.bottom = "auto";
+            }
+        });
+
+        // RESIZABLE bottom
+        resizeHandle.addEventListener("mousedown", function (e) {
+            e.preventDefault();
+            const startY = e.clientY;
+            const startHeight = panel.offsetHeight;
+
+            const resize = (e) => {
+                const newHeight = startHeight + (e.clientY - startY);
+                panel.style.height = newHeight + "px";
+            };
+
+            const stop = () => {
+                window.removeEventListener("mousemove", resize);
+                window.removeEventListener("mouseup", stop);
+            };
+
+            window.addEventListener("mousemove", resize);
+            window.addEventListener("mouseup", stop);
+        });
+
     </script>
 </body>
 </html>

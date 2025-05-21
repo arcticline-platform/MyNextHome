@@ -357,113 +357,548 @@ class OTPVerification(models.Model):
  
     
 # Property Listings
+from django.db import models
+from django.contrib.gis.db import models as gis_models
+from django.contrib.auth import get_user_model
+from django.core.validators import MinValueValidator, MaxValueValidator
+from django.utils.text import slugify
+import requests
+from django.conf import settings
+
+User = get_user_model()
+
+class TimeStampedModel(models.Model):
+    """Abstract base model for tracking creation and modification times."""
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        abstract = True
+
+
 class PropertyType(models.Model):
-    name = models.CharField(max_length=50)
+    """Type of property (House, Apartment, Land, etc.)"""
+    name = models.CharField(max_length=50, unique=True)
+    icon = models.CharField(max_length=50, blank=True, null=True)  # For font-awesome or similar icons
+    description = models.TextField(blank=True)
+
+    class Meta:
+        verbose_name = "Property Type"
+        verbose_name_plural = "Property Types"
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
+
+
+class AmenityCategory(models.Model):
+    """Category for grouping amenities (Interior, Exterior, Community, etc.)"""
+    name = models.CharField(max_length=50, unique=True)
+    icon = models.CharField(max_length=50, blank=True, null=True)
+
+    class Meta:
+        verbose_name = "Amenity Category"
+        verbose_name_plural = "Amenity Categories"
 
     def __str__(self):
         return self.name
 
 
 class Amenity(models.Model):
-    name = models.CharField(max_length=50)
+    """Feature or facility available in/around the property"""
+    name = models.CharField(max_length=50, unique=True)
+    category = models.ForeignKey(AmenityCategory, on_delete=models.SET_NULL, null=True, blank=True)
+    icon = models.CharField(max_length=50, blank=True, null=True)
+    is_featured = models.BooleanField(default=False)
+
+    class Meta:
+        verbose_name = "Amenity"
+        verbose_name_plural = "Amenities"
+        ordering = ['category__name', 'name']
 
     def __str__(self):
         return self.name
 
 
-class Address(models.Model):
+class NeighborhoodFeatureCategory(models.Model):
+    """Category for nearby features (Education, Healthcare, Transportation, etc.)"""
+    name = models.CharField(max_length=50, unique=True)
+    icon = models.CharField(max_length=50, blank=True, null=True)
+
+    class Meta:
+        verbose_name = "Neighborhood Feature Category"
+        verbose_name_plural = "Neighborhood Feature Categories"
+
+    def __str__(self):
+        return self.name
+
+
+class NeighborhoodFeature(models.Model):
+    """Important locations or services near the property"""
+    name = models.CharField(max_length=100)
+    category = models.ForeignKey(NeighborhoodFeatureCategory, on_delete=models.SET_NULL, null=True, blank=True)
+    icon = models.CharField(max_length=50, blank=True, null=True)
+    is_essential = models.BooleanField(default=False)
+
+    class Meta:
+        verbose_name = "Neighborhood Feature"
+        verbose_name_plural = "Neighborhood Features"
+        ordering = ['category__name', 'name']
+        unique_together = ['name', 'category']
+
+    def __str__(self):
+        return f"{self.name} ({self.category.name if self.category else 'Uncategorized'})"
+
+
+class Address(TimeStampedModel):
+    """Physical location details with geospatial data using Mapbox"""
     street_address = models.CharField(max_length=255)
+    apartment_suite = models.CharField(max_length=50, blank=True, null=True)
     city = models.CharField(max_length=100)
     state = models.CharField(max_length=100)
-    country = models.CharField(max_length=100)
+    country = models.CharField(max_length=100, default="United States")
     zip_code = models.CharField(max_length=10)
     latitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
     longitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
     location = gis_models.PointField(geography=True, blank=True, null=True)
     address_verified = models.BooleanField(default=False)
+    timezone = models.CharField(max_length=50, blank=True, null=True)
+    neighborhood = models.CharField(max_length=100, blank=True, null=True)
+    place_name = models.CharField(max_length=255, blank=True, null=True)  # Full place name from Mapbox
+    accuracy = models.CharField(max_length=50, blank=True, null=True)  # Accuracy of geocoding result
+
+    class Meta:
+        verbose_name = "Address"
+        verbose_name_plural = "Addresses"
+        indexes = [
+            models.Index(fields=['city', 'state']),
+            models.Index(fields=['zip_code']),
+            models.Index(fields=['location']),
+        ]
 
     def __str__(self):
         return f"{self.street_address}, {self.city}, {self.state}, {self.country}"
 
+    def clean(self):
+        """Validate address data before saving"""
+        if not any([self.street_address, self.city, self.state, self.zip_code]):
+            raise ValidationError("At least one of street address, city, state, or zip code must be provided")
+
     def verify_address(self):
-        """
-        Verify address using Google Maps API and update latitude, longitude, and location fields.
-        """
-        api_key = 'YOUR_GOOGLE_MAPS_API_KEY'
-        address_query = f"{self.street_address}, {self.city}, {self.state}, {self.country}, {self.zip_code}"
-        url = f"https://maps.googleapis.com/maps/api/geocode/json?address={address_query}&key={api_key}"
-        response = requests.get(url)
-        if response.status_code == 200:
+        """Verify address using Mapbox API and update geospatial fields."""
+        if not settings.MAPBOX_ACCESS_TOKEN:
+            raise ValueError("Mapbox access token is not configured")
+
+        address_query = ", ".join(filter(None, [
+            self.street_address,
+            self.apartment_suite,
+            self.city,
+            self.state,
+            self.zip_code,
+            self.country
+        ]))
+
+        url = f"https://api.mapbox.com/geocoding/v5/mapbox.places/{address_query}.json"
+        params = {
+            'access_token': settings.MAPBOX_ACCESS_TOKEN,
+            'country': 'us' if self.country.lower() == 'united states' else None,
+            'limit': 1
+        }
+
+        try:
+            response = requests.get(url, params=params, timeout=5)
+            response.raise_for_status()
             data = response.json()
-            if data['status'] == 'OK':
-                location_data = data['results'][0]['geometry']['location']
-                self.latitude = location_data['lat']
-                self.longitude = location_data['lng']
-                from django.contrib.gis.geos import Point
-                self.location = Point(self.longitude, self.latitude)
+            
+            if data.get('features'):
+                feature = data['features'][0]
+                self._update_from_mapbox_feature(feature)
+                self._get_timezone_info()
                 self.address_verified = True
                 self.save()
-        else:
-            raise Exception("Error verifying the address.")
+                return True
+            return False
+        except requests.RequestException as e:
+            raise Exception(f"Error verifying address with Mapbox: {str(e)}")
 
-    def google_maps_url(self):
+    def _update_from_mapbox_feature(self, feature):
+        """Update address fields from Mapbox feature"""
+        # Update coordinates
+        longitude, latitude = feature['geometry']['coordinates']
+        self.longitude = longitude
+        self.latitude = latitude
+        self.location = gis_models.Point(longitude, latitude, srid=4326)
+        
+        # Update address components from context
+        context = {item['id'].split('.')[0]: item['text'] for item in feature.get('context', [])}
+        
+        self.neighborhood = feature.get('text', '') if 'poi' in feature.get('place_type', []) else None
+        self.place_name = feature.get('place_name', '')
+        self.accuracy = feature.get('relevance', None)
+        
+        # Update address components if not already set
+        if not self.city and 'place' in context:
+            self.city = context['place']
+        if not self.state and 'region' in context:
+            self.state = context['region']
+        if not self.zip_code and 'postcode' in context:
+            self.zip_code = context['postcode']
+        if not self.country and 'country' in context:
+            self.country = context['country']
+
+    def _get_timezone_info(self):
+        """Get timezone information for the current coordinates"""
+        if not (self.latitude and self.longitude):
+            return
+            
+        url = f"https://api.mapbox.com/v4/examples.4ze9z6tv/tilequery/{self.longitude},{self.latitude}.json"
+        params = {
+            'access_token': settings.MAPBOX_ACCESS_TOKEN,
+            'layers': 'timezones'
+        }
+
+        try:
+            response = requests.get(url, params=params, timeout=3)
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('features'):
+                    self.timezone = data['features'][0]['properties']['TZID']
+        except requests.RequestException:
+            pass  # Timezone lookup is optional, so we ignore errors
+
+    def reverse_geocode(self, latitude, longitude):
+        """Populate address fields from coordinates using reverse geocoding"""
+        if not settings.MAPBOX_ACCESS_TOKEN:
+            raise ValueError("Mapbox access token is not configured")
+
+        url = f"https://api.mapbox.com/geocoding/v5/mapbox.places/{longitude},{latitude}.json"
+        params = {
+            'access_token': settings.MAPBOX_ACCESS_TOKEN,
+            'types': 'address,poi,neighborhood,place,postcode,region,country'
+        }
+
+        try:
+            response = requests.get(url, params=params, timeout=5)
+            response.raise_for_status()
+            data = response.json()
+            
+            if data.get('features'):
+                self._update_from_mapbox_feature(data['features'][0])
+                self.latitude = latitude
+                self.longitude = longitude
+                self.location = gis_models.Point(longitude, latitude, srid=4326)
+                self._get_timezone_info()
+                self.address_verified = True
+                return True
+            return False
+        except requests.RequestException as e:
+            raise Exception(f"Error reverse geocoding with Mapbox: {str(e)}")
+
+    def mapbox_url(self):
+        """Generate Mapbox URL for this address."""
         if self.latitude and self.longitude:
-            return f"https://www.google.com/maps/search/?api=1&query={self.latitude},{self.longitude}"
-        return ""
+            return f"https://www.mapbox.com/?map={self.latitude},{self.longitude},15"
+        return None
+
+    def static_map_url(self, width=600, height=400, zoom=14):
+        """Generate URL for a static map image"""
+        if not (self.latitude and self.longitude):
+            return None
+            
+        return (
+            f"https://api.mapbox.com/styles/v1/mapbox/streets-v11/static/"
+            f"pin-s+000({self.longitude},{self.latitude})/"
+            f"{self.longitude},{self.latitude},{zoom}/{width}x{height}"
+            f"?access_token={settings.MAPBOX_ACCESS_TOKEN}"
+        )
+
+    def get_formatted_address(self):
+        """Return a standardized formatted address."""
+        components = [
+            self.street_address,
+            f"Apt {self.apartment_suite}" if self.apartment_suite else None,
+            f"{self.city}, {self.state} {self.zip_code}" if self.city else None,
+            self.country
+        ]
+        return ", ".join(filter(None, components))
+
+    def distance_to(self, other_address, unit='mi'):
+        """
+        Calculate distance to another address using geodjango.
+        Returns distance in miles (mi) or kilometers (km)
+        """
+        if not (self.location and other_address.location):
+            return None
+            
+        distance = self.location.distance(other_address.location)
+        
+        # Convert from degrees to desired unit
+        if unit == 'mi':
+            return distance * 69  # Approx miles per degree
+        elif unit == 'km':
+            return distance * 111.32  # Approx km per degree
+        return distance
 
 
-class Property(models.Model):
+class Property(TimeStampedModel):
+    """Main property listing model"""
+    LISTING_STATUS = (
+        ('draft', 'Draft'),
+        ('published', 'Published'),
+        ('pending', 'Pending Approval'),
+        ('sold', 'Sold/Rented'),
+        ('hidden', 'Hidden')
+    )
+
+    FURNISHING_STATUS = (
+        ('furnished', 'Furnished'),
+        ('unfurnished', 'Unfurnished'),
+        ('partially', 'Partially Furnished')
+    )
+
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='owned_properties')
+    agent = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='managed_properties')
     title = models.CharField(max_length=255)
-    slug = models.SlugField(unique=True, blank=True)
+    slug = models.SlugField(unique=True, max_length=300, blank=True)
     description = models.TextField()
-    property_type = models.ForeignKey(PropertyType, on_delete=models.SET_NULL, null=True)
-    address = models.OneToOneField(Address, on_delete=models.CASCADE)
+    property_type = models.ForeignKey(PropertyType, on_delete=models.PROTECT)
+    address = models.OneToOneField(Address, on_delete=models.CASCADE, related_name='property')
+    
+    # Pricing information
     price = models.DecimalField(max_digits=12, decimal_places=2, validators=[MinValueValidator(0)])
+    price_currency = models.CharField(max_length=3, default='USD')
+    price_per_sqft = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    is_price_negotiable = models.BooleanField(default=False)
+    tax_rate = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)
+    # Monthly/annual HOA (Homeowners Association) fee for the property, if applicable
+    hoa_fee = models.DecimalField(max_digits=8, decimal_places=2, blank=True, null=True)
+    
+    # Property details
     bedrooms = models.PositiveIntegerField(validators=[MinValueValidator(0)])
-    bathrooms = models.PositiveIntegerField(validators=[MinValueValidator(0)])
+    bathrooms = models.DecimalField(max_digits=3, decimal_places=1, validators=[MinValueValidator(0)])
     square_feet = models.PositiveIntegerField(validators=[MinValueValidator(0)])
     lot_size = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    amenities = models.ManyToManyField(Amenity, blank=True)
+    year_built = models.PositiveIntegerField(blank=True, null=True)
+    floors = models.PositiveIntegerField(default=1)
+    furnishing_status = models.CharField(max_length=20, choices=FURNISHING_STATUS, blank=True, null=True)
+    
+    # Features
+    amenities = models.ManyToManyField(Amenity, blank=True, related_name='properties')
+    neighborhood_features = models.ManyToManyField(NeighborhoodFeature, blank=True, related_name='properties')
+    
+    # Listing management
+    status = models.CharField(max_length=20, choices=LISTING_STATUS, default='draft')
+    is_featured = models.BooleanField(default=False)
+    available_from = models.DateField(blank=True, null=True)
+    last_refurbished = models.DateField(blank=True, null=True)
+
     listed_date = models.DateTimeField(auto_now_add=True)
-    is_published = models.BooleanField(default=False)
-    listed_by = models.ForeignKey(User, on_delete=models.CASCADE)
-    rating = models.DecimalField(max_digits=3, decimal_places=2, validators=[MinValueValidator(0.0), MaxValueValidator(5.0)], default=0.0)
+    
+    # Metrics
+    view_count = models.PositiveIntegerField(default=0)
+    rating = models.DecimalField(
+        max_digits=3, 
+        decimal_places=2, 
+        validators=[MinValueValidator(0.0), MaxValueValidator(5.0)], 
+        default=0.0
+    )
+    favorite_count = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        verbose_name = "Property"
+        verbose_name_plural = "Properties"
+        ordering = ['-created']
+        indexes = [
+            models.Index(fields=['status']),
+            models.Index(fields=['price']),
+            models.Index(fields=['bedrooms']),
+            models.Index(fields=['property_type']),
+        ]
 
     def __str__(self):
-        return self.title
+        return f"{self.title} - {self.address.city}"
 
     def save(self, *args, **kwargs):
         if not self.slug:
-            self.slug = slugify(self.title)
-        super(Property, self).save(*args, **kwargs)
+            base_slug = slugify(self.title)
+            self.slug = base_slug
+            counter = 1
+            while Property.objects.filter(slug=self.slug).exists():
+                self.slug = f"{base_slug}-{counter}"
+                counter += 1
+        
+        # Calculate price per sqft if needed
+        if self.square_feet and self.price and not self.price_per_sqft:
+            self.price_per_sqft = self.price / self.square_feat
+        
+        super().save(*args, **kwargs)
+
+    def update_view_count(self):
+        """Update the view count for the property."""
+        self.view_count = self.views.count()
+        self.save(update_fields=['view_count'])
+
+    def update_favorite_count(self):
+        """Update the favorite count for the property."""
+        self.favorite_count = self.favorites.count()
+        self.save(update_fields=['favorite_count'])
+
+    def get_primary_image(self):
+        """Get the primary image for the property."""
+        return self.images.filter(is_primary=True).first() or self.images.first()
 
 
 class PropertyImage(models.Model):
+    """Images associated with a property listing"""
     property = models.ForeignKey(Property, on_delete=models.CASCADE, related_name='images')
-    image = models.ImageField(upload_to='property_images/')
+    image = models.ImageField(upload_to='property_images/%Y/%m/%d/')
     caption = models.CharField(max_length=255, blank=True, null=True)
+    is_primary = models.BooleanField(default=False)
+    order = models.PositiveIntegerField(default=0)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Property Image"
+        verbose_name_plural = "Property Images"
+        ordering = ['order', 'uploaded_at']
 
     def __str__(self):
         return f"Image for {self.property.title}"
 
+    def save(self, *args, **kwargs):
+        # Ensure only one primary image per property
+        if self.is_primary:
+            PropertyImage.objects.filter(property=self.property).exclude(pk=self.pk).update(is_primary=False)
+        super().save(*args, **kwargs)
 
-class Favorites(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    property = models.ForeignKey(Property, on_delete=models.CASCADE)
-    added_date = models.DateTimeField(auto_now_add=True)
+
+class PropertyVideo(models.Model):
+    """Videos associated with a property listing"""
+    property = models.ForeignKey(Property, on_delete=models.CASCADE, related_name='videos')
+    video_url = models.URLField()
+    caption = models.CharField(max_length=255, blank=True, null=True)
+    is_primary = models.BooleanField(default=False)
+    order = models.PositiveIntegerField(default=0)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ('user', 'property')
+        verbose_name = "Property Video"
+        verbose_name_plural = "Property Videos"
+        ordering = ['order', 'uploaded_at']
 
     def __str__(self):
-        return f"{self.user.username} - {self.property.title}"
+        return f"Video for {self.property.title}"
 
 
-class PropertyView(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, blank=True, null=True)
-    property = models.ForeignKey(Property, on_delete=models.CASCADE)
-    view_date = models.DateTimeField(auto_now_add=True)
+class PropertyDocument(models.Model):
+    """Documents associated with a property (floor plans, contracts, etc.)"""
+    DOCUMENT_TYPES = (
+        ('floor_plan', 'Floor Plan'),
+        ('contract', 'Contract'),
+        ('inspection', 'Inspection Report'),
+        ('other', 'Other')
+    )
+
+    property = models.ForeignKey(Property, on_delete=models.CASCADE, related_name='documents')
+    document = models.FileField(upload_to='property_documents/%Y/%m/%d/')
+    document_type = models.CharField(max_length=20, choices=DOCUMENT_TYPES)
+    title = models.CharField(max_length=100)
+    description = models.TextField(blank=True)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Property Document"
+        verbose_name_plural = "Property Documents"
+        ordering = ['-uploaded_at']
+
+    def __str__(self):
+        return f"{self.get_document_type_display()} for {self.property.title}"
+
+
+class NeighborhoodInfo(models.Model):
+    """Detailed information about the neighborhood"""
+    property = models.OneToOneField(Property, on_delete=models.CASCADE, related_name='neighborhood_info')
+    description = models.TextField(blank=True)
+    walk_score = models.PositiveIntegerField(blank=True, null=True, validators=[MaxValueValidator(100)])
+    transit_score = models.PositiveIntegerField(blank=True, null=True, validators=[MaxValueValidator(100)])
+    bike_score = models.PositiveIntegerField(blank=True, null=True, validators=[MaxValueValidator(100)])
+    noise_level = models.CharField(max_length=50, blank=True, null=True)  # Quiet, Moderate, Loud
+    safety_rating = models.DecimalField(
+        max_digits=3, 
+        decimal_places=1, 
+        blank=True, 
+        null=True, 
+        validators=[MinValueValidator(0.0), MaxValueValidator(10.0)]
+    )
+    last_updated = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Neighborhood Information"
+        verbose_name_plural = "Neighborhood Information"
+
+    def __str__(self):
+        return f"Neighborhood info for {self.property.title}"
+
+
+class PropertyView(TimeStampedModel):
+    """Tracks property views by users"""
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    property = models.ForeignKey(Property, on_delete=models.CASCADE, related_name='views')
     ip_address = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.TextField(blank=True, null=True)
+    referrer = models.URLField(blank=True, null=True)
+
+    class Meta:
+        verbose_name = "Property View"
+        verbose_name_plural = "Property Views"
+        indexes = [
+            models.Index(fields=['property', 'created']),
+        ]
 
     def __str__(self):
-        return f"{self.property.title} viewed on {self.view_date}"
+        return f"View of {self.property.title} by {self.user or 'Anonymous'}"
+
+
+class FavoriteProperty(TimeStampedModel):
+    """Tracks user favorites for properties"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='favorites')
+    property = models.ForeignKey(Property, on_delete=models.CASCADE, related_name='favorites')
+    notes = models.TextField(blank=True)
+
+    class Meta:
+        verbose_name = "Favorite Property"
+        verbose_name_plural = "Favorite Properties"
+        unique_together = ('user', 'property')
+        ordering = ['-created']
+
+    def __str__(self):
+        return f"{self.user.username} favorited {self.property.title}"
+
+
+class PropertyContact(TimeStampedModel):
+    """Contact requests for a property"""
+    CONTACT_METHOD = (
+        ('phone', 'Phone'),
+        ('email', 'Email'),
+        ('sms', 'Text Message'),
+        ('whatsapp', 'WhatsApp')
+    )
+
+    property = models.ForeignKey(Property, on_delete=models.CASCADE, related_name='contacts')
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    name = models.CharField(max_length=100)
+    email = models.EmailField()
+    phone = models.CharField(max_length=20, blank=True, null=True)
+    preferred_contact = models.CharField(max_length=20, choices=CONTACT_METHOD, default='email')
+    message = models.TextField()
+    is_contacted = models.BooleanField(default=False)
+    contacted_at = models.DateTimeField(blank=True, null=True)
+    notes = models.TextField(blank=True)
+
+    class Meta:
+        verbose_name = "Property Contact"
+        verbose_name_plural = "Property Contacts"
+        ordering = ['-created']
+
+    def __str__(self):
+        return f"Contact request for {self.property.title} from {self.name}"
