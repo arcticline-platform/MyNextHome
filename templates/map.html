@@ -38,69 +38,153 @@
     <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.min.js"></script>
     <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.css">
     <style>
-        #map { 
+        /* ===== Base Map Styles ===== */
+        #map {
             position: absolute;
             top: 0;
             bottom: 0;
             width: 100%;
         }
-        
-        .property-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+
+        /* ===== Marker Styles ===== */
+        .marker {
+            width: 32px;
+            height: 40px;
+            background-size: 100%;
+            background-image: url('https://docs.mapbox.com/mapbox-gl-js/assets/custom_marker.png');
+            cursor: pointer;
+            transition: all 0.3s ease, filter 0.3s ease;
         }
-        
-        .heart-icon {
-            transition: all 0.2s ease;
+
+        /* User Marker Styles */
+        .user-marker {
+            filter: drop-shadow(0 0 12px rgba(59, 130, 246, 0.7));
+            position: relative;
+            width: 40px;
+            height: 40px;
+            transform: translateY(-50%);
+            animation: pulse 2s infinite;
         }
-        
-        .heart-icon:hover {
-            transform: scale(1.2);
+
+        .user-marker i {
+            position: relative;
+            z-index: 2;
+            filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.7));
         }
-        
-        .heart-icon.active {
-            color: #ef4444;
-            fill: #ef4444;
+
+        .user-marker .animate-ping {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
         }
-        
+
+        @keyframes ping {
+            0% {
+                transform: scale(0.8);
+                opacity: 0.2;
+            }
+            70%, 100% {
+                transform: scale(1.4);
+                opacity: 0;
+            }
+        }
+
+        .property-marker {
+            filter: drop-shadow(0 0 8px rgba(34, 197, 94, 0.5));
+            transform: translateY(-50%);
+        }
+
+        .property-marker.highlighted,
+        .marker.highlighted {
+            filter: hue-rotate(90deg) drop-shadow(0 0 12px rgba(34, 197, 94, 0.7)) brightness(1.1);
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: translateY(-50%) scale(1); }
+            50% { transform: translateY(-50%) scale(1.1); }
+        }
+
+        /* ===== Popup Styles ===== */
         .mapboxgl-popup-content {
             padding: 0 !important;
             border-radius: 8px !important;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
         }
-        
+
         .mapboxgl-popup-close-button {
             font-size: 20px;
             padding: 6px 8px;
+            color: #666;
+            transition: all 0.2s ease;
         }
-        
-        .sidebar {
-            transition: all 0.3s ease;
+
+        .mapboxgl-popup-close-button:hover {
+            color: #333;
+            background: rgba(0, 0, 0, 0.05);
         }
-        
-        .marker {
-            background-size: cover;
-            width: 32px;
-            height: 40px;
-            cursor: pointer;
+
+        /* ===== Property Card Styles ===== */
+        .property-card {
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
         }
-        
+
+        .property-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            border-color: #bbf7d0; /* primary-200 */
+        }
+
+        .property-card.border-primary-600 {
+            border-color: #22c55e; /* primary-600 */
+            box-shadow: 0 0 0 1px #22c55e, 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        /* ===== UI Controls ===== */
         .mapboxgl-ctrl.mapboxgl-ctrl-group {
             margin: 10px 0 0 10px;
         }
-        
+
         .mapboxgl-ctrl.mapboxgl-ctrl-group button+button {
             border-top: 1px solid #ddd;
         }
-        
+
         .mapboxgl-ctrl-top-right {
             top: 100px;
         }
-        
+
         .mapboxgl-ctrl-geocoder {
             width: 300px;
             margin-top: 10px;
         }
-        
+
+        .view-toggle {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1;
+            background: white;
+            border-radius: 4px;
+            box-shadow: 0 0 0 2px rgba(0,0,0,0.1);
+        }
+
+        .view-toggle button {
+            padding: 6px 10px;
+            border: none;
+            background: none;
+            cursor: pointer;
+        }
+
+        .view-toggle button.active {
+            background: #f0f0f0;
+        }
+
+        /* ===== Overlays ===== */
         .map-overlay {
             position: absolute;
             bottom: 20px;
@@ -114,26 +198,54 @@
             box-shadow: 0 1px 2px rgba(0,0,0,0.1);
             z-index: 1;
         }
-        
-        .view-toggle {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            z-index: 1;
-            background: white;
-            border-radius: 4px;
-            box-shadow: 0 0 0 2px rgba(0,0,0,0.1);
+
+        .sidebar {
+            transition: all 0.3s ease;
         }
-        
-        .view-toggle button {
-            padding: 6px 10px;
-            border: none;
-            background: none;
-            cursor: pointer;
+
+        /* ===== Interactive Elements ===== */
+        .heart-icon {
+            transition: all 0.2s ease;
         }
-        
-        .view-toggle button.active {
-            background: #f0f0f0;
+
+        .heart-icon:hover {
+            transform: scale(1.2);
+        }
+
+        .heart-icon.active {
+            color: #ef4444;
+            fill: #ef4444;
+        }
+
+        #directionsPanelHeader.grab {
+            cursor: grab;
+        }
+
+        #directionsPanelHeader.grabbing {
+            cursor: grabbing;
+        }
+
+        .directions-step {
+            transition: background-color 0.2s ease;
+        }
+
+        .directions-step:hover {
+            background-color: #f0fdf4; /* primary-50 */
+        }
+
+        .get-directions-btn {
+            transition: all 0.2s ease;
+            transform-origin: center;
+        }
+
+        .get-directions-btn:active {
+            transform: scale(0.95);
+        }
+
+        .get-directions-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            background-color: #ccc;
         }
     </style>
 </head>
@@ -149,10 +261,10 @@
                     </div>
                     <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
                         <a href="#" class="border-primary-500 text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
-                            Map Search
+                            Property Sales
                         </a>
                         <a href="#" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
-                            Listings
+                            Rentals
                         </a>
                         <a href="#" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
                             Saved
@@ -173,6 +285,41 @@
                         List Your Property
                     </button>
                 </div>
+                <div class="hidden sm:ml-6 sm:flex sm:items-center relative">
+                    <button id="account-button" class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-md text-sm font-medium">
+                        Account
+                        <i class="fas fa-caret-down ml-2"></i>
+                    </button>
+                    <!-- Account Dropdown -->
+                    <div id="account-dropdown" class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg origin-top-right hidden">
+                        <div class="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
+                            <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900" role="menuitem">
+                                Sign In
+                            </a>
+                            <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900" role="menuitem">
+                                Sign Up
+                            </a>
+                        </div>
+                    </div>
+                    <script>
+                        document.addEventListener('DOMContentLoaded', function() {
+                            const accountButton = document.getElementById('account-button');
+                            const accountDropdown = document.getElementById('account-dropdown');
+
+                            accountButton.addEventListener('click', function(event) {
+                                event.stopPropagation(); // Prevent the document click event from firing immediately
+                                accountDropdown.classList.toggle('hidden');
+                            });
+
+                            document.addEventListener('click', function(event) {
+                                if (!accountDropdown.classList.contains('hidden')) {
+                                    accountDropdown.classList.add('hidden');
+                                }
+                            });
+                        });
+                    </script>
+                </div>
+                    
                 <div class="-mr-2 flex items-center sm:hidden">
                     <button type="button" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500" aria-controls="mobile-menu" aria-expanded="false">
                         <span class="sr-only">Open main menu</span>
@@ -221,6 +368,7 @@
             
             <!-- Property Details or List View -->
             <div class="divide-y divide-gray-200">
+                <div class="property-detials" id="property_details"></div>
                 {% if selected_property %}
                 <!-- Single Property View -->
                 <div class="p-4">
@@ -387,18 +535,64 @@
             <button id="streetView" class="active">Street</button>
             <button id="satelliteView">Satellite</button>
         </div>
-        
+
         <!-- Directions Panel -->
-        <div id="directionsPanel" class="map-overlay hidden">
-            <div class="flex justify-between items-center mb-2">
-                <h3 class="font-medium">Directions</h3>
-                <button id="closeDirections" class="text-gray-500 hover:text-gray-700">
-                    <i class="fas fa-times"></i>
-                </button>
+        <div id="directionsPanel"
+            class=" hidden fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-white rounded-lg shadow-xl z-50 max-w-md w-full overflow-hidden transition-all duration-300 overflow-hidden"
+            style="max-height: 50vh">
+            <!-- Header (Draggable & Collapsible) -->
+            <div id="directionsPanelHeader"
+                class="p-2 bg-gray-100 border-b flex justify-between items-center cursor-move grab">
+                <h3 class="font-medium text-lg">Directions</h3>
+                <div class="flex items-center space-x-2">
+                    <button id="collapseDirections" class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-chevron-down transition-transform duration-300"></i>
+                    </button>
+                    <button id="closeDirections" class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
             </div>
-            <div id="directions" class="text-sm"></div>
+
+            <!-- Content -->
+            <div id="directionsPanelContent" class="transition-all duration-300 overflow-y-auto">
+                <!-- Directions -->
+                <div id="directions" class="p-4">
+                    <!-- Route Summary -->
+                    <div id="route-summary" class="mb-4 p-3 bg-primary-50 rounded-lg">
+                        <div class="flex justify-between mb-2">
+                            <span class="font-medium text-primary-700">Total Distance:</span>
+                            <span id="total-distance" class="text-primary-600">...</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="font-medium text-primary-700">Estimated Time:</span>
+                            <span id="total-duration" class="text-primary-600">...</span>
+                        </div>
+                    </div>
+
+                    <!-- Step-by-step -->
+                    <div id="step-by-step" class="space-y-3">
+                        <div class="animate-pulse text-center text-gray-500">
+                            <i class="fas fa-route text-2xl mb-2"></i>
+                            <p>Calculating route...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="p-4 border-t bg-gray-50">
+                    <button id="startNavigation"
+                        class="w-full bg-primary-600 text-white py-2 px-4 rounded-lg hover:bg-primary-700 flex items-center justify-center">
+                        <i class="fas fa-location-arrow mr-2"></i>
+                        Start Navigation
+                    </button>
+                </div>
+            </div>
+
+            <!-- Resize Handle -->
+            <div id="resizeHandle" class="h-2 cursor-row-resize bg-gray-300 w-full"></div>
         </div>
-        
+
         <!-- Mobile Sidebar Toggle -->
         <button id="showSidebar" class="md:hidden absolute bottom-4 left-4 z-10 p-3 bg-primary-600 text-white rounded-full shadow-lg">
             <i class="fas fa-list"></i>
@@ -406,306 +600,733 @@
     </div>
 
     <script>
-        // Initialize map
-        mapboxgl.accessToken = 'pk.eyJ1IjoiYWpyYWxsYW4iLCJhIjoiY21hd3N5bWJjMGY4YzJqc2V6aG55MHU4byJ9.LHLL7YKtl_V-1xkGVyFhcw';
-        const map = new mapboxgl.Map({
-            container: 'map',
-            style: 'mapbox://styles/mapbox/streets-v11',
-            center: [32.2998, 2.7747], // Gulu City, Uganda coordinates
-            zoom: 15
-        });
-        
-        // Add navigation control
-        map.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
-        
-        // Add geocoder control
-        const geocoder = new MapboxGeocoder({
-            accessToken: mapboxgl.accessToken,
-            mapboxgl: mapboxgl,
-            placeholder: 'Search for places',
-            marker: false
-        });
-        
-        map.addControl(geocoder, 'top-right');
-        
-        // Add directions control
-        const directions = new MapboxDirections({
-            accessToken: mapboxgl.accessToken,
-            unit: 'imperial',
-            profile: 'mapbox/driving',
-            controls: {
-                inputs: false,
-                instructions: false
-            }
-        });
-        
-        map.addControl(directions, 'top-left');
-        document.querySelector('.mapboxgl-ctrl-directions').style.display = 'none';
-        
-        // Sample property data (in a real app, this would come from Django)
-        const properties = [
-            {% for property in properties %}
-            {
-                id: {{ property.id }},
-                title: "{{ property.title }}",
-                price: {{ property.price }},
-                address: "{{ property.address }}",
-                bedrooms: {{ property.bedrooms }},
-                bathrooms: {{ property.bathrooms }},
-                area: {{ property.area }},
-                listing_type: "{{ property.listing_type }}",
-                description: "{{ property.description }}",
-                amenities: {{ property.amenities|safe }},
-                date_listed: "{{ property.date_listed|date:'Y-m-d' }}",
-                image_url: "{{ property.image_url }}",
-                coordinates: [{{ property.coordinates.0 }}, {{ property.coordinates.1 }}]
-            }{% if not forloop.last %},{% endif %}
-            {% endfor %}
-        ];
-        
-        // Store markers for later reference
-        const markers = [];
-        
-        // Wait for map to load
-        map.on('load', () => {
-            // Add property markers to the map
-            properties.forEach(property => {
-                // Create a DOM element for the marker
+        // Map Initialization and Configuration
+        const initializeMap = () => {
+            mapboxgl.accessToken = 'pk.eyJ1IjoiYWpyYWxsYW4iLCJhIjoiY21hd3N5bWJjMGY4YzJqc2V6aG55MHU4byJ9.LHLL7YKtl_V-1xkGVyFhcw';
+            const map = new mapboxgl.Map({
+                container: 'map',
+                style: 'mapbox://styles/mapbox/streets-v12',
+                center: [32.2998, 2.7747], // Gulu City, Uganda coordinates
+                zoom: 15
+            });
+
+            // Add controls
+            map.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
+            
+            // Set up geocoder with search suggestions
+            const searchInput = document.getElementById('search');
+            const geocoder = new MapboxGeocoder({
+                accessToken: mapboxgl.accessToken,
+                mapboxgl: mapboxgl,
+                marker: false,
+                placeholder: 'Search locations...',
+                countries: 'UG,KE,TZ,RW,BI,CD,SS,ET,SO,DJ', // East African countries
+                types: 'place,address,region,locality,neighborhood,poi,postcode', // More location types
+                bbox: [28.0, -12.0, 42.0, 5.0], // Boundary box for East Africa
+                autocomplete: true, // Enable autocomplete
+                flyTo: false, // Disable automatic flying to result
+                minLength: 2, // Show suggestions after 2 characters
+                localGeocoder: function(query) {
+                    // Custom suggestions including property-related terms
+                    const suggestions = [
+                        { text: "Houses for sale in Gulu", coordinates: [32.2998, 2.7747] },
+                        { text: "Apartments for rent in Kampala", coordinates: [32.5825, 0.3476] },
+                        { text: "Properties in Entebbe", coordinates: [32.4633, 0.0512] },
+                        { text: "Real estate in Jinja", coordinates: [33.2032, 0.4478] },
+                        { text: "Homes in Mbarara", coordinates: [30.6482, -0.6066] }
+                    ];
+                    
+                    return suggestions
+                        .filter(item => item.text.toLowerCase().includes(query.toLowerCase()))
+                        .map(item => ({
+                            place_name: item.text,
+                            center: item.coordinates,
+                            place_type: ['query'],
+                            text: item.text
+                        }));
+                }
+            });
+
+            // Create suggestions container
+            const suggestionsContainer = document.createElement('div');
+            suggestionsContainer.className = 'suggestions-container absolute w-full bg-white mt-1 rounded-md shadow-lg z-50 max-h-48 overflow-y-auto hidden';
+            searchInput.parentNode.appendChild(suggestionsContainer);
+
+            // Add geocoder to map but hide default UI
+            geocoder.addTo(map);
+            document.querySelector('.mapboxgl-ctrl-geocoder').style.display = 'none';
+
+            // Handle search input
+            searchInput.addEventListener('input', (e) => {
+                const query = e.target.value;
+                if (query && query.length >= 2) {
+                    geocoder.query(query);
+                    suggestionsContainer.classList.remove('hidden');
+                } else {
+                    suggestionsContainer.classList.add('hidden');
+                }
+            });
+
+            // Handle geocoder results
+            geocoder.on('results', (e) => {
+                suggestionsContainer.innerHTML = '';
+                
+                e.features.forEach(feature => {
+                    const div = document.createElement('div');
+                    div.className = 'p-2 hover:bg-gray-100 cursor-pointer flex items-center';
+                    div.innerHTML = `
+                        <i class="fas fa-map-marker-alt text-primary-500 mr-2"></i>
+                        <span>${feature.place_name}</span>
+                    `;
+                    
+                    div.addEventListener('click', () => {
+                        searchInput.value = feature.place_name;
+                        map.flyTo({
+                            center: feature.center,
+                            zoom: 14
+                        });
+                        suggestionsContainer.classList.add('hidden');
+                    });
+                    
+                    suggestionsContainer.appendChild(div);
+                });
+            });
+
+            // Close suggestions when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!searchInput.contains(e.target) && !suggestionsContainer.contains(e.target)) {
+                    suggestionsContainer.classList.add('hidden');
+                }
+            });
+
+            const directions = new MapboxDirections({
+                accessToken: mapboxgl.accessToken,
+                unit: 'metric',
+                profile: 'mapbox/driving',
+                controls: { inputs: false, instructions: false }
+            });
+
+            map.addControl(directions, 'top-left');
+            document.querySelector('.mapboxgl-ctrl-directions').style.display = 'none';
+
+            return { map, directions };
+        };
+
+        // State Management
+        const createAppState = () => {
+            return {
+                selectedMarker: null,
+                userLocationMarker: null,
+                userLocation: null,
+                propertyMarkers: [],
+                directionsPanel: document.getElementById('directionsPanel'),
+                directionsContent: document.getElementById('directions')
+            };
+        };
+
+        // Location Services
+        const setupLocationServices = (map, state) => {
+            const createUserMarker = () => {
+                const el = document.createElement('div');
+                el.className = 'user-marker';
+                el.innerHTML = `
+                    <div class="relative">
+                        <i class="fas fa-map-marker-alt text-blue-500 text-3xl"></i>
+                        <div class="absolute inset-0 rounded-full bg-blue-500 opacity-20 animate-ping"></div>
+                    </div>
+                `;
+                return el;
+            };
+
+            const getUserLocation = () => {
+                if (!navigator.geolocation) {
+                    alert('Geolocation is not supported by your browser');
+                    return false;
+                }
+
+                return new Promise((resolve, reject) => {
+                    navigator.geolocation.getCurrentPosition(
+                        position => {
+                            state.userLocation = [position.coords.longitude, position.coords.latitude];
+                            
+                            // Remove previous marker if exists
+                            if (state.userLocationMarker) {
+                                state.userLocationMarker.remove();
+                            }
+                            
+                            // Create new marker
+                            const markerElement = createUserMarker();
+                            state.userLocationMarker = new mapboxgl.Marker({
+                                element: markerElement,
+                                anchor: 'bottom'
+                            })
+                            .setLngLat(state.userLocation)
+                            .addTo(map);
+                            
+                            // Center map on location
+                            map.flyTo({
+                                center: state.userLocation,
+                                zoom: 14,
+                                essential: true
+                            });
+                            
+                            resolve(state.userLocation);
+                        },
+                        error => {
+                            console.error('Error getting location:', error);
+                            alert('Unable to get your location. Please enable location services.');
+                            reject(error);
+                        },
+                        { enableHighAccuracy: true, timeout: 10000 }
+                    );
+                });
+            };
+
+            // Add click handler for current location button
+            document.getElementById('currentLocation').addEventListener('click', () => {
+                getUserLocation().catch(console.error);
+            });
+
+            return {
+                getUserLocation,
+                getCurrentLocation: () => state.userLocation,
+                getCurrentMarker: () => state.userLocationMarker
+            };
+        };
+
+        // Property Markers Management
+        const setupPropertyMarkers = (map, state, properties, directionsHandlers) => {
+            const createBeautifulMarker = (color = 'primary') => {
                 const el = document.createElement('div');
                 el.className = 'marker';
                 el.style.backgroundImage = `url(https://docs.mapbox.com/mapbox-gl-js/assets/custom_marker.png)`;
                 el.style.width = '32px';
                 el.style.height = '40px';
                 el.style.backgroundSize = '100%';
-                
-                // Create popup content
-                const popupContent = document.createElement('div');
-                popupContent.className = 'w-64';
-                popupContent.innerHTML = `
-                    <img src="${property.image_url}" alt="${property.title}" class="w-full h-32 object-cover rounded-t-lg">
-                    <div class="p-3">
-                        <h4 class="font-bold text-gray-900">UGX ${property.price.toLocaleString()}</h4>
-                        <h5 class="text-sm font-medium text-gray-800">${property.title}</h5>
-                        <div class="mt-1 flex text-xs text-gray-500">
-                            <span class="flex items-center mr-2">
-                                <i class="fas fa-bed text-primary-500 mr-1"></i> ${property.bedrooms}
-                            </span>
-                            <span class="flex items-center mr-2">
-                                <i class="fas fa-bath text-primary-500 mr-1"></i> ${property.bathrooms}
-                            </span>
-                            <span class="flex items-center">
-                                <i class="fas fa-ruler-combined text-primary-500 mr-1"></i> ${property.area} sqft
-                            </span>
+                el.style.filter = `drop-shadow(0 0 8px rgba(var(--${color}-rgb), 0.7))`;
+                return el;
+            };
+
+            const initPropertyMarkers = () => {
+                state.propertyMarkers = properties.map(property => {
+                    const el = createBeautifulMarker();
+                    const popupContent = document.createElement('div');
+                    popupContent.className = 'w-74';
+                    popupContent.innerHTML = `
+                        <img src="${property.image_url}" alt="${property.title}" class="w-full h-32 object-cover rounded-t-lg">
+                        <div class="p-3">
+                            <h4 class="font-bold text-gray-900">UGX ${property.price.toLocaleString()}</h4>
+                            <h5 class="text-sm font-medium text-gray-800">${property.title}</h5>
+                            <div class="mt-1 flex text-xs text-gray-500">
+                                <span class="flex items-center mr-2">
+                                    <i class="fas fa-bed text-primary-500 mr-1"></i> ${property.bedrooms}
+                                </span>
+                                <span class="flex items-center mr-2">
+                                    <i class="fas fa-bath text-primary-500 mr-1"></i> ${property.bathrooms}
+                                </span>
+                                <span class="flex items-center">
+                                    <i class="fas fa-ruler-combined text-primary-500 mr-1"></i> ${property.area} sqft
+                                </span>
+                            </div>
+                            <div class="mt-2 flex space-x-2">
+                                <button class="get-directions-btn flex-1 text-xs bg-primary-600 hover:bg-primary-700 text-white py-2 px-3 rounded">
+                                    <i class="fas fa-directions mr-1"></i> Navigate
+                                </button>
+                                <button class="property-details-btn flex-1 text-xs bg-white border border-primary-600 text-primary-600 hover:bg-primary-50 py-2 px-3 rounded">
+                                    Details
+                                </button>
+                            </div>
                         </div>
-                        <button class="property-popup-btn mt-2 w-full text-xs bg-primary-100 hover:bg-primary-200 text-primary-800 py-1 px-2 rounded" data-property-id="${property.id}">
-                            View Details
-                        </button>
+                    `;
+                    
+                    const marker = new mapboxgl.Marker(el)
+                        .setLngLat(property.coordinates)
+                        .setPopup(new mapboxgl.Popup({ offset: 25 }).setDOMContent(popupContent))
+                        .addTo(map);
+
+                    // Add click handler for the directions button
+                    const directionsBtn = popupContent.querySelector('.get-directions-btn');
+                    directionsBtn.addEventListener('click', async (e) => {
+                        e.stopPropagation();
+                        if (state.userLocation) {
+                            directionsBtn.disabled = true;
+                            directionsBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Routing...';
+
+                            try {
+                                await directionsHandlers.showRoute(state.userLocation, property.coordinates);
+                            } catch (error) {
+                                alert('Could not calculate route. Please try again later.');
+                                console.error('Routing error:', error);
+                            } finally {
+                                directionsBtn.innerHTML = '<i class="fas fa-directions mr-1"></i> Navigate';
+                                directionsBtn.disabled = false;
+                            }
+
+                            // Reset button state
+                            directionsBtn.innerHTML = '<i class="fas fa-directions mr-1"></i> Navigate';
+                            directionsBtn.disabled = false;
+                        } else {
+                            alert('Please enable location services first by clicking the location button');
+                        }
+                    });
+                    
+                    // Details button handler
+                    popupContent.querySelector('.property-details-btn').addEventListener('click', () => {
+                        const propertyDetailsDiv = document.getElementById('property_details');
+                        propertyDetailsDiv.innerHTML = `
+                            <div class="p-4">
+                                <div class="relative">
+                                    <img src="${property.image_url}" alt="${property.title}" class="w-full h-48 object-cover rounded-lg">
+                                    <div class="absolute top-2 right-2">
+                                        <button class="heart-icon p-2 bg-white rounded-full shadow-md text-gray-400 hover:text-red-500">
+                                            <i class="far fa-heart"></i>
+                                        </button>
+                                    </div>
+                                    <div class="absolute bottom-2 left-2 bg-primary-600 text-white text-xs font-bold px-2 py-1 rounded">
+                                        ${property.listing_type}
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-4">
+                                    <div class="flex justify-between items-start">
+                                        <h3 class="text-xl font-bold text-gray-900">UGX ${property.price.toLocaleString()}</h3>
+                                        <span class="text-xs text-gray-500">${property.date_listed}</span>
+                                    </div>
+                                    <h4 class="text-lg font-semibold text-gray-800 mt-1">${property.title}</h4>
+                                    <p class="text-sm text-gray-600 mt-1"><i class="fas fa-map-marker-alt text-primary-500 mr-1"></i> ${property.address}</p>
+                                    
+                                    <div class="mt-4 grid grid-cols-3 gap-2 text-center border rounded-lg p-2">
+                                        <div>
+                                            <div class="text-sm text-gray-500">Bedrooms</div>
+                                            <div class="font-semibold text-primary-600">${property.bedrooms}</div>
+                                        </div>
+                                        <div>
+                                            <div class="text-sm text-gray-500">Bathrooms</div>
+                                            <div class="font-semibold text-primary-600">${property.bathrooms}</div>
+                                        </div>
+                                        <div>
+                                            <div class="text-sm text-gray-500">Area</div>
+                                            <div class="font-semibold text-primary-600">${property.area} sqft</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="mt-4">
+                                        <h5 class="font-medium text-gray-900">Description</h5>
+                                        <p class="mt-1 text-sm text-gray-600">${property.description}</p>
+                                    </div>
+
+                                    <div class="mt-6 space-y-2">
+                                        <button class="w-full bg-primary-600 hover:bg-primary-700 text-white py-3 px-4 rounded-md font-medium get-directions-btn">
+                                            <i class="fas fa-directions mr-2"></i> Get Directions
+                                        </button>
+                                        <button class="w-full bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 py-3 px-4 rounded-md font-medium">
+                                            <i class="fas fa-phone mr-2"></i> Contact Agent
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+
+                        // Add click handler for the directions button
+                        propertyDetailsDiv.querySelector('.get-directions-btn').addEventListener('click', async (e) => {
+                            e.stopPropagation();
+                            if (state.userLocation) {
+                                directionsBtn.disabled = true;
+                                directionsBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Routing...';
+
+                                try {
+                                    await directionsHandlers.showRoute(state.userLocation, property.coordinates);
+                                } catch (error) {
+                                    alert('Could not calculate route. Please try again later.');
+                                    console.error('Routing error:', error);
+                                } finally {
+                                    directionsBtn.innerHTML = '<i class="fas fa-directions mr-1"></i> Navigate';
+                                    directionsBtn.disabled = false;
+                                }
+
+                                // Reset button state
+                                directionsBtn.innerHTML = '<i class="fas fa-directions mr-1"></i> Navigate';
+                                directionsBtn.disabled = false;
+                            } else {
+                                alert('Please enable location services first by clicking the location button');
+                            }
+                        });
+                    });
+
+                    return { id: property.id, marker, coordinates: property.coordinates };
+                });
+            };
+
+            const handlePropertyClick = (propertyId, event) => {
+                const property = properties.find(p => p.id === propertyId);
+                if (!property) return;
+                
+                // Highlight card
+                document.querySelectorAll('.property-card').forEach(c => {
+                    c.classList.remove('border-primary-600', 'bg-primary-50');
+                });
+                event.currentTarget.classList.add('border-primary-600', 'bg-primary-50');
+                
+                // Find and highlight marker
+                const markerObj = state.propertyMarkers.find(m => m.id === propertyId);
+                if (markerObj) {
+                    // Remove previous highlights
+                    state.propertyMarkers.forEach(m => {
+                        m.marker.getElement().style.filter = 'none';
+                    });
+                    
+                    // Highlight current with beautiful effect
+                    markerObj.marker.getElement().style.filter = `
+                        hue-rotate(90deg) 
+                        drop-shadow(0 0 8px rgba(34, 197, 94, 0.7))
+                        brightness(1.1)
+                    `;
+                    state.selectedMarker = markerObj;
+                    
+                    // Smooth fly to property
+                    map.flyTo({
+                        center: property.coordinates,
+                        zoom: 16,
+                        essential: true,
+                        speed: 0.9,
+                        curve: 1,
+                        easing(t) {
+                            return t * (2 - t);
+                        }
+                    });
+                    
+                    // Open popup with animation
+                    setTimeout(() => {
+                        markerObj.marker.getPopup().addTo(map);
+                    }, 500);
+                }
+            };
+
+            return { initPropertyMarkers, handlePropertyClick };
+        };
+
+        // Directions Management
+        const setupDirections = (map, directions, state) => {
+            // Listen for the 'route' event from MapboxDirections
+            directions.on('route', (e) => {
+                if (!e.route || e.route.length === 0) {
+                    console.warn('No route found.');
+                    return;
+                }
+
+                const route = e.route[0];
+                state.directionsPanel.classList.remove('hidden');
+                
+                // Format the distance and duration
+                const distance = (route.distance / 1000).toFixed(1);
+                const duration = Math.floor(route.duration / 60);
+                
+                // Update the directions panel content
+                state.directionsContent.innerHTML = `
+                    <div class="mb-3 p-3 bg-gray-50 rounded-lg">
+                        <div class="flex justify-between">
+                            <span class="font-medium">Distance:</span>
+                            <span>${distance} km</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="font-medium">Duration:</span>
+                            <span>${duration} min</span>
+                        </div>
+                    </div>
+                    <div class="space-y-2 max-h-64 overflow-y-auto">
+                        ${route.legs[0].steps.map((step, i) => `
+                            <div class="flex items-start p-2 hover:bg-gray-50 rounded">
+                                <div class="flex-shrink-0 mt-1 mr-3 w-6 h-6 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center text-xs font-bold">
+                                    ${i+1}
+                                </div>
+                                <div class="flex-1">
+                                    <div class="text-sm">${step.maneuver.instruction}</div>
+                                    ${step.distance > 0 ? `<div class="text-xs text-gray-500 mt-1">${(step.distance / 1000).toFixed(1)} km</div>` : ''}
+                                </div>
+                            </div>
+                        `).join('')}
                     </div>
                 `;
+            });
+
+            // Error handling for directions
+            directions.on('error', (e) => {
+                console.error('Directions error:', e.error);
+                alert('Could not calculate route. Please try again later.');
+            });
+
+            const showRoute = async (start, end) => {
+                try {
+                    state.directionsPanel.classList.remove('hidden');
+                    document.querySelector('.mapboxgl-ctrl-directions').style.display = 'block';
+                    
+                    // Set origin and destination
+                    directions.setOrigin(start);
+                    directions.setDestination(end);
+                    
+                    // Wait for the route to be calculated
+                    await new Promise((resolve) => {
+                        const checkRoute = () => {
+                            if (directions.getOrigin() && directions.getDestination()) {
+                                resolve();
+                            } else {
+                                setTimeout(checkRoute, 100);
+                            }
+                        };
+                        checkRoute();
+                    });
+                    
+                    // Center the map on the route
+                    const bounds = new mapboxgl.LngLatBounds()
+                        .extend(start)
+                        .extend(end);
+                    map.fitBounds(bounds, {
+                        padding: 100,
+                        maxZoom: 15
+                    });
+                    
+                } catch (error) {
+                    console.error('Error showing route:', error);
+                    alert('Failed to calculate route. Please try again.');
+                }
+            };
+
+            document.getElementById('closeDirections').addEventListener('click', () => {
+                state.directionsPanel.classList.add('hidden');
+                document.querySelector('.mapboxgl-ctrl-directions').style.display = 'none';
+                directions.removeRoutes();
+            });
+
+            // Start navigation button handler
+            document.getElementById('startNavigation').addEventListener('click', () => {
+                if (!directions.getOrigin() || !directions.getDestination()) {
+                    alert('Please calculate a route first');
+                    return;
+                }
                 
-                // Add marker to map
-                const marker = new mapboxgl.Marker(el)
-                    .setLngLat(property.coordinates)
-                    .setPopup(new mapboxgl.Popup({ offset: 25 }).setDOMContent(popupContent))
-                    .addTo(map);
+                // Here you would typically integrate with a navigation SDK
+                // For this example, we'll just zoom to the route
+                const origin = directions.getOrigin().geometry.coordinates;
+                const destination = directions.getDestination().geometry.coordinates;
                 
-                markers.push({
-                    id: property.id,
-                    marker: marker,
-                    coordinates: property.coordinates
+                const bounds = new mapboxgl.LngLatBounds()
+                    .extend(origin)
+                    .extend(destination);
+                
+                map.fitBounds(bounds, {
+                    padding: 50,
+                    maxZoom: 15
                 });
                 
-                // Add click event to popup button
-                popupContent.querySelector('.property-popup-btn').addEventListener('click', (e) => {
+                alert('Navigation started! In a real app, this would launch turn-by-turn navigation.');
+            });
+
+            return { showRoute };
+        };
+
+        // UI Event Handlers
+        const setupUIHandlers = (map, state, handlers) => {
+            // Property card click handlers
+            document.querySelectorAll('.property-card').forEach(card => {
+                card.addEventListener('click', function(event) {
+                    const propertyId = parseInt(this.getAttribute('data-property-id'));
+                    handlers.handlePropertyClick(propertyId, event);
+                });
+            });
+
+            // Map controls
+            document.getElementById('zoomIn').addEventListener('click', () => map.zoomIn());
+            document.getElementById('zoomOut').addEventListener('click', () => map.zoomOut());
+
+            // Mobile sidebar toggle
+            const sidebar = document.getElementById('sidebar');
+            document.getElementById('toggleSidebar').addEventListener('click', () => sidebar.classList.add('hidden'));
+            document.getElementById('showSidebar').addEventListener('click', () => sidebar.classList.remove('hidden'));
+
+            // Favorite heart icons
+            document.querySelectorAll('.heart-icon').forEach(icon => {
+                icon.addEventListener('click', function(e) {
                     e.stopPropagation();
-                    // In a real app, this would fetch the property details from Django
-                    console.log('Property selected from popup:', property.id);
-                    // For demo, we'll just show an alert
-                    alert(`Showing details for property: ${property.title}`);
+                    this.classList.toggle('active');
+                    const heart = this.querySelector('i');
+                    heart.classList.toggle('far');
+                    heart.classList.toggle('fas');
                 });
             });
-        });
-        
-        // Map controls
-        document.getElementById('zoomIn').addEventListener('click', () => {
-            map.zoomIn();
-        });
-        
-        document.getElementById('zoomOut').addEventListener('click', () => {
-            map.zoomOut();
-        });
-        
-        document.getElementById('currentLocation').addEventListener('click', () => {
-            navigator.geolocation.getCurrentPosition((position) => {
-                map.flyTo({
-                    center: [position.coords.longitude, position.coords.latitude],
-                    zoom: 14
-                });
-            }, (error) => {
-                console.error('Error getting location:', error);
-                alert('Unable to get your current location. Please ensure location services are enabled.');
-            });
-        });
-        
-        // Toggle sidebar on mobile
-        const sidebar = document.getElementById('sidebar');
-        const toggleSidebar = document.getElementById('toggleSidebar');
-        const showSidebar = document.getElementById('showSidebar');
-        
-        toggleSidebar.addEventListener('click', () => {
-            sidebar.classList.add('hidden');
-        });
-        
-        showSidebar.addEventListener('click', () => {
-            sidebar.classList.remove('hidden');
-        });
-        
-        // Toggle favorite heart icons
-        document.querySelectorAll('.heart-icon').forEach(icon => {
-            icon.addEventListener('click', function(e) {
-                e.stopPropagation();
-                this.classList.toggle('active');
-                const heart = this.querySelector('i');
-                if (heart.classList.contains('far')) {
-                    heart.classList.remove('far');
-                    heart.classList.add('fas');
-                } else {
-                    heart.classList.remove('fas');
-                    heart.classList.add('far');
-                }
-            });
-        });
-        
-        // Property card click events
-        document.querySelectorAll('.property-card').forEach(card => {
-            card.addEventListener('click', function() {
-                const propertyId = this.getAttribute('data-property-id');
-                // In a real app, this would fetch the property details from Django
-                console.log('Property selected:', propertyId);
-                // For demo, we'll just show an alert
-                const property = properties.find(p => p.id == propertyId);
-                if (property) {
-                    alert(`Showing details for property: ${property.title}`);
-                }
-            });
-        });
-        
-        // View toggle buttons
-        const streetViewBtn = document.getElementById('streetView');
-        const satelliteViewBtn = document.getElementById('satelliteView');
-        
-        streetViewBtn.addEventListener('click', () => {
-            map.setStyle('mapbox://styles/mapbox/streets-v11');
-            streetViewBtn.classList.add('active');
-            satelliteViewBtn.classList.remove('active');
-        });
-        
-        satelliteViewBtn.addEventListener('click', () => {
-            map.setStyle('mapbox://styles/mapbox/satellite-v9');
-            satelliteViewBtn.classList.add('active');
-            streetViewBtn.classList.remove('active');
-        });
-        
-        // View on map button
-        document.getElementById('viewOnMap')?.addEventListener('click', () => {
-            // In a real app, this would use the selected property's coordinates
-            const propertyId = 1; // Example
-            const property = properties.find(p => p.id == propertyId);
+
+            // View toggle buttons
+            const streetViewBtn = document.getElementById('streetView');
+            const satelliteViewBtn = document.getElementById('satelliteView');
             
-            if (property) {
-                map.flyTo({
-                    center: property.coordinates,
-                    zoom: 16,
-                    essential: true
-                });
-                
-                // Open the marker's popup
-                const marker = markers.find(m => m.id == propertyId);
-                if (marker) {
-                    marker.marker.getPopup().addTo(map);
-                }
-                
-                // Switch to satellite view
+            streetViewBtn.addEventListener('click', () => {
+                map.setStyle('mapbox://styles/mapbox/streets-v12');
+                streetViewBtn.classList.add('active');
+                satelliteViewBtn.classList.remove('active');
+            });
+            
+            satelliteViewBtn.addEventListener('click', () => {
                 map.setStyle('mapbox://styles/mapbox/satellite-v9');
                 satelliteViewBtn.classList.add('active');
                 streetViewBtn.classList.remove('active');
-            }
-        });
-        
-        // Get directions button
-        document.getElementById('getDirections')?.addEventListener('click', () => {
-            // Show directions panel
-            document.getElementById('directionsPanel').classList.remove('hidden');
+            });
+        };
+
+        // Main Application Initialization
+        const initApp = () => {
+            // Initialize core components
+            const { map, directions } = initializeMap();
+            const state = createAppState();
+            const locationServices = setupLocationServices(map, state);
             
-            // Show directions control
-            document.querySelector('.mapboxgl-ctrl-directions').style.display = 'block';
-            
-            // Set destination to property location
-            const propertyId = 1; // Example
-            const property = properties.find(p => p.id == propertyId);
-            
-            if (property) {
-                directions.setDestination(property.coordinates);
+            // Property data from Django template
+            const properties = [
+                {% for property in properties %}
+                {
+                    id: {{ property.id }},
+                    title: "{{ property.title }}",
+                    price: {{ property.price }},
+                    address: "{{ property.address }}",
+                    bedrooms: {{ property.bedrooms }},
+                    bathrooms: {{ property.bathrooms }},
+                    area: {{ property.area }},
+                    listing_type: "{{ property.listing_type }}",
+                    description: "{{ property.description }}",
+                    amenities: {{ property.amenities|safe }},
+                    date_listed: "{{ property.date_listed|date:'Y-m-d' }}",
+                    image_url: "{{ property.image_url }}",
+                    coordinates: [{{ property.coordinates.0 }}, {{ property.coordinates.1 }}]
+                }{% if not forloop.last %},{% endif %}
+                {% endfor %}
+            ];
+
+            // Setup property markers and handlers
+            const { showRoute } = setupDirections(map, directions, state);
+
+            // Pass showRoute to the markers setup
+            const { initPropertyMarkers, handlePropertyClick } = setupPropertyMarkers(
+                map,
+                state,
+                properties,
+                setupDirections(map, directions, state) // Pass the entire object
+            );
+            // Initialize when map loads
+            map.on('load', () => {
+
+                initPropertyMarkers();
+                locationServices.getUserLocation();
                 
-                // Get current location for origin
-                navigator.geolocation.getCurrentPosition((position) => {
-                    directions.setOrigin([position.coords.longitude, position.coords.latitude]);
+                // Setup navigation buttons in property popups
+                state.propertyMarkers.forEach(({ marker, coordinates }) => {
+                    const popupContent = marker.getPopup().getElement();
+                    const directionsBtn = popupContent?.querySelector('.get-directions-btn');
                     
-                    // Listen for route response
-                    map.on('route', (e) => {
-                        const route = e.route[0];
-                        const directionsPanel = document.getElementById('directions');
-                        directionsPanel.innerHTML = `
-                            <div class="mb-2">
-                                <div class="font-medium">Distance: ${(route.distance * 0.000621371).toFixed(1)} miles</div>
-                                <div class="font-medium">Duration: ${Math.floor(route.duration / 60)} min</div>
-                            </div>
-                            <div class="space-y-1">
-                                ${route.legs[0].steps.map(step => `
-                                    <div class="flex items-start">
-                                        <div class="flex-shrink-0 mt-1 mr-2 text-primary-500">
-                                            <i class="fas fa-${getDirectionIcon(step.maneuver.type, step.maneuver.modifier)}"></i>
-                                        </div>
-                                        <div>${step.maneuver.instruction}</div>
-                                    </div>
-                                `).join('')}
-                            </div>
-                        `;
-                    });
-                }, (error) => {
-                    console.error('Error getting location:', error);
-                    document.getElementById('directions').innerHTML = `
-                        <div class="text-red-500">Unable to get your current location. Please enter starting point manually.</div>
-                    `;
+                    if (directionsBtn) {
+                        directionsBtn.onclick = () => {
+                            if (state.userLocation) {
+                                showRoute(state.userLocation, coordinates);
+                            } else {
+                                alert('Please enable location services to get directions');
+                            }
+                        };
+                    }
                 });
+            });
+
+            // Setup UI event handlers
+            setupUIHandlers(map, state, { handlePropertyClick });
+        };
+
+        // Start the application
+        document.addEventListener('DOMContentLoaded', initApp);
+
+        const panel = document.getElementById("directionsPanel");
+        const header = document.getElementById("directionsPanelHeader");
+        const content = document.getElementById("directionsPanelContent");
+        const collapseBtn = document.getElementById("collapseDirections");
+        const closeBtn = document.getElementById("closeDirections");
+        const resizeHandle = document.getElementById("resizeHandle");
+
+        // COLLAPSE toggle
+        collapseBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            const icon = collapseBtn.querySelector("i");
+            const isCollapsed = content.style.display === "none";
+            content.style.display = isCollapsed ? "block" : "none";
+            icon.classList.toggle("fa-chevron-down", !isCollapsed);
+            icon.classList.toggle("fa-chevron-up", isCollapsed);
+        });
+
+        // CLOSE panel
+        closeBtn.addEventListener("click", () => {
+            panel.style.display = "none";
+        });
+
+        // DRAGGABLE header
+        let offsetX,
+        offsetY,
+        dragging = false;
+
+        header.addEventListener("mousedown", (e) => {
+            dragging = true;
+            offsetX = e.clientX - panel.offsetLeft;
+            offsetY = e.clientY - panel.offsetTop;
+            header.classList.remove("grab");
+            header.classList.add("grabbing");
+        });
+
+        document.addEventListener("mousemove", (e) => {
+            if (!dragging) return;
+                panel.style.left = `${e.clientX - offsetX}px`;
+                panel.style.top = `${e.clientY - offsetY}px`;
+                panel.style.bottom = "auto";
+            });
+
+            document.addEventListener("mouseup", () => {
+            if (dragging) {
+                dragging = false;
+                header.classList.add("grab");
+                header.classList.remove("grabbing");
+                localStorage.setItem(
+                "panelPosition",
+                JSON.stringify({
+                    left: panel.style.left,
+                    top: panel.style.top,
+                })
+                );
             }
         });
-        
-        // Close directions panel
-        document.getElementById('closeDirections')?.addEventListener('click', () => {
-            document.getElementById('directionsPanel').classList.add('hidden');
-            document.querySelector('.mapboxgl-ctrl-directions').style.display = 'none';
-            directions.removeRoutes();
-        });
-        
-        // Helper function to get direction icon
-        function getDirectionIcon(type, modifier) {
-            if (type === 'depart' || type === 'arrive') return 'map-marker-alt';
-            if (type === 'turn') {
-                if (modifier.includes('left')) return 'arrow-left';
-                if (modifier.includes('right')) return 'arrow-right';
-                if (modifier.includes('sharp left')) return 'arrow-left';
-                if (modifier.includes('sharp right')) return 'arrow-right';
-                if (modifier.includes('slight left')) return 'arrow-left';
-                if (modifier.includes('slight right')) return 'arrow-right';
-                return 'arrow-up';
+
+        // Restore saved position
+        window.addEventListener("DOMContentLoaded", () => {
+            const saved = localStorage.getItem("panelPosition");
+            if (saved) {
+                const { left, top } = JSON.parse(saved);
+                panel.style.left = left;
+                panel.style.top = top;
+                panel.style.bottom = "auto";
             }
-            if (type === 'merge') return 'code-branch';
-            if (type === 'on ramp' || type === 'off ramp') return 'exchange-alt';
-            if (type === 'fork') return 'code-branch';
-            if (type === 'roundabout') return 'undo';
-            return 'directions';
-        }
+        });
+
+        // RESIZABLE bottom
+        resizeHandle.addEventListener("mousedown", function (e) {
+            e.preventDefault();
+            const startY = e.clientY;
+            const startHeight = panel.offsetHeight;
+
+            const resize = (e) => {
+                const newHeight = startHeight + (e.clientY - startY);
+                panel.style.height = newHeight + "px";
+            };
+
+            const stop = () => {
+                window.removeEventListener("mousemove", resize);
+                window.removeEventListener("mouseup", stop);
+            };
+
+            window.addEventListener("mousemove", resize);
+            window.addEventListener("mouseup", stop);
+        });
+
     </script>
 </body>
 </html>
