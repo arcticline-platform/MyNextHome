@@ -68,14 +68,15 @@ INSTALLED_APPS = [
     'django.contrib.humanize',
 
     # Local Apps
-    'accounts',
     'core',
     'finance',
+    'accounts',
+    'tracking_analyzer',
 
     # Third Party Apps
     'ckeditor',
     'phonenumbers',
-    'tracking_analyzer',
+    'import_export',
 ]
 
 MIDDLEWARE = [
@@ -107,15 +108,16 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'MyNextHome.wsgi.application'
+ASGI_APPLICATION = 'MyNextHome.asgi.application'
 
 
-AUTHENTICATION_BACKENDS = [
-    # Needed to login by username in Django admin, regardless of `allauth`
-    'django.contrib.auth.backends.ModelBackend',
-    'accounts.authentications.EmailOrUsernameAuthBackend',
-    # `allauth` specific authentication methods, such as login by email
-    'allauth.account.auth_backends.AuthenticationBackend',
-]
+# AUTHENTICATION_BACKENDS = [
+#     # Needed to login by username in Django admin, regardless of `allauth`
+#     'django.contrib.auth.backends.ModelBackend',
+#     'accounts.authentications.EmailOrUsernameAuthBackend',
+#     # `allauth` specific authentication methods, such as login by email
+#     'allauth.account.auth_backends.AuthenticationBackend',
+# ]
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases

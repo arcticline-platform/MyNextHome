@@ -405,9 +405,6 @@ class Amenity(models.Model):
         verbose_name_plural = "Amenities"
         ordering = ['category__name', 'name']
 
-    class Meta:
-        verbose_name_plural = 'Amenities'
-
     def __str__(self):
         return self.name
 
@@ -644,6 +641,14 @@ class Property(TimeStampedModel):
         ('hidden', 'Hidden')
     )
 
+    LISTING_CATEGORY = (
+        ('sale', 'For Sale'),
+        ('rent', 'For Rent'),
+        ('lease', 'For Lease'),
+        ('short_term', 'Short Term Rental'),
+        ('long_term', 'Long Term Rental')
+    )
+
     FURNISHING_STATUS = (
         ('furnished', 'Furnished'),
         ('unfurnished', 'Unfurnished'),
@@ -660,7 +665,7 @@ class Property(TimeStampedModel):
     
     # Pricing information
     price = models.DecimalField(max_digits=12, decimal_places=2, validators=[MinValueValidator(0)])
-    price_currency = models.CharField(max_length=3, default='USD')
+    price_currency = models.CharField(max_length=3, default='UGX')
     price_per_sqft = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     is_price_negotiable = models.BooleanField(default=False)
     tax_rate = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)
@@ -682,6 +687,7 @@ class Property(TimeStampedModel):
     
     # Listing management
     status = models.CharField(max_length=20, choices=LISTING_STATUS, default='draft')
+    category = models.CharField(max_length=20, choices=LISTING_CATEGORY, default='sale')
     is_featured = models.BooleanField(default=False)
     available_from = models.DateField(blank=True, null=True)
     last_refurbished = models.DateField(blank=True, null=True)
@@ -699,7 +705,7 @@ class Property(TimeStampedModel):
     favorite_count = models.PositiveIntegerField(default=0)
 
     is_published = models.BooleanField(default=False)
-    listed_by = models.ForeignKey(User, on_delete=models.CASCADE)
+    listed_by = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name='listed_properties')
     rating = models.DecimalField(max_digits=3, decimal_places=2, validators=[MinValueValidator(0.0), MaxValueValidator(5.0)], default=0.0)
     parking_spaces = models.PositiveIntegerField(default=0)
     internet_included = models.BooleanField(default=False)
@@ -759,6 +765,7 @@ class Property(TimeStampedModel):
     def get_primary_image(self):
         """Get the primary image for the property."""
         return self.images.filter(is_primary=True).first() or self.images.first()
+
 
 class PropertyImage(models.Model):
     """Images associated with a property listing"""
@@ -824,7 +831,7 @@ class PropertyDocument(models.Model):
         ordering = ['-uploaded_at']
 
     def __str__(self):
-        return f"{self.get_document_type_display()} for {self.property.title}"
+        return f"{self.document_type()} for {self.property.title}"
 
 
 class NeighborhoodInfo(models.Model):
@@ -914,7 +921,6 @@ class PropertyContact(TimeStampedModel):
 
     def __str__(self):
         return f"Contact request for {self.property.title} from {self.name}"
-        return f"{self.property.title} viewed on {self.view_date}"
     
 
 class PropertyPayment(models.Model):
@@ -922,7 +928,8 @@ class PropertyPayment(models.Model):
     property = models.ForeignKey(Property, on_delete=models.CASCADE)
     currency = models.CharField(max_length=3,default='USD',help_text="ISO 4217 currency code (e.g., USD, EUR, GBP)")
     usd_price = models.DecimalField(max_digits=12,decimal_places=2,validators=[MinValueValidator(0)],help_text="Price converted to USD")# All currencies are automatically converted to USD
-    exchange_rate = models.DecimalField(max_digits=10,decimal_places=6,help_text="Exchange rate when price was converted to USD")# Exchange rate at the time of conversion
+    exchange_rate = models.DecimalField(max_digits=10,decimal_places=6,help_text="Exchange rate when price was converted to USD")
+    # Exchange rate at the time of conversion
     conversion_date = models.DateTimeField(auto_now=True)# Conversion timestamp
     PAYMENT_TYPE_CHOICE = (
         ('cash', 'Cash'),
