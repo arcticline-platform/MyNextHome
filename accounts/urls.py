@@ -7,36 +7,40 @@ from rest_framework.routers import DefaultRouter
 
 
 router = DefaultRouter()
-router.register(r'users', apis.UserViewSet)
-router.register(r'profiles', apis.UserProfileViewSet)
-router.register(r'portfolios', apis.PortfolioViewSet)
-router.register(r'receipts', apis.ReceiptViewSet)
 
 
 urlpatterns = [
     path('api/', include(router.urls)),
+
+    path('api/login/', views.LoginView.as_view(), name='login_api'),
+    path('api/signup/', views.SignupView.as_view(), name='signup_api'),
+    path('api/verify/', views.VerifyUserView.as_view(), name='verify_user'),
+
+    # Template renders
+    path('signup/',views.signup, name='signup'),
+    path('login/',views.login_user, name='login'),
+    path('logout/',views.logout_view, name='logout'),
+
+    path("update_user_profile/", views.update_user_profile, name="update_user_profile"),
+    path('contact-support/', views.contact_support, name='contact_support'),
+    path('notification-preferences/', views.notification_preferences, name='notification_preferences'),
+    path('accounts_password_change/', views.accounts_password_change, name='accounts_password_change'),
+    path("delete-account/", views.delete_account, name="delete_account"),
+
+
 	# Logins
-	path('auth/', include('django.contrib.auth.urls')),
-    path('login/', views.LogInView.as_view(), name='login'),
-	path('logout/', auth_views.LogoutView.as_view(), name='logout'),
-    path('signUp/', views.user_signup, name='signup'),
+	# path('auth/', include('django.contrib.auth.urls')),
 	path('check_username/', views.check_username, name='check_username'),
 	re_path(r'^check_user_email/$', views.check_user_email, name='check_email'),
 	# activation
-    path('activate/<uidb64>/<token>', views.activate, name='activate'),
-    path('account_activation_sent/', views.account_activation_sent, name='account_activation_sent'),
-    path('resend-activation-email/', views.resend_activation_email, name='resend_activation_email'),
-	path('profile/<id>/<username>/',  views.profile, name='profile'),
+	path('profile/',  views.profile, name='profile'),
     path('<id>/upload_photo', views.upload_photo, name='upload_photo'),
     path('<id>/upload_cover_photo', views.upload_cover_photo, name='upload_cover_photo'),
     path('<id>/user_bio/', views.user_bio, name='user_bio'),
-    path('account_settings/', views.account_settings, name='account_settings'),
+    path('account_settings/', views.account_settings, name='settings'),
 	path('int:<id>/update_profile/', views.update_profile, name='update_profile'),
     path('int:<id>/create_or_update_portfolio/', views.create_or_update_portfolio, name='create_or_update_portfolio'),
     path('notifications/', views.notifications, name='notifications'),
-	# Account Delete
-	path('int:<id>/delete_account/', views.delete_user_account, name='delete_buyer_account'),
-    # PayLink update
 
     path('send-otp/', utils.send_otp, name='send_otp'),
     path('verify-otp/', utils.verify_otp, name='verify_otp'),

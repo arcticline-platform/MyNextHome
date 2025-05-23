@@ -285,40 +285,97 @@
                         </div>
                         <input id="search" name="search" class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 focus:border-transparent sm:text-sm" placeholder="Search locations..." type="search">
                     </div>
-                    <button class="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+                    <a href="{% if user.is_authenticated %}#{% else %}{% url 'login' %}{% endif %}" class="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-md text-sm font-medium">
                         List Your Property
-                    </button>
+                    </a>
                 </div>
                 <div class="hidden sm:ml-6 sm:flex sm:items-center relative">
-                    <button id="account-button" class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-md text-sm font-medium">
-                        Account
-                        <i class="fas fa-caret-down ml-2"></i>
+                    <button id="account-button" class="group flex items-center bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-md text-sm font-medium transition duration-150 ease-in-out">
+                        <i class="fas fa-user-circle mr-2 text-gray-500 group-hover:text-primary-600"></i>
+                        {% if user.is_authenticated %}
+                            {{ user.username }}
+                        {% else %}
+                            Account
+                        {% endif %}
+                        <i class="fas fa-caret-down ml-2 transform transition-transform duration-200"></i>
                     </button>
                     <!-- Account Dropdown -->
-                    <div id="account-dropdown" class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg origin-top-right hidden">
-                        <div class="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
-                            <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900" role="menuitem">
-                                Sign In
-                            </a>
-                            <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900" role="menuitem">
-                                Sign Up
-                            </a>
+                    <div id="account-dropdown" class="absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 divide-y divide-gray-100 transform opacity-0 scale-95 transition-all duration-200 ease-out pointer-events-none">
+                        <div class="py-1" role="menu" aria-orientation="vertical">
+                            {% if user.is_authenticated %}
+                                <a href="{% url 'profile' %}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-primary-50 hover:text-primary-700 transition duration-150" role="menuitem">
+                                    <i class="fas fa-user w-5 mr-3 text-gray-400"></i>
+                                    Profile
+                                </a>
+                                <a href="#" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-primary-50 hover:text-primary-700 transition duration-150" role="menuitem">
+                                    <i class="fas fa-heart w-5 mr-3 text-gray-400"></i>
+                                    Saved Properties
+                                </a>
+                                <a href="{% url 'settings' %}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-primary-50 hover:text-primary-700 transition duration-150" role="menuitem">
+                                    <i class="fas fa-cog w-5 mr-3 text-gray-400"></i>
+                                    Settings
+                                </a>
+                                <div class="border-t border-gray-100"></div>
+                                <form action="{% url 'logout' %}" method="POST" class="block">
+                                    {% csrf_token %}
+                                    <button type="submit" class="w-full text-left flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition duration-150" role="menuitem">
+                                        <i class="fas fa-sign-out-alt w-5 mr-3 text-red-400"></i>
+                                        Sign Out
+                                    </button>
+                                </form>
+                            {% else %}
+                                <a href="{% url 'login' %}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-primary-50 hover:text-primary-700 transition duration-150" role="menuitem">
+                                    <i class="fas fa-sign-in-alt w-5 mr-3 text-gray-400"></i>
+                                    Sign In
+                                </a>
+                                <a href="{% url 'signup' %}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-primary-50 hover:text-primary-700 transition duration-150" role="menuitem">
+                                    <i class="fas fa-user-plus w-5 mr-3 text-gray-400"></i>
+                                    Sign Up
+                                </a>
+                            {% endif %}
                         </div>
                     </div>
                     <script>
                         document.addEventListener('DOMContentLoaded', function() {
                             const accountButton = document.getElementById('account-button');
                             const accountDropdown = document.getElementById('account-dropdown');
+                            const caretIcon = accountButton.querySelector('.fa-caret-down');
+                            let isOpen = false;
+
+                            const toggleDropdown = (show) => {
+                                isOpen = show;
+                                accountDropdown.style.transform = show ? 'scale(1)' : 'scale(0.95)';
+                                accountDropdown.style.opacity = show ? '1' : '0';
+                                accountDropdown.style.pointerEvents = show ? 'auto' : 'none';
+                                caretIcon.style.transform = show ? 'rotate(180deg)' : 'rotate(0)';
+                                accountButton.setAttribute('aria-expanded', show);
+                            };
 
                             accountButton.addEventListener('click', function(event) {
-                                event.stopPropagation(); // Prevent the document click event from firing immediately
-                                accountDropdown.classList.toggle('hidden');
+                                event.stopPropagation();
+                                toggleDropdown(!isOpen);
                             });
 
                             document.addEventListener('click', function(event) {
-                                if (!accountDropdown.classList.contains('hidden')) {
-                                    accountDropdown.classList.add('hidden');
+                                if (isOpen && !accountDropdown.contains(event.target)) {
+                                    toggleDropdown(false);
                                 }
+                            });
+
+                            document.addEventListener('keydown', function(event) {
+                                if (event.key === 'Escape' && isOpen) {
+                                    toggleDropdown(false);
+                                }
+                            });
+
+                            const menuItems = accountDropdown.querySelectorAll('a');
+                            menuItems.forEach(item => {
+                                item.addEventListener('mouseenter', () => {
+                                    item.querySelector('i').classList.add('text-primary-500');
+                                });
+                                item.addEventListener('mouseleave', () => {
+                                    item.querySelector('i').classList.remove('text-primary-500');
+                                });
                             });
                         });
                     </script>

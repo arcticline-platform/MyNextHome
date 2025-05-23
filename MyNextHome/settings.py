@@ -77,6 +77,7 @@ INSTALLED_APPS = [
     'ckeditor',
     'phonenumbers',
     'import_export',
+    'drf_spectacular',
 ]
 
 MIDDLEWARE = [
@@ -109,6 +110,19 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'MyNextHome.wsgi.application'
 ASGI_APPLICATION = 'MyNextHome.asgi.application'
+
+REST_FRAMEWORK = {
+    # YOUR SETTINGS
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'MYNEXTHOME API',
+    'DESCRIPTION': 'API for MyNextHome',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    # OTHER SETTINGS
+}
 
 
 # AUTHENTICATION_BACKENDS = [

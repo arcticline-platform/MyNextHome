@@ -2,7 +2,7 @@
 # import math
 import uuid
 import random
-# import string
+import string
 import datetime
 import requests
 from datetime import date, datetime, timedelta
@@ -40,8 +40,9 @@ AUTH_USER_MODEL = getattr(settings, "AUTH_USER_MODEL", "auth.User")
 
 class User(AbstractUser):
     email = models.EmailField(_('email address'), unique=True)
-    is_subscribed = models.BooleanField(default=False, help_text=_('Designate the user as a buyer'))
-    is_creator = models.BooleanField(default=False, help_text=_('Designate the user as a creator'))
+    phone = models.CharField(max_length=15, blank=True, null=True)
+    is_owner = models.BooleanField(default=False, help_text=_('Designate the user as an owner'))
+    is_realtor = models.BooleanField(default=False, help_text=_('Designate the user as a realtor'))
     is_banned = models.BooleanField(default=False, help_text=_('Ban accounts that breach user guidelines'))
     referral_code = models.UUIDField(null=True, blank=True, editable=False)
     REQUIRED_FIELDS = ['email']
@@ -205,6 +206,25 @@ class UserProfile(models.Model):
         if self.unique_id == '000000001':
             self.unique_id = self.generate_unique_number()
         super(UserProfile, self).save(*args, **kwargs)
+
+
+class VerificationToken(models.Model):
+    user = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name="verification_tokens")
+    token = models.CharField(max_length=8, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        if not self.token:
+            # Generate 8 character token using only digits
+            while True:
+                token = ''.join(random.choices(string.digits, k=6))
+                if not VerificationToken.objects.filter(token=token).exists():
+                    self.token = token
+                    break
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"Token for {self.user.username}"
 
 
 class PortfolioType(models.Model):
