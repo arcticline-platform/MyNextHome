@@ -1,0 +1,93 @@
+{% extends "wifimanager/base.html" %}
+
+{% block title %}Update your User Profile{% endblock %}
+
+{% block content %}
+<div class="w-full max-w-2xl bg-white rounded-xl shadow-lg overflow-hidden animate-fade-in">
+    <div class="bg-gradient-to-r from-blue-600 to-blue-800 py-6 px-8">
+        <h1 class="text-2xl font-bold text-white">Update your User Profile</h1>
+        <p class="text-blue-100 mt-2">Edit the form below to set up your user profile</p>
+    </div>
+
+    <div class="p-8">
+        <form method="POST">
+            {% csrf_token %}
+            
+            <!-- Form errors -->
+            {% if form.errors %}
+                <div class="p-4 mb-6 rounded-md bg-red-50 text-red-800 border border-red-200">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-exclamation-circle text-red-600"></i>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm font-medium">Please correct the errors below</p>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Form fields in grid layout -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {% for field in form %}
+                    {% if field.widget_type == 'textarea' or 'description' in field.name %}
+                        <!-- Full width for textarea fields or description fields -->
+                        <div class="md:col-span-2 {% if field.errors %}border-red-300 rounded-lg{% endif %} input-focus-effect">
+                            <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">{{ field.label }}</label>
+                            <div class="w-full">
+                                {{ field }}
+                                <script>
+                                    // Add Tailwind classes to the field
+                                    document.getElementById('{{ field.id_for_label }}').classList.add(
+                                        'w-full', 'px-4', 'py-2', 'rounded-lg', 'border', 'border-gray-300',
+                                        'shadow-sm', 'focus:border-blue-500', 'focus:ring', 'focus:ring-blue-200',
+                                        'focus:ring-opacity-50'
+                                    );
+                                </script>
+                            </div>
+                            {% if field.help_text %}
+                                <p class="mt-1 text-xs text-gray-500">{{ field.help_text }}</p>
+                            {% endif %}
+                            {% if field.errors %}
+                                <p class="mt-1 text-xs text-red-600">{{ field.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        <!-- Half width for other fields -->
+                        <div class="{% if field.errors %}border-red-300 rounded-lg{% endif %} input-focus-effect">
+                            <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">{{ field.label }}</label>
+                            <div class="w-full">
+                                {{ field }}
+                                <script>
+                                    // Add Tailwind classes to the field
+                                    document.getElementById('{{ field.id_for_label }}').classList.add(
+                                        'w-full', 'px-4', 'py-2', 'rounded-lg', 'border', 'border-gray-300',
+                                        'shadow-sm', 'focus:border-blue-500', 'focus:ring', 'focus:ring-blue-200',
+                                        'focus:ring-opacity-50'
+                                    );
+                                </script>
+                            </div>
+                            {% if field.help_text %}
+                                <p class="mt-1 text-xs text-gray-500">{{ field.help_text }}</p>
+                            {% endif %}
+                            {% if field.errors %}
+                                <p class="mt-1 text-xs text-red-600">{{ field.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+
+            <!-- Submit button -->
+            <div class="mt-8">
+                <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    <i class="fas fa-user-plus mr-2"></i> Save Profile
+                </button>
+                <a href="javascript:void(0)" onclick="history.length > 1 ? history.back() : window.location.href='/wifimanager/'" class="ml-4 inline-flex items-center text-sm text-gray-600 hover:text-gray-900">
+                    <i class="fas fa-arrow-left mr-1"></i> Back
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,304 @@
+{% extends "base.html" %}
+
+{% block title %}Login {% endblock %}
+
+{% block content %}
+<div x-data="loginState()" class="w-full max-w-md">
+    <!-- Logo and Header -->
+    <div class="text-center mb-8 animate-fade-in" style="animation-delay: 0.1s;">
+        <div
+            class="bg-green-600 text-white h-16 w-16 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+            <i x-show="currentStep === 'login'" class="fas fa-sign-in-alt text-2xl"></i>
+            <i x-show="currentStep === 'recovery'" class="fas fa-key text-2xl"></i>
+        </div>
+        <h1 x-show="currentStep === 'login'" class="text-3xl font-bold text-gray-800">Welcome Back</h1>
+        <h1 x-show="currentStep === 'recovery'" class="text-3xl font-bold text-gray-800">Reset Password</h1>
+        <p x-show="currentStep === 'login'" class="text-gray-600 mt-2">Sign in to your account</p>
+        <p x-show="currentStep === 'recovery'" class="text-gray-600 mt-2">We'll send you a recovery link</p>
+    </div>
+
+    <!-- LOGIN FORM -->
+    <div x-show="currentStep === 'login'" class="bg-white rounded-xl shadow-xl overflow-hidden animate-fade-in"
+        style="animation-delay: 0.2s;">
+        <div class="p-6">
+            <!-- Error Message -->
+            <div x-show="formStatus === 'error'" x-transition
+                class="bg-red-50 text-red-700 p-4 rounded-lg mb-6 flex items-center">
+                <i class="fas fa-exclamation-circle mr-3"></i>
+                <span x-text="errorMessage">An error occurred.</span>
+            </div>
+
+            <!-- Form -->
+            <form @submit.prevent="submitLoginForm">
+                <!-- Email or Phone Field -->
+                <div class="mb-4 animate-fade-in" style="animation-delay: 0.3s;">
+                    <label for="identifier" class="block text-sm font-medium text-gray-700 mb-1">Email or Phone Number</label>
+                    <div
+                        class="relative input-focus-effect rounded-lg border border-gray-300 transition-all duration-200">
+                        <span class="absolute inset-y-0 left-3 flex items-center text-gray-400">
+                            <i class="fas fa-user"></i>
+                        </span>
+                        <input type="text" id="identifier" x-model="formData.identifier"
+                            class="w-full py-3 pl-10 pr-3 rounded-lg focus:outline-none bg-transparent"
+                            placeholder="name@example.com or +1234567890" required>
+                    </div>
+                </div>
+
+                <!-- Password Field -->
+                <div class="mb-6 animate-fade-in" style="animation-delay: 0.4s;">
+                    <div class="flex justify-between items-center mb-1">
+                        <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+                        <button type="button" @click="currentStep = 'recovery'" class="text-sm text-green-600 hover:text-green-800">
+                            Forgot password?
+                        </button>
+                    </div>
+                    <div
+                        class="relative input-focus-effect rounded-lg border border-gray-300 transition-all duration-200">
+                        <span class="absolute inset-y-0 left-3 flex items-center text-gray-400">
+                            <i class="fas fa-lock"></i>
+                        </span>
+                        <input :type="showPassword ? 'text' : 'password'" id="password" x-model="formData.password"
+                            class="w-full py-3 pl-10 pr-10 rounded-lg focus:outline-none bg-transparent"
+                            placeholder="Enter your password" required>
+                        <button type="button" @click="showPassword = !showPassword"
+                            class="absolute inset-y-0 right-3 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none">
+                            <i class="fas" :class="showPassword ? 'fa-eye-slash' : 'fa-eye'"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Remember Me -->
+                <div class="mb-6 animate-fade-in" style="animation-delay: 0.5s;">
+                    <label class="flex items-center">
+                        <input type="checkbox" x-model="formData.remember"
+                            class="w-4 h-4 rounded text-green-600 focus:ring-green-500 border-gray-300">
+                        <span class="ml-2 text-sm text-gray-600">Remember me on this device</span>
+                    </label>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="animate-fade-in" style="animation-delay: 0.6s;">
+                    <button type="submit"
+                        class="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center"
+                        :class="{'opacity-75 cursor-not-allowed': isSubmitting}" :disabled="isSubmitting">
+                        <span x-show="!isSubmitting">Sign In</span>
+                        <span x-show="isSubmitting" class="flex items-center">
+                            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                    stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor"
+                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                </path>
+                            </svg>
+                            Signing in...
+                        </span>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Bottom Divider -->
+        <div class="border-t border-gray-200 p-6 bg-gray-50 animate-fade-in" style="animation-delay: 0.7s;">
+            <p class="text-center text-gray-600 text-sm">
+                Don't have an account? <a href="{% url 'signup' %}" class="text-green-600 hover:text-green-800 font-medium">Sign up</a>
+            </p>
+        </div>
+    </div>
+
+    <!-- PASSWORD RECOVERY SCREEN -->
+    <div x-show="currentStep === 'recovery'" class="bg-white rounded-xl shadow-xl overflow-hidden animate-fade-in">
+        <div class="p-6">
+            <!-- Success Message -->
+            <div x-show="recoveryStatus === 'success'"
+                class="bg-green-50 text-green-700 p-4 rounded-lg mb-6 flex items-center">
+                <i class="fas fa-check-circle mr-3"></i>
+                <span>Recovery link sent! Please check your email.</span>
+            </div>
+
+            <!-- Error Message -->
+            <div x-show="recoveryStatus === 'error'"
+                class="bg-red-50 text-red-700 p-4 rounded-lg mb-6 flex items-center">
+                <i class="fas fa-exclamation-circle mr-3"></i>
+                <span x-text="recoveryError">An error occurred.</span>
+            </div>
+
+            <div x-show="recoveryStatus !== 'success'">
+                <!-- Recovery Instructions -->
+                <p class="text-gray-600 mb-6">
+                    Enter your email address and we'll send you a link to reset your password.
+                </p>
+
+                <!-- Recovery Form -->
+                <form @submit.prevent="submitRecoveryForm">
+                    <!-- Email Field -->
+                    <div class="mb-6">
+                        <label for="recovery_email" class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                        <div
+                            class="relative input-focus-effect rounded-lg border border-gray-300 transition-all duration-200">
+                            <span class="absolute inset-y-0 left-3 flex items-center text-gray-400">
+                                <i class="fas fa-envelope"></i>
+                            </span>
+                            <input type="email" id="recovery_email" x-model="recoveryEmail"
+                                class="w-full py-3 pl-10 pr-3 rounded-lg focus:outline-none bg-transparent"
+                                placeholder="name@example.com" required>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit"
+                        class="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center"
+                        :class="{'opacity-75 cursor-not-allowed': isRecovering}" :disabled="isRecovering">
+                        <span x-show="!isRecovering">Send Recovery Link</span>
+                        <span x-show="isRecovering" class="flex items-center">
+                            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                    stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor"
+                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                </path>
+                            </svg>
+                            Sending...
+                        </span>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Bottom Divider -->
+        <div class="border-t border-gray-200 p-6 bg-gray-50">
+            <p class="text-center text-gray-600 text-sm">
+                <button @click="goBackToLogin" class="text-green-600 hover:text-green-800 font-medium">
+                    <i class="fas fa-arrow-left mr-1"></i> Back to login
+                </button>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function loginState() {
+        return {
+            currentStep: 'login', // 'login' or 'recovery'
+
+            // Login form data
+            formData: {
+                identifier: '',  // Changed from email to identifier (can be email or phone)
+                password: '',
+                remember: false
+            },
+            showPassword: false,
+            isSubmitting: false,
+            formStatus: 'idle', // idle, submitting, error
+            errorMessage: '',
+
+            // Recovery data
+            recoveryEmail: '',
+            recoveryStatus: 'idle', // idle, recovering, success, error
+            recoveryError: '',
+            isRecovering: false,
+
+            // LOGIN METHODS
+            async submitLoginForm() {
+                if (!this.formData.identifier || !this.formData.password) {
+                    this.formStatus = 'error';
+                    this.errorMessage = 'Please fill all required fields.';
+                    return;
+                }
+
+                this.isSubmitting = true;
+                this.formStatus = 'submitting';
+
+                try {
+                    // Replace with your actual API endpoint
+                    const response = await fetch('{% url "login_api" %}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            // Include CSRF token for Django
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        },
+                        body: JSON.stringify({
+                            username_or_email_or_phone: this.formData.identifier,
+                            password: this.formData.password,
+                            // remember: this.formData.remember
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (!response.ok) {
+                        console.log(data);
+                        let errorMessage = 'Invalid credentials.';
+                        if (data.detail) {
+                            errorMessage = data.detail;
+                        }
+                        throw new Error(errorMessage);
+                    }
+
+                    // Redirect to dashboard or home page after successful login
+                    window.location.href = data.redirect_url || "{% url 'home' %}";
+
+                } catch (error) {
+                    this.formStatus = 'error';
+                    this.errorMessage = error.message || 'Login failed. Please try again.';
+                } finally {
+                    this.isSubmitting = false;
+                }
+            },
+
+            // RECOVERY METHODS
+            async submitRecoveryForm() {
+                if (!this.recoveryEmail) {
+                    this.recoveryStatus = 'error';
+                    this.recoveryError = 'Please enter your email address.';
+                    return;
+                }
+
+                this.isRecovering = true;
+                this.recoveryStatus = 'recovering';
+
+                try {
+                    // Replace with your actual API endpoint
+                    const response = await fetch('/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        },
+                        body: JSON.stringify({
+                            email: this.recoveryEmail
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(data.detail || 'Failed to send recovery email.');
+                    }
+
+                    this.recoveryStatus = 'success';
+
+                } catch (error) {
+                    this.recoveryStatus = 'error';
+                    this.recoveryError = error.message || 'An error occurred. Please try again.';
+                } finally {
+                    this.isRecovering = false;
+                }
+            },
+
+            goBackToLogin() {
+                // Reset recovery form
+                this.recoveryEmail = '';
+                this.recoveryStatus = 'idle';
+                
+                // Go back to login
+                this.currentStep = 'login';
+            }
+        };
+    }
+</script>
+{% endblock %}
