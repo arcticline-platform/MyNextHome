@@ -62,7 +62,7 @@
 
         /* User Marker Styles */
         .user-marker {
-            filter: drop-shadow(0 0 12px rgba(59, 130, 246, 0.7));
+            filter: drop-shadow(0 0 12px rgba(59, 246, 143, 0.7));
             position: relative;
             width: 40px;
             height: 40px;
@@ -73,7 +73,7 @@
         .user-marker i {
             position: relative;
             z-index: 2;
-            filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.7));
+            filter: drop-shadow(0 0 8px rgba(59, 246, 137, 0.7));
         }
 
         .user-marker .animate-ping {
@@ -742,8 +742,8 @@
                 if (isHighAccuracy) {
                     el.innerHTML = `
                         <div class="relative">
-                            <i class="fas fa-map-marker-alt text-blue-500 text-3xl"></i>
-                            <div class="absolute inset-0 rounded-full bg-blue-500 opacity-20 animate-ping"></div>
+                            <i class="fas fa-map-marker-alt text-green-500 text-3xl"></i>
+                            <div class="absolute inset-0 rounded-full bg-green-500 opacity-20 animate-ping"></div>
                         </div>
                     `;
                 } else {
@@ -789,6 +789,7 @@
                         position => {
                             const coords = [position.coords.longitude, position.coords.latitude];
                             const accuracy = position.coords.accuracy;
+                            console.log('High accuracy location:', coords, accuracy);
                             
                             // Update UI with high accuracy location
                             updateUserLocation({
@@ -808,7 +809,7 @@
                         },
                         {
                             enableHighAccuracy: true,
-                            timeout: 10000,
+                            timeout: 15000,
                             maximumAge: 0
                         }
                     );
