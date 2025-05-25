@@ -465,10 +465,28 @@ class Address(TimeStampedModel):
     apartment_suite = models.CharField(max_length=50, blank=True, null=True)
     city = models.CharField(max_length=100)
     state = models.CharField(max_length=100)
-    country = models.CharField(max_length=100, default="United States")
+    EAST_AFRICAN_COUNTRIES = [
+        ('Uganda', 'Uganda'),
+        ('Kenya', 'Kenya'),
+        ('Tanzania', 'Tanzania'),
+        ('Rwanda', 'Rwanda'),
+        ('Burundi', 'Burundi'),
+        ('South Sudan', 'South Sudan'),
+        ('Ethiopia', 'Ethiopia'),
+        ('Somalia', 'Somalia'),
+        ('Eritrea', 'Eritrea'),
+        ('Djibouti', 'Djibouti'),
+        ('DR Congo', 'DR Congo'),
+    ]
+    country = models.CharField(
+        max_length=100,
+        choices=EAST_AFRICAN_COUNTRIES,
+        default="Uganda",
+        help_text="Country (East Africa only)"
+    )
     zip_code = models.CharField(max_length=10)
-    latitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
-    longitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
+    latitude = models.DecimalField(max_digits=13, decimal_places=6, blank=True, null=True)
+    longitude = models.DecimalField(max_digits=13, decimal_places=6, blank=True, null=True)
     location = gis_models.PointField(geography=True, blank=True, null=True)
     nearby_landmarks = models.TextField(blank=True)
     map_url = models.URLField(blank=True)  
@@ -685,7 +703,29 @@ class Property(TimeStampedModel):
     
     # Pricing information
     price = models.DecimalField(max_digits=12, decimal_places=2, validators=[MinValueValidator(0)])
-    price_currency = models.CharField(max_length=3, default='UGX')
+    CURRENCY_CHOICES = [
+        ('UGX', 'Ugandan Shilling'),
+        ('KES', 'Kenyan Shilling'),
+        ('TZS', 'Tanzanian Shilling'),
+        ('RWF', 'Rwandan Franc'),
+        ('BIF', 'Burundian Franc'),
+        ('SSP', 'South Sudanese Pound'),
+        ('ETB', 'Ethiopian Birr'),
+        ('SOS', 'Somali Shilling'),
+        ('ERN', 'Eritrean Nakfa'),
+        ('DJF', 'Djiboutian Franc'),
+        ('CDF', 'Congolese Franc'),
+        ('USD', 'US Dollar'),
+        ('EUR', 'Euro'),
+        ('GBP', 'British Pound'),
+        ('CNY', 'Chinese Yuan'),
+    ]
+    price_currency = models.CharField(
+        max_length=3,
+        choices=CURRENCY_CHOICES,
+        default='UGX',
+        help_text="Currency for the property price"
+    )
     price_per_sqft = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     is_price_negotiable = models.BooleanField(default=False)
     tax_rate = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)
@@ -757,7 +797,7 @@ class Property(TimeStampedModel):
         
         # Calculate price per sqft if needed
         if self.square_feet and self.price and not self.price_per_sqft:
-            self.price_per_sqft = self.price / self.square_feat
+            self.price_per_sqft = self.price / self.square_feet
         
         super().save(*args, **kwargs)
 

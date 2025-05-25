@@ -28,7 +28,9 @@ django-filter==24.3
 django-import-export==4.3.3
 django-ipware==7.0.1
 django-js-asset==3.0.1
+django-mapbox-location-field==2.1.0
 django-phonenumber-field==8.0.0
+django-user-agents==0.4.0
 djangorestframework==3.16.0
 djangorestframework_simplejwt==5.5.0
 drf-spectacular==0.28.0
@@ -64,8 +66,11 @@ tablib==3.7.0
 twilio==9.4.1
 typing_extensions==4.12.2
 tzdata==2024.2
+ua-parser==1.0.1
+ua-parser-builtins==0.18.0.post1
 uritemplate==4.1.1
 urllib3==2.3.0
+user-agents==2.2.0
 vine==5.1.0
 wcwidth==0.2.13
 yarl==1.18.3

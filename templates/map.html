@@ -285,7 +285,7 @@
                         </div>
                         <input id="search" name="search" class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 focus:border-transparent sm:text-sm" placeholder="Search locations..." type="search">
                     </div>
-                    <a href="{% if user.is_authenticated %}#{% else %}{% url 'login' %}{% endif %}" class="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+                    <a href="{% if user.is_authenticated %}{% url 'add_property' %}{% else %}{% url 'login' %}{% endif %}" class="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-md text-sm font-medium">
                         List Your Property
                     </a>
                 </div>
@@ -311,9 +311,9 @@
                                     <i class="fas fa-heart w-5 mr-3 text-gray-400"></i>
                                     Saved Properties
                                 </a>
-                                <a href="{% url 'settings' %}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-primary-50 hover:text-primary-700 transition duration-150" role="menuitem">
-                                    <i class="fas fa-cog w-5 mr-3 text-gray-400"></i>
-                                    Settings
+                                <a href="{% url 'profile' %}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-primary-50 hover:text-primary-700 transition duration-150" role="menuitem">
+                                    <i class="fas fa-user w-5 mr-3 text-gray-400"></i>
+                                    Account
                                 </a>
                                 <div class="border-t border-gray-100"></div>
                                 <form action="{% url 'logout' %}" method="POST" class="block">

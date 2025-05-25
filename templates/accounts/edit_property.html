@@ -1,0 +1,80 @@
+{% extends "accounts/property_form_base.html" %}
+
+{% block title %}Edit {{ property.title }} | MyNextHome{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<style>
+    .image-upload-progress {
+        display: none;
+        margin-top: 1rem;
+    }
+    .progress-bar {
+        height: 20px;
+        background-color: #e5e7eb;
+        border-radius: 0.25rem;
+        overflow: hidden;
+    }
+    .progress-bar-fill {
+        height: 100%;
+        background-color: #10b981;
+        width: 0%;
+        transition: width 0.3s ease;
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+{{ block.super }}
+<script>
+    // Handle image uploads via AJAX
+    document.getElementById('id_image').addEventListener('change', function(e) {
+        const files = e.target.files;
+        if (!files.length) return;
+        
+        const progressContainer = document.createElement('div');
+        progressContainer.className = 'image-upload-progress';
+        progressContainer.innerHTML = `
+            <p class="text-sm text-gray-600">Uploading ${files.length} image(s)...</p>
+            <div class="progress-bar">
+                <div class="progress-bar-fill"></div>
+            </div>
+        `;
+        
+        this.parentNode.appendChild(progressContainer);
+        progressContainer.style.display = 'block';
+        
+        const progressBar = progressContainer.querySelector('.progress-bar-fill');
+        let uploaded = 0;
+        
+        Array.from(files).forEach(file => {
+            const formData = new FormData();
+            formData.append('image', file);
+            
+            fetch('{% url "upload_property_image" property.pk %}', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    uploaded++;
+                    progressBar.style.width = `${(uploaded / files.length) * 100}%`;
+                    
+                    if (uploaded === files.length) {
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 500);
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        });
+    });
+</script>
+{% endblock %}
