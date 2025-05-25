@@ -242,8 +242,7 @@ def create_users(count=20):
         password='admin123',
         first_name='Admin',
         last_name='User',
-        is_subscribed=True,
-        is_creator=True,
+        is_realtor=True,
         referral_code=uuid.uuid4()
     )
     UserProfile.objects.create(
@@ -275,8 +274,7 @@ def create_users(count=20):
             password='testpass123',
             first_name=first_name,
             last_name=last_name,
-            is_subscribed=random.random() < 0.6,
-            is_creator=random.random() < 0.3,
+            is_realtor=random.random() < 0.3,
             referral_code=uuid.uuid4()
         )
         
@@ -340,7 +338,7 @@ def create_properties(count=1000):
     )
     
     print(f"Creating {count} properties...")
-    users = list(User.objects.filter(is_creator=True))
+    users = list(User.objects.filter(is_realtor=True))
     property_types = list(PropertyType.objects.all())
     addresses = list(Address.objects.all())
     amenities = list(Amenity.objects.all())
