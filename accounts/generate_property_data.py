@@ -20,18 +20,18 @@ django.setup()
 User = get_user_model()
 fake = Faker()
 
-# Constants for Ugandan context
+# Constants for Ugandan context with accurate city coordinates
 UGANDAN_CITIES = [
-    ('Kampala', 'Central'),
-    ('Jinja', 'Eastern'),
-    ('Mbarara', 'Western'),
-    ('Gulu', 'Northern'),
-    ('Entebbe', 'Central'),
-    ('Mbale', 'Eastern'),
-    ('Fort Portal', 'Western'),
-    ('Lira', 'Northern'),
-    ('Arua', 'Northern'),
-    ('Masaka', 'Central'),
+    ('Kampala', 'Central', (0.3136, 32.5811)),
+    ('Jinja', 'Eastern', (0.4244, 33.2041)),
+    ('Mbarara', 'Western', (-0.6049, 30.6485)),
+    ('Gulu', 'Northern', (2.7746, 32.2980)),
+    ('Entebbe', 'Central', (0.0644, 32.4465)),
+    ('Mbale', 'Eastern', (1.0644, 34.1796)),
+    ('Fort Portal', 'Western', (0.6933, 30.2666)),
+    ('Lira', 'Northern', (2.2350, 32.9097)),
+    ('Arua', 'Northern', (3.0201, 30.9111)),
+    ('Masaka', 'Central', (-0.3333, 31.7333)),
 ]
 
 PROPERTY_TYPES = [
@@ -303,12 +303,20 @@ def create_addresses(count=1000):
     
     print(f"Creating {count} addresses...")
     for i in range(count):
-        city, region = random.choice(UGANDAN_CITIES)
+        city_data = random.choice(UGANDAN_CITIES)
+        city = city_data[0]
+        region = city_data[1]
+        city_coords = city_data[2]
+        
         street_address = fake.street_address()
         
         # Generate Ugandan-style addresses
         if random.random() < 0.5:
             street_address = f"{random.randint(1, 100)} {fake.street_name()}"
+        
+        # Generate coordinates within 10km of city center
+        lat = city_coords[0] + random.uniform(-0.1, 0.1)
+        lon = city_coords[1] + random.uniform(-0.1, 0.1)
         
         # Generate Ugandan postal codes (not official but for testing)
         postal_code = f"UG-{random.randint(1000, 9999)}"
@@ -320,8 +328,8 @@ def create_addresses(count=1000):
             state=region,
             country="Uganda",
             zip_code=postal_code,
-            latitude=Decimal(str(random.uniform(-1.5, 3.5))),  # Rough bounds for Uganda
-            longitude=Decimal(str(random.uniform(29.5, 35.0))),  # Rough bounds for Uganda
+            latitude=Decimal(str(round(lat, 6))),
+            longitude=Decimal(str(round(lon, 6))),
             neighborhood=fake.city_suffix() if random.random() < 0.5 else None,
             nearby_landmarks=fake.text(max_nb_chars=100) if random.random() < 0.7 else '',
         )
