@@ -18,14 +18,22 @@ from accounts.models import Property
 
 channel_layer = get_channel_layer()
 
+try:
+    from django.db import connection
+    if connection.settings_dict and 'core_systemutility' in connection.introspection.table_names():
+        try:
+            utility = SystemUtility.objects.get(id=1)
+        except SystemUtility.DoesNotExist:
+            utility = None
+    else:
+        utility = None
+except Exception as e:
+    utility = None
+
+
 def landing_page(request):
-    if request.user.is_authenticated:
-        return redirect('profile',request.user.id, request.user.username)
-    try:
-        utility = SystemUtility.objects.get(id=1)
+    if utility is not None:
         Tracker.objects.create_from_request(request, utility)
-    except SystemUtility.DoesNotExist:
-        utility = None  
     return render(request, 'landing.html', {})
 
 

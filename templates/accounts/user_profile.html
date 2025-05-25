@@ -1,0 +1,869 @@
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}My Profile{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@8/swiper-bundle.min.css">
+<style>
+    .profile-nav-item {
+        transition: all 0.3s ease;
+        border-bottom: 2px solid transparent;
+    }
+    .profile-nav-item:hover, .profile-nav-item.active {
+        border-bottom-color: #057153;
+        color: #057153;
+    }
+    .property-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .property-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    }
+    .avatar-upload {
+        position: relative;
+        max-width: 200px;
+        margin: 0 auto;
+    }
+    .avatar-upload .avatar-preview {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        border: 3px solid #057153;
+        background-size: cover;
+        background-position: center;
+    }
+    .avatar-upload .btn-upload {
+        position: absolute;
+        bottom: 10px;
+        right: 10px;
+        background: #057153;
+        color: white;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+    }
+    .danger-zone {
+        border-left: 4px solid #ef4444;
+    }
+    .swal2-html-container {
+        max-height: 60vh;
+        overflow-y: auto;
+    }
+    .property-modal-image {
+        height: 300px;
+        object-fit: cover;
+        width: 100%;
+        border-radius: 8px;
+    }
+    .property-feature {
+        display: flex;
+        align-items: center;
+        margin-right: 1rem;
+    }
+    .property-feature i {
+        margin-right: 0.5rem;
+        color: #057153;
+    }
+    .swal2-popup {
+        max-width: 800px !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8 max-w-7xl">
+    <div x-data="{ activeTab: 'saved', ...profile() }" class="bg-white rounded-xl shadow-md overflow-hidden animate-fade-in">
+        <!-- Profile Header -->
+        <div class="fixed top-4 left-4 z-50">
+            <a href="{% url 'home' %}" 
+               class="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-full shadow-lg 
+                  transition-all duration-300 hover:scale-105 hover:shadow-xl hover:gap-3
+                  group backdrop-blur-sm bg-opacity-90">
+            <i class="fas fa-arrow-left group-hover:animate-pulse"></i>
+            <span class="text-sm font-medium opacity-30 group-hover:opacity-100 transition-opacity duration-300">
+                Back to Homes
+            </span>
+            </a>
+        </div>
+        <div class="bg-green-600 p-6 text-white">
+            <div class="flex flex-col md:flex-row items-center">
+                <div class="avatar-upload mb-4 md:mb-0 md:mr-6">
+                    <div class="avatar-preview" style="background-image: url('{% if user.profile.avatar %}{{ user.profile.avatar.url }}{% else %}{% static 'img/user.png' %}{% endif %}');"></div>
+                    <label class="btn-upload">
+                        <i class="fas fa-camera"></i>
+                        <input type="file" class="hidden" accept="image/*" @change="previewAvatar">
+                    </label>
+                </div>
+                <div class="text-center md:text-left">
+                    <h1 class="text-2xl font-bold">{{ user.get_full_name|default:user.username }}</h1>
+                    <p class="text-green-100">{{ user.email }}</p>
+                    <p class="text-green-100 mt-2">
+                        <i class="fas fa-map-marker-alt mr-1"></i>
+                        {% if user.profile.location %}{{ user.profile.location }}{% else %}Location not set{% endif %}
+                    </p>
+                    <div class="flex justify-center md:justify-start space-x-2 mt-3">
+                        <span class="bg-green-700 text-xs px-2 py-1 rounded-full">Member since {{ user.date_joined|date:"M Y" }}</span>
+                        {% if user.profile.is_agent %}
+                        <span class="bg-yellow-500 text-xs px-2 py-1 rounded-full">Verified Agent</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="border-b border-gray-200">
+            <nav class="flex overflow-x-auto">
+                <button @click="activeTab = 'saved'" :class="{ 'active': activeTab === 'saved' }" class="profile-nav-item px-6 py-4 font-medium text-sm whitespace-nowrap">
+                    <i class="fas fa-heart mr-2"></i> Saved Properties
+                </button>
+                <button @click="activeTab = 'listings'" :class="{ 'active': activeTab === 'listings' }" class="profile-nav-item px-6 py-4 font-medium text-sm whitespace-nowrap">
+                    <i class="fas fa-home mr-2"></i> My Listings
+                </button>
+                <button @click="activeTab = 'settings'" :class="{ 'active': activeTab === 'settings' }" class="profile-nav-item px-6 py-4 font-medium text-sm whitespace-nowrap">
+                    <i class="fas fa-cog mr-2"></i> Account Settings
+                </button>
+                {% if user.profile.is_agent %}
+                <button @click="activeTab = 'agent'" :class="{ 'active': activeTab === 'agent' }" class="profile-nav-item px-6 py-4 font-medium text-sm whitespace-nowrap">
+                    <i class="fas fa-user-tie mr-2"></i> Agent Dashboard
+                </button>
+                {% endif %}
+            </nav>
+        </div>
+
+        <!-- Tab Content -->
+        <div class="p-6">
+            <!-- Saved Properties Tab -->
+            <div x-show="activeTab === 'saved'" x-transition>
+                <h2 class="text-xl font-semibold mb-4">Your Saved Properties</h2>
+                {% if saved_properties %}
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {% for property in saved_properties %}
+                    <div class="property-card bg-white rounded-lg overflow-hidden shadow-md border border-gray-100">
+                        <div class="relative">
+                            <img src="{{ property.images.filter.is_primary.first.image.url|default:property.images.first.image.url }}" 
+                                 alt="{{ property.title }}" 
+                                 class="w-full h-48 object-cover">
+                            <button @click="removeSavedProperty('{{ property.id }}')" class="absolute top-2 right-2 bg-white p-2 rounded-full text-red-500 shadow-md hover:bg-red-50">
+                                <i class="fas fa-heart"></i>
+                            </button>
+                        </div>
+                        <div class="p-4">
+                            <h3 class="font-bold text-lg mb-1">{{ property.title }}</h3>
+                            <p class="text-gray-600 text-sm mb-2">
+                                <i class="fas fa-map-marker-alt text-green-500 mr-1"></i>
+                                {{ property.location }}
+                            </p>
+                            <div class="flex justify-between items-center mb-3">
+                                <span class="text-green-600 font-bold">{{property.price_currency}} {{ property.price|floatformat:"0"|intcomma }}</span>
+                                <div class="flex space-x-1">
+                                    <span class="text-sm text-gray-500"><i class="fas fa-bed mr-1"></i> {{ property.bedrooms }}</span>
+                                    <span class="text-sm text-gray-500"><i class="fas fa-bath mr-1"></i> {{ property.bathrooms }}</span>
+                                    <span class="text-sm text-gray-500"><i class="fas fa-ruler-combined mr-1"></i> {{ property.area }} sqft</span>
+                                </div>
+                            </div>
+                            <div class="flex justify-between">
+                                <button @click="showPropertyDetails('{{ property.id }}')" class="text-green-600 hover:text-green-800 text-sm font-medium">View Details</button>
+                        
+                                <button class="text-sm bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded">Contact Agent</button>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-12">
+                    <i class="fas fa-heart text-gray-300 text-5xl mb-4"></i>
+                    <h3 class="text-lg font-medium text-gray-700">No saved properties yet</h3>
+                    <p class="text-gray-500 mt-2">When you save properties, they'll appear here.</p>
+                    <a href="{% url 'home' %}" class="mt-4 inline-block bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg">Browse Properties</a>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- My Listings Tab -->
+            <div x-show="activeTab === 'listings'" x-transition>
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-semibold">Your Property Listings</h2>
+                    <a href="{% url 'add_property' %}" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center">
+                        <i class="fas fa-plus mr-2"></i> Add New Property
+                    </a>
+                </div>
+                
+                {% if user_listings %}
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Property</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Views</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for listing in user_listings %}
+                            <tr data-property-id="{{ listing.id }}">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="flex-shrink-0 h-10 w-10">
+                                            <img class="h-10 w-10 rounded-md object-cover" src="{{ listing.images.filter.is_primary.first.image.url|default:listing.images.first.image.url }}" alt="{{ listing.title }}">
+                                        </div>
+                                        <div class="ml-4">
+                                            <div class="text-sm font-medium text-gray-900 property-title">{{ listing.title }}</div>
+                                            <div class="text-sm text-gray-500">{{ listing.location }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                        {% if listing.status == 'published' %}bg-green-100 text-green-800
+                                        {% elif listing.status == 'pending' %}bg-yellow-100 text-yellow-800
+                                        {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                        {{ listing.get_status_display }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{listing.price_currency}} {{ listing.price|floatformat:"0"|intcomma }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ listing.view_count }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <a href="{% url 'edit_property' listing.id %}" class="text-green-600 hover:text-green-900 mr-3"><i class="fas fa-edit"></i></a>
+                                    <a href="#" @click="showPropertyDetails('{{ listing.id }}')" class="text-blue-600 hover:text-blue-900 mr-3"><i class="fas fa-eye"></i></a>
+                                    <a href="#" @click.prevent="confirmDeleteProperty({{ listing.id }}, '{{ listing.title|escapejs }}')" class="text-red-600 hover:text-red-900"><i class="fas fa-trash"></i></a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-12">
+                    <i class="fas fa-home text-gray-300 text-5xl mb-4"></i>
+                    <h3 class="text-lg font-medium text-gray-700">No listings yet</h3>
+                    <p class="text-gray-500 mt-2">Start by adding your first property listing.</p>
+                    <a href="{% url 'add_property' %}" class="mt-4 inline-block bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg">Add Property</a>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Account Settings Tab -->
+            <div x-show="activeTab === 'settings'" x-transition>
+                <h2 class="text-xl font-semibold mb-6">Account Settings</h2>
+                <form method="post" enctype="multipart/form-data" class="space-y-6" @submit.prevent="submitProfileForm">
+                    {% csrf_token %}
+                    <input type="hidden" name="form_type" value="profile_settings">
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Personal Information -->
+                        <div class="bg-gray-50 p-6 rounded-lg">
+                            <h3 class="text-lg font-medium mb-4">Personal Information</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <label for="id_first_name" class="block text-sm font-medium text-gray-700">First Name</label>
+                                    <input type="text" name="first_name" id="id_first_name" value="{{ user.first_name }}" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500">
+                                </div>
+                                <div>
+                                    <label for="id_last_name" class="block text-sm font-medium text-gray-700">Last Name</label>
+                                    <input type="text" name="last_name" id="id_last_name" value="{{ user.last_name }}" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500">
+                                </div>
+                                <div>
+                                    <label for="id_email" class="block text-sm font-medium text-gray-700">Email</label>
+                                    <input type="email" name="email" id="id_email" value="{{ user.email }}" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500">
+                                </div>
+                                <div>
+                                    <label for="id_phone" class="block text-sm font-medium text-gray-700">Phone Number</label>
+                                    <input type="text" name="phone" id="id_phone" value="{{ user.profile.phone }}" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Profile Details -->
+                        <div class="bg-gray-50 p-6 rounded-lg">
+                            <h3 class="text-lg font-medium mb-4">Profile Details</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <label for="id_bio" class="block text-sm font-medium text-gray-700">Bio</label>
+                                    <textarea name="bio" id="id_bio" rows="3" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500">{{ user.profile.bio }}</textarea>
+                                </div>
+                                <div>
+                                    <label for="id_location" class="block text-sm font-medium text-gray-700">Location</label>
+                                    <input type="text" name="location" id="id_location" value="{{ user.profile.location }}" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500">
+                                </div>
+                                <div>
+                                    <label for="id_avatar" class="block text-sm font-medium text-gray-700">Profile Picture</label>
+                                    <input type="file" name="avatar" id="id_avatar" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Password Change -->
+                    <div class="bg-gray-50 p-6 rounded-lg">
+                        <h3 class="text-lg font-medium mb-4">Change Password</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label for="id_old_password" class="block text-sm font-medium text-gray-700">Current Password</label>
+                                <input type="password" name="old_password" id="id_old_password" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500">
+                            </div>
+                            <div>
+                                <label for="id_new_password1" class="block text-sm font-medium text-gray-700">New Password</label>
+                                <input type="password" name="new_password1" id="id_new_password1" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500">
+                            </div>
+                            <div>
+                                <label for="id_new_password2" class="block text-sm font-medium text-gray-700">Confirm New Password</label>
+                                <input type="password" name="new_password2" id="id_new_password2" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Danger Zone -->
+                    <div class="bg-red-50 p-6 rounded-lg danger-zone">
+                        <h3 class="text-lg font-medium text-red-800 mb-4">Danger Zone</h3>
+                        <div class="space-y-4">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <h4 class="font-medium text-red-700">Delete Account</h4>
+                                    <p class="text-sm text-red-600">Permanently delete your account and all associated data</p>
+                                </div>
+                                <button @click="confirmAccountDeletion()" type="button" class="px-4 py-2 border border-red-600 text-red-600 hover:bg-red-600 hover:text-white rounded-md transition-colors duration-200">
+                                    Delete Account
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" @click="resetForm()" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                            Reset Changes
+                        </button>
+                        <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg">
+                            Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Agent Dashboard Tab -->
+            {% if user.profile.is_agent %}
+            <div x-show="activeTab === 'agent'" x-transition>
+                <h2 class="text-xl font-semibold mb-6">Agent Dashboard</h2>
+                
+                <!-- Agent Stats -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                    <div class="bg-white p-4 rounded-lg shadow border border-gray-100">
+                        <div class="text-gray-500 text-sm">Total Listings</div>
+                        <div class="text-2xl font-bold text-green-600">{{ agent_stats.total_listings }}</div>
+                    </div>
+                    <div class="bg-white p-4 rounded-lg shadow border border-gray-100">
+                        <div class="text-gray-500 text-sm">Active Listings</div>
+                        <div class="text-2xl font-bold text-blue-600">{{ agent_stats.active_listings }}</div>
+                    </div>
+                    <div class="bg-white p-4 rounded-lg shadow border border-gray-100">
+                        <div class="text-gray-500 text-sm">Total Views</div>
+                        <div class="text-2xl font-bold text-purple-600">{{ agent_stats.total_views }}</div>
+                    </div>
+                    <div class="bg-white p-4 rounded-lg shadow border border-gray-100">
+                        <div class="text-gray-500 text-sm">Leads This Month</div>
+                        <div class="text-2xl font-bold text-yellow-600">{{ agent_stats.monthly_leads }}</div>
+                    </div>
+                </div>
+                
+                <!-- Recent Leads -->
+                <div class="bg-white p-6 rounded-lg shadow mb-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-medium">Recent Leads</h3>
+                        <a href="#" class="text-green-600 hover:text-green-800 text-sm">View All</a>
+                    </div>
+                    
+                    {% if recent_leads %}
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Property</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                {% for lead in recent_leads %}
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm font-medium text-gray-900">{{ lead.name }}</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm text-gray-900">{{ lead.property.title }}</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm text-gray-500">{{ lead.phone }}</div>
+                                        <div class="text-sm text-gray-500">{{ lead.email }}</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        {{ lead.created_at|date:"M d, Y" }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                            {% if lead.status == 'new' %}bg-blue-100 text-blue-800
+                                            {% elif lead.status == 'contacted' %}bg-green-100 text-green-800
+                                            {% elif lead.status == 'converted' %}bg-purple-100 text-purple-800
+                                            {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                            {{ lead.get_status_display }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-8">
+                        <i class="fas fa-users text-gray-300 text-5xl mb-4"></i>
+                        <h3 class="text-lg font-medium text-gray-700">No leads yet</h3>
+                        <p class="text-gray-500 mt-2">When potential buyers contact you about your listings, they'll appear here.</p>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Performance Chart (Placeholder) -->
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <h3 class="text-lg font-medium mb-4">Monthly Performance</h3>
+                    <div class="h-64 flex items-center justify-center bg-gray-50 rounded-lg">
+                        <p class="text-gray-500">Performance chart will be displayed here</p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/swiper@8/swiper-bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('profile', () => ({
+            // Avatar preview functionality
+            previewAvatar(event) {
+                const input = event.target;
+                if (input.files && input.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        document.querySelector('.avatar-preview').style.backgroundImage = `url('${e.target.result}')`;
+                    };
+                    reader.readAsDataURL(input.files[0]);
+                }
+            },
+
+            // New function to show property details in modal
+            showPropertyDetails(propertyId) {
+                Swal.fire({
+                    title: 'Loading Property Details',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                        
+                        fetch(`/accounts/properties/property/${propertyId}/`, {
+                            method: 'GET',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                        })
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('Failed to load property details');
+                            }
+                            return response.json();
+                        })
+                        .then(property => {
+                            // Create image gallery
+                            const imagesGallery = property.images.map(img => 
+                                `<div class="swiper-slide">
+                                    <img src="${img.url}" alt="${img.caption || property.title}" class="property-modal-image">
+                                </div>`
+                            ).join('');
+
+                            // Format amenities list
+                            const amenitiesList = property.amenities.map(amenity => 
+                                `<li class="flex items-center mb-2">
+                                    <i class="fas fa-check text-green-500 mr-2"></i>
+                                    <span>${amenity.name}</span>
+                                </li>`
+                            ).join('');
+
+                            // Format neighborhood features
+                            const featuresList = property.neighborhood_features.map(feature => 
+                                `<li class="flex items-center mb-2">
+                                    <i class="fas fa-star text-green-500 mr-2"></i>
+                                    <span>${feature.name}</span>
+                                </li>`
+                            ).join('');
+                            
+                            // Create key features section
+                            const featuresHtml = `
+                                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                                    <div class="property-feature">
+                                        <i class="fas fa-bed"></i>
+                                        <span>${property.bedrooms} Bedrooms</span>
+                                    </div>
+                                    <div class="property-feature">
+                                        <i class="fas fa-bath"></i>
+                                        <span>${property.bathrooms} Bathrooms</span>
+                                    </div>
+                                    <div class="property-feature">
+                                        <i class="fas fa-ruler-combined"></i>
+                                        <span>${property.square_feet} sqft</span>
+                                    </div>
+                                    <div class="property-feature">
+                                        <i class="fas fa-car"></i>
+                                        <span>${property.parking_spaces} Parking</span>
+                                    </div>
+                                </div>
+                            `;
+                            
+                            Swal.fire({
+                                title: property.title,
+                                html: `
+                                    <div class="text-left">
+                                        <div class="swiper-container mb-4">
+                                            <div class="swiper-wrapper">
+                                                ${imagesGallery}
+                                            </div>
+                                            <div class="swiper-pagination"></div>
+                                            <div class="swiper-button-next"></div>
+                                            <div class="swiper-button-prev"></div>
+                                        </div>
+                                        <div class="mb-4">
+                                            <h3 class="text-xl font-bold mb-2">${property.currency} ${property.price.toLocaleString()}</h3>
+                                            <p class="text-gray-600 mb-4">
+                                                <i class="fas fa-map-marker-alt text-green-500 mr-1"></i>
+                                                ${property.address.street}, ${property.address.city}, ${property.address.state}
+                                            </p>
+                                            ${featuresHtml}
+                                            <div class="mb-4">
+                                                <h4 class="font-bold mb-2">Property Details</h4>
+                                                <p class="text-gray-700 mb-2">Type: ${property.property_type}</p>
+                                                
+                                                <p class="text-gray-700 mb-2">Furnishing: ${property.furnishing_status||"Not Stated"}</p>
+                                                <p class="text-gray-700">Internet Included: ${property.internet_included ? 'Yes' : 'No'}</p>
+                                            </div>
+                                            <div class="mb-4">
+                                                <h4 class="font-bold mb-2">Description</h4>
+                                                <p class="text-gray-700">${property.description}</p>
+                                            </div>
+                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                <div>
+                                                    <h4 class="font-bold mb-2">Amenities</h4>
+                                                    <ul class="grid grid-cols-1 gap-2">
+                                                        ${amenitiesList}
+                                                    </ul>
+                                                </div>
+                                                <div>
+                                                    <h4 class="font-bold mb-2">Neighborhood Features</h4>
+                                                    <ul class="grid grid-cols-1 gap-2">
+                                                        ${featuresList}
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `,
+                                showConfirmButton: false,
+                                showCloseButton: true,
+                                width: '80%',
+                                padding: '2em',
+                                background: '#ffffff',
+                                customClass: {
+                                    container: 'property-modal-container'
+                                }
+                            });
+
+                            // Initialize Swiper after modal is shown
+                            new Swiper('.swiper-container', {
+                                pagination: {
+                                    el: '.swiper-pagination',
+                                    clickable: true
+                                },
+                                navigation: {
+                                    nextEl: '.swiper-button-next',
+                                    prevEl: '.swiper-button-prev'
+                                }
+                            });
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            Swal.fire({
+                                title: 'Error!',
+                                text: 'Failed to load property details.',
+                                icon: 'error',
+                                confirmButtonColor: '#057153',
+                            });
+                        });
+                    }
+                });
+            },
+
+            // Remove saved property with SweetAlert2 confirmation
+            removeSavedProperty(propertyId) {
+                Swal.fire({
+                    title: 'Remove from saved?',
+                    text: "This property will be removed from your saved list.",
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#057153',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Yes, remove it!'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        fetch(`/accounts/saved-properties/${propertyId}/remove/`, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRFToken': '{{ csrf_token }}',
+                                'Content-Type': 'application/json',
+                            },
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                Swal.fire({
+                                    title: 'Removed!',
+                                    text: 'The property has been removed from your saved list.',
+                                    icon: 'success',
+                                    confirmButtonColor: '#057153',
+                                }).then(() => {
+                                    window.location.reload();
+                                });
+                            } else {
+                                Swal.fire({
+                                    title: 'Error!',
+                                    text: data.message || 'Failed to remove property.',
+                                    icon: 'error',
+                                    confirmButtonColor: '#057153',
+                                });
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            Swal.fire({
+                                title: 'Error!',
+                                text: 'An error occurred while removing the property.',
+                                icon: 'error',
+                                confirmButtonColor: '#057153',
+                            });
+                        });
+                    }
+                });
+            },
+
+            // Delete property confirmation with SweetAlert2
+            confirmDeleteProperty(propertyId, propertyTitle) {
+                Swal.fire({
+                    title: 'Delete Property?',
+                    html: `Are you sure you want to delete <strong>${propertyTitle}</strong>?<br>This action cannot be undone.`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Yes, delete it!',
+                    reverseButtons: true
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        this.deleteProperty(propertyId);
+                    }
+                });
+            },
+
+            // Actual property deletion
+            deleteProperty(propertyId) {
+                fetch(`/accounts/properties/delete/${propertyId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}',
+                        'Content-Type': 'application/json',
+                    },
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire({
+                            title: 'Deleted!',
+                            text: 'Your property has been deleted.',
+                            icon: 'success',
+                            confirmButtonColor: '#057153',
+                        }).then(() => {
+                            // Find and remove the deleted property's row
+                            const propertyRow = document.querySelector(`tr[data-property-id="${propertyId}"]`);
+                            if (propertyRow) {
+                                propertyRow.remove();
+                            }
+                        });
+                    } else {
+                        Swal.fire({
+                            title: 'Error!',
+                            text: data.message || 'Failed to delete property.',
+                            icon: 'error',
+                            confirmButtonColor: '#057153',
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    Swal.fire({
+                        title: 'Error!',
+                        text: 'An error occurred while deleting the property.',
+                        icon: 'error',
+                        confirmButtonColor: '#057153',
+                    });
+                });
+            },
+
+            // Account deletion confirmation
+            confirmAccountDeletion() {
+                Swal.fire({
+                    title: 'Delete Your Account?',
+                    html: `This will permanently delete your account and all associated data.<br><strong>This action cannot be undone!</strong>`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Yes, delete my account',
+                    reverseButtons: true,
+                    input: 'password',
+                    inputLabel: 'Enter your password to confirm',
+                    inputPlaceholder: 'Your password',
+                    inputAttributes: {
+                        autocapitalize: 'off',
+                        autocorrect: 'off'
+                    },
+                    preConfirm: (password) => {
+                        if (!password) {
+                            Swal.showValidationMessage('Please enter your password');
+                        }
+                        return fetch('/accounts/delete/', {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRFToken': '{{ csrf_token }}',
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ password: password })
+                        })
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(response.statusText);
+                            }
+                            return response.json();
+                        })
+                        .catch(error => {
+                            Swal.showValidationMessage(`Request failed: ${error}`);
+                        });
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        if (result.value && result.value.success) {
+                            Swal.fire({
+                                title: 'Account Deleted!',
+                                text: 'Your account has been permanently deleted.',
+                                icon: 'success',
+                                confirmButtonColor: '#057153',
+                            }).then(() => {
+                                window.location.href = '/';
+                            });
+                        } else {
+                            Swal.fire({
+                                title: 'Error!',
+                                text: result.value ? result.value.message : 'Failed to delete account. Please try again.',
+                                icon: 'error',
+                                confirmButtonColor: '#057153',
+                            });
+                        }
+                    }
+                });
+            },
+
+            // Form submission with SweetAlert2 feedback
+            submitProfileForm(event) {
+                const form = event.target;
+                const formData = new FormData(form);
+                
+                Swal.fire({
+                    title: 'Saving Changes...',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                        fetch(form.action, {
+                            method: form.method,
+                            body: formData,
+                            headers: {
+                                'X-CSRFToken': '{{ csrf_token }}',
+                            },
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                Swal.fire({
+                                    title: 'Success!',
+                                    text: data.message || 'Your changes have been saved.',
+                                    icon: 'success',
+                                    confirmButtonColor: '#057153',
+                                }).then(() => {
+                                    if (data.redirect) {
+                                        window.location.href = data.redirect;
+                                    }
+                                });
+                            } else {
+                                let errorMessage = data.message || 'Failed to save changes.';
+                                if (data.errors) {
+                                    errorMessage += '<br><br>' + Object.values(data.errors).join('<br>');
+                                }
+                                Swal.fire({
+                                    title: 'Error!',
+                                    html: errorMessage,
+                                    icon: 'error',
+                                    confirmButtonColor: '#057153',
+                                });
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            Swal.fire({
+                                title: 'Error!',
+                                text: 'An error occurred while saving your changes.',
+                                icon: 'error',
+                                confirmButtonColor: '#057153',
+                            });
+                        });
+                    }
+                });
+            },
+
+            // Reset form to original values
+            resetForm() {
+                Swal.fire({
+                    title: 'Reset Changes?',
+                    text: "All unsaved changes will be lost.",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#057153',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Yes, reset!'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.reload();
+                    }
+                });
+            }
+        }));
+    });
+</script>
+{% endblock %}

@@ -28,6 +28,8 @@ urlpatterns = [
     path("delete-account/", views.delete_account, name="delete_account"),
 
 
+    path('properties/', include('accounts.property_urls')),
+
 	# Logins
 	# path('auth/', include('django.contrib.auth.urls')),
 	path('check_username/', views.check_username, name='check_username'),
@@ -39,7 +41,6 @@ urlpatterns = [
     path('<id>/user_bio/', views.user_bio, name='user_bio'),
     path('account_settings/', views.account_settings, name='settings'),
 	path('int:<id>/update_profile/', views.update_profile, name='update_profile'),
-    path('int:<id>/create_or_update_portfolio/', views.create_or_update_portfolio, name='create_or_update_portfolio'),
     path('notifications/', views.notifications, name='notifications'),
 
     path('send-otp/', utils.send_otp, name='send_otp'),

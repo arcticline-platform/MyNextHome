@@ -63,7 +63,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    # 'django.contrib.gis',
+    'django.contrib.gis',
     # 'django.contrib.sitemaps',
     'django.contrib.humanize',
 
@@ -77,7 +77,11 @@ INSTALLED_APPS = [
     'ckeditor',
     'phonenumbers',
     'import_export',
+    'rest_framework',
     'drf_spectacular',
+    'django_user_agents',
+    'mapbox_location_field',
+    'rest_framework_simplejwt',
 ]
 
 MIDDLEWARE = [
@@ -88,6 +92,9 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+
+    # Third Party Middleware
+    'django_user_agents.middleware.UserAgentMiddleware',
 ]
 
 ROOT_URLCONF = 'MyNextHome.urls'
@@ -181,6 +188,7 @@ CHANNEL_LAYERS = {
 #     }
 # }
 
+# USER_AGENTS_CACHE = 'default'
 
 
 # Password validation
@@ -333,6 +341,12 @@ AFRICAS_TALKING_APIKEY = env('AFRICAS_TALKING_APIKEY')
 AFRICAS_TALKING_USERNAME = env('AFRICAS_TALKING_USERNAME')
 AFRICAS_TALKING_SENDER_ID = env('AFRICAS_TALKING_SENDER_ID')
 
+# Mapbox
 MAPBOX_ACCESS_TOKEN = env('MAPBOX_ACCESS_TOKEN')
 MAPBOX_STYLE_URL = 'mapbox://styles/mapbox/streets-v12'
+
+
+# File upload settings
+FILE_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10MB
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10MB
 
