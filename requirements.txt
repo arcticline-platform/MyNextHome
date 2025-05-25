@@ -37,6 +37,8 @@ drf-spectacular==0.28.0
 Faker==37.3.0
 frozenlist==1.5.0
 geoip2==5.1.0
+gunicorn==23.0.0
+h11==0.16.0
 idna==3.10
 inflection==0.5.1
 jsonschema==4.23.0
@@ -45,6 +47,7 @@ kombu==5.4.2
 maxminddb==2.7.0
 msgpack==1.1.0
 multidict==6.1.0
+packaging==25.0
 phonenumbers==8.13.52
 pillow==11.1.0
 prompt_toolkit==3.0.48
@@ -71,6 +74,7 @@ ua-parser-builtins==0.18.0.post1
 uritemplate==4.1.1
 urllib3==2.3.0
 user-agents==2.2.0
+uvicorn==0.34.2
 vine==5.1.0
 wcwidth==0.2.13
 yarl==1.18.3

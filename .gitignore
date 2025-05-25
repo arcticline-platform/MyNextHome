@@ -8,7 +8,7 @@ celerybeat-schedule.bak
 celerybeat-schedule.dat
 celerybeat-schedule.dir
 .whl
-.pem
+*.pem
 ########### Python #############
 # Byte-compiled / optimized / DLL files
 __pycache__/
