@@ -38,7 +38,7 @@ def landing_page(request):
 
 
 def home(request):
-    properties = Property.objects.filter(status='published').select_related('address').prefetch_related('amenities', 'images')
+    properties = Property.objects.filter(status='published').select_related('address').prefetch_related('amenities', 'images')[:100]
     property_list = []
     for property in properties:
         primary_image = property.images.filter(is_primary=True).first()
