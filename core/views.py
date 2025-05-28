@@ -42,7 +42,7 @@ def home(request):
         Property.objects.filter(status='published')
         .select_related('address', 'property_type')
         .prefetch_related('amenities__category', 'images', 'neighborhood_features__category')
-        [:10]
+        .order_by('-listed_date')[:15]
     )
     property_list = []
     for property in properties:

@@ -201,6 +201,7 @@ class EditPropertyView(LoginRequiredMixin, UpdateView):
             
             # Save property with address
             property = property_form.save(commit=False)
+            property.status = 'published'  # Ensure status is set to published
             property.address = address
             property.save()
             
