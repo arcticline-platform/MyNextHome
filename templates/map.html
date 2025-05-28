@@ -661,7 +661,7 @@
             <i class="fas fa-list"></i>
         </button>
     </div>
-
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         // Map Initialization and Configuration
         const initializeMap = () => {
@@ -746,7 +746,13 @@
                         searchInput.value = feature.place_name;
                         map.flyTo({
                             center: feature.center,
-                            zoom: 14
+                            zoom: 14,
+                            essential: true,
+                            speed: 1.5,  // Slightly faster animation
+                            curve: 1.2,  // Smoother curve
+                            easing(t) {
+                                return t * (2 - t);  // Ease-out easing function
+                            }
                         });
                         suggestionsContainer.classList.add('hidden');
                     });
@@ -785,7 +791,8 @@
                 userLocation: null,
                 propertyMarkers: [],
                 directionsPanel: document.getElementById('directionsPanel'),
-                directionsContent: document.getElementById('directions')
+                directionsContent: document.getElementById('directions'),
+                currentMediaSlider: null
             };
         };
 
@@ -968,7 +975,12 @@
                 map.flyTo({
                     center: location.coords,
                     zoom: location.source === 'gps' ? 14 : 12,
-                    essential: true
+                    essential: true,
+                    speed: 1.5,  // Slightly faster animation
+                    curve: 1.2,  // Smoother curve
+                    easing(t) {
+                        return t * (2 - t);  // Ease-out easing function
+                    }
                 });
 
                 // Update UI to show location source
@@ -1000,7 +1012,12 @@
                     await getUserLocation();
                 } catch (error) {
                     console.error('Location error:', error);
-                    alert('Unable to get your location. Please ensure location services are enabled.');
+                    Swal.fire({
+                        title: 'Location Error',
+                        text: 'Unable to get your location. Please ensure location services are enabled.',
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                    });
                 } finally {
                     // Restore button state
                     locationBtn.disabled = false;
@@ -1016,229 +1033,6 @@
             };
         };
 
-//         const setupLocationServices = (map) => {
-//     const config = {
-//         maxGpsAttempts: 3,
-//         gpsTimeout: 15000,
-//         fallbackGpsTimeout: 10000,
-//         ipServices: [
-//             'https://ipapi.co/json/',
-//             'https://freegeoip.app/json/',
-//             'https://geolocation-db.com/json/',
-//             'https://ipwho.is/'
-//         ],
-//         cacheDuration: 300000 // 5 minutes
-//     };
-
-//     let gpsWatchId = null;
-//     let isLocating = false;
-//     let locationMarker = null;
-
-//     const cleanup = () => {
-//         if (gpsWatchId !== null) {
-//             navigator.geolocation.clearWatch(gpsWatchId);
-//             gpsWatchId = null;
-//         }
-//     };
-
-//     const getCachedIpLocation = () => {
-//         const cached = localStorage.getItem('ipLocationCache');
-//         if (cached) {
-//             const parsed = JSON.parse(cached);
-//             if (Date.now() - parsed.timestamp < config.cacheDuration) {
-//                 return parsed;
-//             }
-//         }
-//         return null;
-//     };
-
-//     const saveIpLocationToCache = (location) => {
-//         localStorage.setItem('ipLocationCache', JSON.stringify({ ...location, timestamp: Date.now() }));
-//     };
-
-//     const getIPBasedLocation = async () => {
-//         const cached = getCachedIpLocation();
-//         if (cached) return cached;
-
-//         for (const service of config.ipServices) {
-//             try {
-//                 const controller = new AbortController();
-//                 const timeoutId = setTimeout(() => controller.abort(), 5000);
-
-//                 const res = await fetch(service, { signal: controller.signal });
-//                 clearTimeout(timeoutId);
-
-//                 if (!res.ok) continue;
-//                 const data = await res.json();
-
-//                 if (data.longitude && data.latitude) {
-//                     const location = {
-//                         coords: [parseFloat(data.longitude), parseFloat(data.latitude)],
-//                         accuracy: null,
-//                         source: 'ip'
-//                     };
-//                     saveIpLocationToCache(location);
-//                     return location;
-//                 }
-//             } catch (err) {
-//                 console.warn(`IP geolocation failed: ${service}`, err);
-//             }
-//         }
-
-//         throw new Error('All IP geolocation services failed');
-//     };
-
-//     const getHighAccuracyLocation = (attempt = 1) => {
-//         return new Promise((resolve, reject) => {
-//             if (!navigator.geolocation) {
-//                 reject(new Error('Geolocation not supported'));
-//                 return;
-//             }
-
-//             const timeout = attempt === 1 ? config.gpsTimeout : config.fallbackGpsTimeout;
-//             let timeoutId;
-
-//             const onSuccess = (position) => {
-//                 cleanup();
-//                 clearTimeout(timeoutId);
-//                 resolve({
-//                     coords: [position.coords.longitude, position.coords.latitude],
-//                     accuracy: position.coords.accuracy,
-//                     source: 'gps',
-//                     timestamp: position.timestamp
-//                 });
-//             };
-
-//             const onError = (err) => {
-//                 cleanup();
-//                 clearTimeout(timeoutId);
-//                 reject(err);
-//             };
-
-//             timeoutId = setTimeout(() => {
-//                 cleanup();
-//                 reject(new Error(`GPS timeout after ${timeout / 1000}s`));
-//             }, timeout);
-
-//             navigator.geolocation.getCurrentPosition(onSuccess, onError, {
-//                 enableHighAccuracy: true,
-//                 timeout: timeout
-//             });
-//         });
-//     };
-
-//     const getUserLocation = async (attempt = 1) => {
-//         try {
-//             return await getHighAccuracyLocation(attempt);
-//         } catch (err) {
-//             console.warn(`GPS attempt ${attempt} failed:`, err);
-//             if (attempt < config.maxGpsAttempts) {
-//                 return getUserLocation(attempt + 1);
-//             }
-
-//             try {
-//                 console.log('Falling back to IP geolocation');
-//                 return await getIPBasedLocation();
-//             } catch (ipErr) {
-//                 console.error('IP fallback also failed:', ipErr);
-//                 const cached = getCachedIpLocation();
-//                 if (cached) {
-//                     console.warn('Returning cached IP location');
-//                     return cached;
-//                 }
-//                 throw new Error('Unable to determine location');
-//             }
-//         }
-//     };
-
-//     const updateMapLocation = (location) => {
-//         const [lng, lat] = location.coords;
-
-//         // Center map
-//         map.flyTo({ center: [lng, lat], zoom: 15 });
-
-//         // Add or update marker
-//         if (locationMarker) {
-//             locationMarker.setLngLat([lng, lat]);
-//         } else {
-//             locationMarker = new mapboxgl.Marker({ color: '#2ecc71' })
-//                 .setLngLat([lng, lat])
-//                 .setPopup(new mapboxgl.Popup().setText("You are here"))
-//                 .addTo(map);
-//         }
-
-//         // Update info display if needed
-//         const sourceEl = document.getElementById('locationSource');
-//         const accuracyEl = document.getElementById('locationAccuracy');
-
-//         if (sourceEl) {
-//             sourceEl.textContent = location.source === 'gps'
-//                 ? `GPS Location (±${Math.round(location.accuracy)}m)`
-//                 : 'Approximate Location (IP)';
-//             sourceEl.className = location.source === 'gps'
-//                 ? 'text-xs bg-green-100 text-green-800 px-2 py-1 rounded'
-//                 : 'text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded';
-//         }
-
-//         if (accuracyEl) {
-//             accuracyEl.textContent = location.accuracy
-//                 ? `Accuracy: ±${Math.round(location.accuracy)} meters`
-//                 : 'Accuracy: Unknown';
-//             accuracyEl.classList.toggle('hidden', !location.accuracy);
-//         }
-//     };
-
-//     document.getElementById('currentLocation').addEventListener('click', async () => {
-//         const button = document.getElementById('currentLocation');
-//         if (isLocating) return;
-//         isLocating = true;
-
-//         const originalHTML = button.innerHTML;
-//         button.disabled = true;
-//         button.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Locating...';
-
-//         try {
-//             const location = await getUserLocation();
-//             updateMapLocation(location);
-
-//             // Watch for GPS updates
-//             if (location.source === 'gps') {
-//                 gpsWatchId = navigator.geolocation.watchPosition(
-//                     (pos) => {
-//                         updateMapLocation({
-//                             coords: [pos.coords.longitude, pos.coords.latitude],
-//                             accuracy: pos.coords.accuracy,
-//                             source: 'gps',
-//                             timestamp: pos.timestamp
-//                         });
-//                     },
-//                     (err) => console.warn('Watch position error:', err),
-//                     { enableHighAccuracy: true, maximumAge: 10000 }
-//                 );
-//             }
-//         } catch (err) {
-//             console.error('Location error:', err);
-//             let message = 'Unable to get your location.';
-//             if (err.message.includes('timeout')) {
-//                 message = 'Location timed out. Try moving to an open area.';
-//             } else if (err.message.includes('permission')) {
-//                 message = 'Location permission denied. Please enable location access.';
-//             }
-//             alert(message);
-//         } finally {
-//             button.disabled = false;
-//             button.innerHTML = originalHTML;
-//             isLocating = false;
-//         }
-//     });
-
-//     return {
-//         getUserLocation,
-//         cleanup
-//     };
-// };
-
-
         // Property Markers Management
         const setupPropertyMarkers = (map, state, properties, directionsHandlers) => {
             const createBeautifulMarker = (color = 'primary') => {
@@ -1252,6 +1046,230 @@
                 return el;
             };
 
+            const initMediaSlider = (property) => {
+
+                console.log(property.images, property.video_url);
+
+                // Destroy existing slider if any
+                if (state.currentMediaSlider) {
+                    state.currentMediaSlider.destroy();
+                }
+
+                const sliderContainer = document.createElement('div');
+                sliderContainer.className = 'relative w-full h-64 md:h-80 lg:h-96 overflow-hidden rounded-t-lg group';
+                
+                // Create slider track
+                const sliderTrack = document.createElement('div');
+                sliderTrack.className = 'flex h-full transition-transform duration-300 ease-in-out';
+                sliderTrack.style.width = `${100 * (property.images.length + (property.video_url ? 1 : 0))}%`;
+                
+                // Add images to slider
+                property.images.forEach((imageUrl, index) => {
+                    const slide = document.createElement('div');
+                    slide.className = 'flex-shrink-0 w-full h-full relative';
+                    slide.style.width = `${100 / (property.images.length + (property.video_url ? 1 : 0))}%`;
+                    
+                    const img = document.createElement('img');
+                    img.src = imageUrl;
+                    img.alt = `${property.title} - Image ${index + 1}`;
+                    img.className = 'w-full h-full object-cover';
+                    img.loading = 'lazy';
+                    
+                    // Add zoom on hover effect
+                    const zoomOverlay = document.createElement('div');
+                    zoomOverlay.className = 'absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-300 flex items-center justify-center';
+                    zoomOverlay.innerHTML = '<i class="fas fa-search-plus text-white opacity-0 group-hover:opacity-100 transform group-hover:scale-110 transition-all duration-300"></i>';
+                    
+                    slide.appendChild(img);
+                    slide.appendChild(zoomOverlay);
+                    sliderTrack.appendChild(slide);
+                });
+
+                // Add video as last item if exists
+                if (property.video_url) {
+                    const videoSlide = document.createElement('div');
+                    videoSlide.className = 'flex-shrink-0 w-full h-full relative';
+                    videoSlide.style.width = `${100 / (property.images.length + 1)}%`;
+                    
+                    const video = document.createElement('video');
+                    video.src = property.video_url;
+                    video.controls = true;
+                    video.className = 'w-full h-full object-cover';
+                    video.muted = true;
+                    
+                    videoSlide.appendChild(video);
+                    sliderTrack.appendChild(videoSlide);
+                }
+
+                sliderContainer.appendChild(sliderTrack);
+                
+                // Create navigation dots
+                const dotsContainer = document.createElement('div');
+                dotsContainer.className = 'absolute bottom-4 left-0 right-0 flex justify-center space-x-2 z-10';
+                
+                const totalSlides = property.images.length + (property.video_url ? 1 : 0);
+                for (let i = 0; i < totalSlides; i++) {
+                    const dot = document.createElement('button');
+                    dot.className = `w-3 h-3 rounded-full transition-all duration-300 ${i === 0 ? 'bg-white w-6' : 'bg-white bg-opacity-50'}`;
+                    dot.dataset.index = i;
+                    dotsContainer.appendChild(dot);
+                }
+                
+                sliderContainer.appendChild(dotsContainer);
+                
+                // Add navigation arrows (hidden by default, shown on hover)
+                const prevButton = document.createElement('button');
+                prevButton.className = 'absolute left-2 top-1/2 -translate-y-1/2 bg-black bg-opacity-20 text-white p-3 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 hover:bg-opacity-40';
+                prevButton.innerHTML = '<i class="fas fa-chevron-left text-xl"></i>';
+                
+                const nextButton = document.createElement('button');
+                nextButton.className = 'absolute right-2 top-1/2 -translate-y-1/2 bg-black bg-opacity-20 text-white p-3 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 hover:bg-opacity-40';
+                nextButton.innerHTML = '<i class="fas fa-chevron-right text-xl"></i>';
+                
+                sliderContainer.appendChild(prevButton);
+                sliderContainer.appendChild(nextButton);
+                
+                // Initialize slider functionality
+                let currentIndex = 0;
+                let autoSlideInterval;
+                let isDragging = false;
+                let startPos = 0;
+                let currentTranslate = 0;
+                let prevTranslate = 0;
+                let animationID;
+                
+                const updateSlider = () => {
+                    const slideWidth = sliderContainer.offsetWidth;
+                    const translateX = -currentIndex * slideWidth;
+                    sliderTrack.style.transform = `translateX(${translateX}px)`;
+                    
+                    // Update active dot
+                    const dots = dotsContainer.querySelectorAll('button');
+                    dots.forEach((dot, i) => {
+                        dot.className = `w-3 h-3 rounded-full transition-all duration-300 ${i === currentIndex ? 'bg-white w-6' : 'bg-white bg-opacity-50'}`;
+                    });
+                };
+                
+                const startAutoSlide = () => {
+                    autoSlideInterval = setInterval(() => {
+                        if (!isDragging) {
+                            currentIndex = (currentIndex + 1) % totalSlides;
+                            updateSlider();
+                        }
+                    }, 5000);
+                };
+                
+                const stopAutoSlide = () => {
+                    clearInterval(autoSlideInterval);
+                };
+                
+                // Initialize slider position
+                updateSlider();
+                
+                // Touch and mouse events for swipe
+                const touchStart = (e) => {
+                    stopAutoSlide();
+                    isDragging = true;
+                    startPos = getPositionX(e);
+                    prevTranslate = -currentIndex * sliderContainer.offsetWidth;
+                    sliderTrack.style.cursor = 'grabbing';
+                    sliderTrack.style.transition = 'none';
+                    cancelAnimationFrame(animationID);
+                };
+                
+                const touchEnd = () => {
+                    if (isDragging) {
+                        isDragging = false;
+                        sliderTrack.style.cursor = 'grab';
+                        sliderTrack.style.transition = 'transform 0.3s ease-in-out';
+                        
+                        const movedBy = currentTranslate - prevTranslate;
+                        const slideWidth = sliderContainer.offsetWidth;
+                        const threshold = slideWidth / 4;
+                        
+                        if (movedBy < -threshold && currentIndex < totalSlides - 1) {
+                            currentIndex += 1;
+                        } else if (movedBy > threshold && currentIndex > 0) {
+                            currentIndex -= 1;
+                        }
+                        
+                        updateSlider();
+                        startAutoSlide();
+                    }
+                };
+                
+                const touchMove = (e) => {
+                    if (isDragging) {
+                        const currentPosition = getPositionX(e);
+                        currentTranslate = prevTranslate + currentPosition - startPos;
+                        sliderTrack.style.transform = `translateX(${currentTranslate}px)`;
+                    }
+                };
+                
+                const getPositionX = (e) => {
+                    return e.type.includes('mouse') ? e.pageX : e.touches[0].clientX;
+                };
+                
+                // Add event listeners
+                sliderTrack.addEventListener('touchstart', touchStart, { passive: false });
+                sliderTrack.addEventListener('touchend', touchEnd);
+                sliderTrack.addEventListener('touchmove', touchMove, { passive: false });
+                
+                sliderTrack.addEventListener('mousedown', touchStart);
+                sliderTrack.addEventListener('mouseup', touchEnd);
+                sliderTrack.addEventListener('mouseleave', touchEnd);
+                sliderTrack.addEventListener('mousemove', touchMove);
+                
+                // Event listeners for buttons
+                prevButton.addEventListener('click', () => {
+                    stopAutoSlide();
+                    currentIndex = (currentIndex - 1 + totalSlides) % totalSlides;
+                    updateSlider();
+                    startAutoSlide();
+                });
+                
+                nextButton.addEventListener('click', () => {
+                    stopAutoSlide();
+                    currentIndex = (currentIndex + 1) % totalSlides;
+                    updateSlider();
+                    startAutoSlide();
+                });
+                
+                dotsContainer.querySelectorAll('button').forEach(dot => {
+                    dot.addEventListener('click', () => {
+                        stopAutoSlide();
+                        currentIndex = parseInt(dot.dataset.index);
+                        updateSlider();
+                        startAutoSlide();
+                    });
+                });
+                
+                // Start auto-slide
+                startAutoSlide();
+                
+                // Pause on hover
+                sliderContainer.addEventListener('mouseenter', stopAutoSlide);
+                sliderContainer.addEventListener('mouseleave', startAutoSlide);
+                
+                // Store slider state
+                state.currentMediaSlider = {
+                    destroy: () => {
+                        stopAutoSlide();
+                        sliderContainer.removeEventListener('mouseenter', stopAutoSlide);
+                        sliderContainer.removeEventListener('mouseleave', startAutoSlide);
+                        sliderTrack.removeEventListener('touchstart', touchStart);
+                        sliderTrack.removeEventListener('touchend', touchEnd);
+                        sliderTrack.removeEventListener('touchmove', touchMove);
+                        sliderTrack.removeEventListener('mousedown', touchStart);
+                        sliderTrack.removeEventListener('mouseup', touchEnd);
+                        sliderTrack.removeEventListener('mouseleave', touchEnd);
+                        sliderTrack.removeEventListener('mousemove', touchMove);
+                    }
+                };
+                
+                return sliderContainer;
+            };
+
             const initPropertyMarkers = () => {
                 state.propertyMarkers = properties.map(property => {
                     const el = createBeautifulMarker();
@@ -1260,7 +1278,7 @@
                     popupContent.innerHTML = `
                         <img src="${property.image_url}" alt="${property.title}" class="w-full h-32 object-cover rounded-t-lg">
                         <div class="p-3">
-                            <h4 class="font-bold text-gray-900">UGX ${property.price.toLocaleString()}</h4>
+                            <h4 class="font-bold text-gray-900">${property.price_currency} ${property.price.toLocaleString()}</h4>
                             <h5 class="text-sm font-medium text-gray-800">${property.title}</h5>
                             <div class="mt-1 flex text-xs text-gray-500">
                                 <span class="flex items-center mr-2">
@@ -1270,7 +1288,7 @@
                                     <i class="fas fa-bath text-primary-500 mr-1"></i> ${property.bathrooms}
                                 </span>
                                 <span class="flex items-center">
-                                    <i class="fas fa-ruler-combined text-primary-500 mr-1"></i> ${property.area} sqft
+                                    <i class="fas fa-ruler-combined text-primary-500 mr-1"></i> ${property.area} ${property.area_unit || 'sqft'}
                                 </span>
                             </div>
                             <div class="mt-2 flex space-x-2">
@@ -1300,7 +1318,12 @@
                             try {
                                 await directionsHandlers.showRoute(state.userLocation, property.coordinates);
                             } catch (error) {
-                                alert('Could not calculate route. Please try again later.');
+                                Swal.fire({
+                                    title: 'Routing Error',
+                                    text: 'Could not calculate route. Please try again later.',
+                                    icon: 'error',
+                                    confirmButtonText: 'OK'
+                                });
                                 console.error('Routing error:', error);
                             } finally {
                                 directionsBtn.innerHTML = '<i class="fas fa-directions mr-1"></i> Navigate';
@@ -1311,94 +1334,284 @@
                             directionsBtn.innerHTML = '<i class="fas fa-directions mr-1"></i> Navigate';
                             directionsBtn.disabled = false;
                         } else {
-                            alert('Please enable location services first by clicking the location button');
+                            Swal.fire({
+                                title: 'Location Required',
+                                text: 'Please enable location services first by clicking the location button',
+                                icon: 'info',
+                                confirmButtonText: 'OK'
+                            });
                         }
                     });
                     
                     // Details button handler
-                    popupContent.querySelector('.property-details-btn').addEventListener('click', () => {
-                        const propertyDetailsDiv = document.getElementById('property_details');
-                        propertyDetailsDiv.innerHTML = `
-                            <div class="p-4">
-                                <div class="relative">
-                                    <img src="${property.image_url}" alt="${property.title}" class="w-full h-48 object-cover rounded-lg">
-                                    <div class="absolute top-2 right-2">
-                                        <button class="heart-icon p-2 bg-white rounded-full shadow-md text-gray-400 hover:text-red-500">
-                                            <i class="far fa-heart"></i>
-                                        </button>
-                                    </div>
-                                    <div class="absolute bottom-2 left-2 bg-primary-600 text-white text-xs font-bold px-2 py-1 rounded">
-                                        ${property.listing_type}
-                                    </div>
-                                </div>
-                                
-                                <div class="mt-4">
-                                    <div class="flex justify-between items-start">
-                                        <h3 class="text-xl font-bold text-gray-900">UGX ${property.price.toLocaleString()}</h3>
-                                        <span class="text-xs text-gray-500">${property.date_listed}</span>
-                                    </div>
-                                    <h4 class="text-lg font-semibold text-gray-800 mt-1">${property.title}</h4>
-                                    <p class="text-sm text-gray-600 mt-1"><i class="fas fa-map-marker-alt text-primary-500 mr-1"></i> ${property.address}</p>
-                                    
-                                    <div class="mt-4 grid grid-cols-3 gap-2 text-center border rounded-lg p-2">
-                                        <div>
-                                            <div class="text-sm text-gray-500">Bedrooms</div>
-                                            <div class="font-semibold text-primary-600">${property.bedrooms}</div>
-                                        </div>
-                                        <div>
-                                            <div class="text-sm text-gray-500">Bathrooms</div>
-                                            <div class="font-semibold text-primary-600">${property.bathrooms}</div>
-                                        </div>
-                                        <div>
-                                            <div class="text-sm text-gray-500">Area</div>
-                                            <div class="font-semibold text-primary-600">${property.area} sqft</div>
-                                        </div>
-                                    </div>
-
-                                    <div class="mt-4">
-                                        <h5 class="font-medium text-gray-900">Description</h5>
-                                        <p class="mt-1 text-sm text-gray-600">${property.description}</p>
-                                    </div>
-
-                                    <div class="mt-6 space-y-2">
-                                        <button class="w-full bg-primary-600 hover:bg-primary-700 text-white py-3 px-4 rounded-md font-medium get-directions-btn">
-                                            <i class="fas fa-directions mr-2"></i> Get Directions
-                                        </button>
-                                        <button class="w-full bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 py-3 px-4 rounded-md font-medium">
-                                            <i class="fas fa-phone mr-2"></i> Contact Agent
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-
-                        // Add click handler for the directions button
-                        propertyDetailsDiv.querySelector('.get-directions-btn').addEventListener('click', async (e) => {
-                            e.stopPropagation();
-                            if (state.userLocation) {
-                                directionsBtn.disabled = true;
-                                directionsBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Routing...';
-
-                                try {
-                                    await directionsHandlers.showRoute(state.userLocation, property.coordinates);
-                                } catch (error) {
-                                    alert('Could not calculate route. Please try again later.');
-                                    console.error('Routing error:', error);
-                                } finally {
-                                    directionsBtn.innerHTML = '<i class="fas fa-directions mr-1"></i> Navigate';
-                                    directionsBtn.disabled = false;
-                                }
-
-                                // Reset button state
-                                directionsBtn.innerHTML = '<i class="fas fa-directions mr-1"></i> Navigate';
-                                directionsBtn.disabled = false;
-                            } else {
-                                alert('Please enable location services first by clicking the location button');
-                            }
-                        });
+                    popupContent.querySelector('.property-details-btn').addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        showPropertyDetails(property, state, directionsHandlers);
                     });
 
                     return { id: property.id, marker, coordinates: property.coordinates };
+                });
+            };
+
+            const showPropertyDetails = (property, state, directionsHandlers) => {
+                const propertyDetailsDiv = document.getElementById('property_details');
+                propertyDetailsDiv.className = 'p-4 overflow-y-auto h-full';
+                
+                // Create media slider
+                const mediaSlider = initMediaSlider(property);
+                
+                propertyDetailsDiv.innerHTML = `
+                    <div class="bg-white rounded-lg shadow-md overflow-hidden h-full flex flex-col">
+                        ${mediaSlider.outerHTML}
+                        
+                        <div class="p-6 flex-1 flex flex-col">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h2 class="text-2xl font-bold text-gray-900">${property.price_currency} ${property.price.toLocaleString()}</h2>
+                                    <p class="text-sm text-gray-500 flex items-center">
+                                        <i class="fas ${property.is_price_negotiable === 'Yes' ? 'fa-handshake' : 'fa-lock'} mr-1"></i>
+                                        ${property.is_price_negotiable === 'Yes' ? 'Price negotiable' : 'Fixed price'}
+                                    </p>
+                                </div>
+                                <button class="heart-icon p-2 bg-white rounded-full shadow-md text-gray-400 hover:text-red-500 transition-colors duration-300">
+                                    <i class="far fa-heart"></i>
+                                </button>
+                            </div>
+                            
+                            <h3 class="text-xl font-semibold text-gray-800 mt-2">${property.title}</h3>
+                            <p class="text-gray-600 mt-1 flex items-center">
+                                <i class="fas fa-map-marker-alt text-primary-500 mr-2"></i>
+                                ${property.address}
+                            </p>
+                            
+                            <div class="mt-4 grid grid-cols-2 gap-2 text-center border rounded-lg p-2 bg-gray-50">
+                                <div class="p-2 hover:bg-gray-100 rounded transition-colors duration-200">
+                                    <div class="text-xs text-gray-500 flex items-center justify-center">
+                                        <i class="fas fa-bed text-primary-500 mr-1"></i> Beds
+                                    </div>
+                                    <div class="font-semibold text-sm text-primary-600">${property.bedrooms}</div>
+                                </div>
+                                <div class="p-2 hover:bg-gray-100 rounded transition-colors duration-200">
+                                    <div class="text-xs text-gray-500 flex items-center justify-center">
+                                        <i class="fas fa-bath text-primary-500 mr-1"></i> Baths
+                                    </div>
+                                    <div class="font-semibold text-sm text-primary-600">${property.bathrooms}</div>
+                                </div>
+                                <div class="p-2 hover:bg-gray-100 rounded transition-colors duration-200">
+                                    <div class="text-xs text-gray-500 flex items-center justify-center">
+                                        <i class="fas fa-ruler-combined text-primary-500 mr-1"></i> Area
+                                    </div>
+                                    <div class="font-semibold text-sm text-primary-600">${property.area} ${property.area_unit || 'sqft'}</div>
+                                </div>
+                                <div class="p-2 hover:bg-gray-100 rounded transition-colors duration-200">
+                                    <div class="text-xs text-gray-500 flex items-center justify-center">
+                                        <i class="fas fa-home text-primary-500 mr-1"></i> Type
+                                    </div>
+                                    <div class="font-semibold text-sm text-primary-600">${property.property_type?.name || ''}</div>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-6 flex-1">
+                                <h4 class="text-lg font-semibold text-gray-900 border-b pb-2 flex items-center">
+                                    <i class="fas fa-align-left text-primary-500 mr-2"></i> Description
+                                </h4>
+                                <p class="mt-2 text-gray-600 whitespace-pre-line">${property.description}</p>
+                            </div>
+                            
+                            ${property.amenities.length > 0 ? `
+                            <div class="mt-6">
+                                <h4 class="text-lg font-semibold text-gray-900 border-b pb-2 flex items-center">
+                                    <i class="fas fa-star text-primary-500 mr-2"></i> Amenities
+                                </h4>
+                                <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    ${property.amenities.map(amenity => `
+                                        <div class="flex items-center p-2 hover:bg-gray-50 rounded transition-colors duration-200">
+                                            <i class="${amenity.icon || 'fas fa-check-circle'} text-primary-500 mr-2 w-5 text-center"></i>
+                                            <span class="text-gray-600">${amenity.name}</span>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                            ` : ''}
+                            
+                            ${property.neighborhood_features.length > 0 ? `
+                            <div class="mt-6">
+                                <h4 class="text-lg font-semibold text-gray-900 border-b pb-2 flex items-center">
+                                    <i class="fas fa-map-marked-alt text-primary-500 mr-2"></i> Neighborhood Features
+                                </h4>
+                                <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    ${property.neighborhood_features.map(feature => `
+                                        <div class="flex items-center p-2 hover:bg-gray-50 rounded transition-colors duration-200">
+                                            <i class="${feature.icon || 'fas fa-check-circle'} text-primary-500 mr-2 w-5 text-center"></i>
+                                            <span class="text-gray-600">${feature.name}</span>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                            ` : ''}
+                            
+                            <div class="mt-6 grid grid-cols-1 lg:grid-cols-1 gap-4">
+                                <div class="bg-gray-50 p-4 rounded-lg">
+                                    <h4 class="text-lg font-semibold text-gray-900 border-b pb-2 flex items-center">
+                                        <i class="fas fa-info-circle text-primary-500 mr-2"></i> Property Details
+                                    </h4>
+                                    <div class="mt-3 space-y-3">
+                                        <div class="flex justify-between items-center hover:bg-gray-100 p-1 rounded transition-colors duration-200">
+                                            <span class="text-gray-500 flex items-center">
+                                                <i class="fas fa-home mr-2 text-primary-500 w-4 text-center"></i> Type:
+                                            </span>
+                                            <span class="text-gray-700">${property.property_type?.name || 'N/A'}</span>
+                                        </div>
+                                        <div class="flex justify-between items-center hover:bg-gray-100 p-1 rounded transition-colors duration-200">
+                                            <span class="text-gray-500 flex items-center">
+                                                <i class="fas fa-tag mr-2 text-primary-500 w-4 text-center"></i> Listing:
+                                            </span>
+                                            <span class="text-gray-700">${property.listing_type}</span>
+                                        </div>
+                                        <div class="flex justify-between items-center hover:bg-gray-100 p-1 rounded transition-colors duration-200">
+                                            <span class="text-gray-500 flex items-center">
+                                                <i class="fas fa-calendar-alt mr-2 text-primary-500 w-4 text-center"></i> Year Built:
+                                            </span>
+                                            <span class="text-gray-700">${property.year_built || 'N/A'}</span>
+                                        </div>
+                                        <div class="flex justify-between items-center hover:bg-gray-100 p-1 rounded transition-colors duration-200">
+                                            <span class="text-gray-500 flex items-center">
+                                                <i class="fas fa-building mr-2 text-primary-500 w-4 text-center"></i> Floors:
+                                            </span>
+                                            <span class="text-gray-700">${property.floors || 'N/A'}</span>
+                                        </div>
+                                        <div class="flex justify-between items-center hover:bg-gray-100 p-1 rounded transition-colors duration-200">
+                                            <span class="text-gray-500 flex items-center">
+                                                <i class="fas fa-couch mr-2 text-primary-500 w-4 text-center"></i> Furnishing:
+                                            </span>
+                                            <span class="text-gray-700">${property.furnishing_status || property.furnish_status || 'N/A'}</span>
+                                        </div>
+                                        <div class="flex justify-between items-center hover:bg-gray-100 p-1 rounded transition-colors duration-200">
+                                            <span class="text-gray-500 flex items-center">
+                                                <i class="fas fa-car mr-2 text-primary-500 w-4 text-center"></i> Parking:
+                                            </span>
+                                            <span class="text-gray-700">${property.parking_spaces || 'N/A'}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="bg-gray-50 p-4 rounded-lg">
+                                    <h4 class="text-lg font-semibold text-gray-900 border-b pb-2 flex items-center">
+                                        <i class="fas fa-chart-line text-primary-500 mr-2"></i> Additional Info
+                                    </h4>
+                                    <div class="mt-3 space-y-3">
+                                        <div class="flex justify-between items-center hover:bg-gray-100 p-1 rounded transition-colors duration-200">
+                                            <span class="text-gray-500 flex items-center">
+                                                <i class="fas fa-calendar mr-2 text-primary-500 w-4 text-center"></i> Listed:
+                                            </span>
+                                            <span class="text-gray-700">${property.date_listed}</span>
+                                        </div>
+                                        <div class="flex justify-between items-center hover:bg-gray-100 p-1 rounded transition-colors duration-200">
+                                            <span class="text-gray-500 flex items-center">
+                                                <i class="fas fa-clock mr-2 text-primary-500 w-4 text-center"></i> Available:
+                                            </span>
+                                            <span class="text-gray-700">${property.available_from || 'N/A'}</span>
+                                        </div>
+                                        <div class="flex justify-between items-center hover:bg-gray-100 p-1 rounded transition-colors duration-200">
+                                            <span class="text-gray-500 flex items-center">
+                                                <i class="fas fa-sync-alt mr-2 text-primary-500 w-4 text-center"></i> Refurbished:
+                                            </span>
+                                            <span class="text-gray-700">${property.last_refurbished || 'N/A'}</span>
+                                        </div>
+                                        <div class="flex justify-between items-center hover:bg-gray-100 p-1 rounded transition-colors duration-200">
+                                            <span class="text-gray-500 flex items-center">
+                                                <i class="fas fa-eye mr-2 text-primary-500 w-4 text-center"></i> Views:
+                                            </span>
+                                            <span class="text-gray-700">${property.view_count}</span>
+                                        </div>
+                                        <div class="flex justify-between items-center hover:bg-gray-100 p-1 rounded transition-colors duration-200">
+                                            <span class="text-gray-500 flex items-center">
+                                                <i class="fas fa-star mr-2 text-primary-500 w-4 text-center"></i> Rating:
+                                            </span>
+                                            <span class="text-gray-700">${property.rating || 'N/A'}</span>
+                                        </div>
+                                        <div class="flex justify-between items-center hover:bg-gray-100 p-1 rounded transition-colors duration-200">
+                                            <span class="text-gray-500 flex items-center">
+                                                <i class="fas fa-heart mr-2 text-primary-500 w-4 text-center"></i> Favorites:
+                                            </span>
+                                            <span class="text-gray-700">${property.favorite_count}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-6 space-y-3">
+                                <button class="w-full bg-primary-600 hover:bg-primary-700 text-white py-3 px-4 rounded-md font-medium get-directions-btn transition-colors duration-300 flex items-center justify-center">
+                                    <i class="fas fa-directions mr-2"></i> Get Directions
+                                </button>
+                                <button class="w-full bg-white border border-primary-600 text-primary-600 hover:bg-primary-50 py-3 px-4 rounded-md font-medium transition-colors duration-300 flex items-center justify-center">
+                                    <i class="fas fa-phone mr-2"></i> Contact Agent
+                                </button>
+                                <button class="w-full bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 py-3 px-4 rounded-md font-medium transition-colors duration-300 flex items-center justify-center">
+                                    <i class="fas fa-share-alt mr-2"></i> Share Property
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // Initialize the media slider after DOM insertion
+                const sliderContainer = propertyDetailsDiv.querySelector('.relative.w-full.h-64');
+                if (sliderContainer) {
+                    initMediaSlider(property);
+                }
+
+                // Scroll to details section
+                document.getElementById('sidebar').scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                });
+
+                // Add click handler for the directions button
+                propertyDetailsDiv.querySelector('.get-directions-btn').addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    if (state.userLocation) {
+                        const btn = e.target.closest('button');
+                        btn.disabled = true;
+                        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Calculating Route...';
+
+                        try {
+                            await directionsHandlers.showRoute(state.userLocation, property.coordinates);
+                        } catch (error) {
+                            Swal.fire({
+                                title: 'Routing Error',
+                                text: 'Could not calculate route. Please try again later.',
+                                icon: 'error',
+                                confirmButtonText: 'OK'
+                            });
+                            console.error('Routing error:', error);
+                        } finally {
+                            btn.innerHTML = '<i class="fas fa-directions mr-2"></i> Get Directions';
+                            btn.disabled = false;
+                        }
+                    } else {
+                        Swal.fire({
+                            title: 'Location Required',
+                            text: 'Please enable location services first by clicking the location button',
+                            icon: 'info',
+                            confirmButtonText: 'OK'
+                        });
+                    }
+                });
+
+                // Favorite button handler
+                propertyDetailsDiv.querySelector('.heart-icon').addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    this.classList.toggle('text-red-500');
+                    const heart = this.querySelector('i');
+                    heart.classList.toggle('far');
+                    heart.classList.toggle('fas');
+                    
+                    // Add animation
+                    this.classList.add('animate-pulse');
+                    setTimeout(() => {
+                        this.classList.remove('animate-pulse');
+                    }, 300);
                 });
             };
 
@@ -1433,10 +1646,10 @@
                         center: property.coordinates,
                         zoom: 16,
                         essential: true,
-                        speed: 0.9,
-                        curve: 1,
+                        speed: 1.5,
+                        curve: 1.2,
                         easing(t) {
-                            return t * (2 - t);
+                            return t * (2 - t); // Ease-out easing function
                         }
                     });
                     
@@ -1444,6 +1657,9 @@
                     setTimeout(() => {
                         markerObj.marker.getPopup().addTo(map);
                     }, 500);
+                    
+                    // Show property details
+                    showPropertyDetails(property, state, directionsHandlers);
                 }
             };
 
@@ -1497,20 +1713,34 @@
             // Error handling for directions
             directions.on('error', (e) => {
                 console.error('Directions error:', e.error);
-                alert('Could not calculate route. Please try again later.');
+                Swal.fire({
+                    title: 'Routing Error',
+                    text: 'Could not calculate route. Please try again later.',
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                });
             });
 
             const showRoute = async (start, end) => {
+                const loadingSwal = Swal.fire({
+                    title: 'Calculating Route',
+                    html: 'Please wait while we calculate the best route...',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
                 try {
-                    state.directionsPanel.classList.remove('hidden');
-                    document.querySelector('.mapboxgl-ctrl-directions').style.display = 'block';
+                    // Clear any existing routes first
+                    directions.removeRoutes();
                     
                     // Set origin and destination
                     directions.setOrigin(start);
                     directions.setDestination(end);
                     
                     // Wait for the route to be calculated
-                    await new Promise((resolve) => {
+                    await new Promise((resolve, reject) => {
                         const checkRoute = () => {
                             if (directions.getOrigin() && directions.getDestination()) {
                                 resolve();
@@ -1518,21 +1748,49 @@
                                 setTimeout(checkRoute, 100);
                             }
                         };
+                        
+                        // Add timeout for route calculation
+                        const timeout = setTimeout(() => {
+                            reject(new Error('Route calculation timed out'));
+                        }, 10000); // 10 seconds timeout
+                        
+                        directions.on('route', () => {
+                            clearTimeout(timeout);
+                            resolve();
+                        });
+                        
                         checkRoute();
                     });
+                    
+                    // Show directions panel
+                    state.directionsPanel.classList.remove('hidden');
+                    document.querySelector('.mapboxgl-ctrl-directions').style.display = 'block';
                     
                     // Center the map on the route
                     const bounds = new mapboxgl.LngLatBounds()
                         .extend(start)
                         .extend(end);
+                        
+                    // map.fitBounds(bounds, {
+                    //     padding: 100,
+                    //     maxZoom: 15
+                    // });
                     map.fitBounds(bounds, {
-                        padding: 100,
-                        maxZoom: 15
+                        padding: {top: 100, bottom: 100, left: 100, right: 100},
+                        maxZoom: 15,
+                        speed: 1.2
                     });
                     
+                    await loadingSwal.close();
                 } catch (error) {
+                    await loadingSwal.close();
                     console.error('Error showing route:', error);
-                    alert('Failed to calculate route. Please try again.');
+                    Swal.fire({
+                        title: 'Routing Error',
+                        text: error.message || 'Failed to calculate route. Please try again.',
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                    });
                 }
             };
 
@@ -1545,7 +1803,12 @@
             // Start navigation button handler
             document.getElementById('startNavigation').addEventListener('click', () => {
                 if (!directions.getOrigin() || !directions.getDestination()) {
-                    alert('Please calculate a route first');
+                    Swal.fire({
+                        title: 'Route Required',
+                        text: 'Please calculate a route first',
+                        icon: 'info',
+                        confirmButtonText: 'OK'
+                    });
                     return;
                 }
                 
@@ -1563,7 +1826,12 @@
                     maxZoom: 15
                 });
                 
-                alert('Navigation started! In a real app, this would launch turn-by-turn navigation.');
+                Swal.fire({
+                    title: 'Navigation Started',
+                    text: 'In a real app, this would launch turn-by-turn navigation.',
+                    icon: 'success',
+                    confirmButtonText: 'OK'
+                });
             });
 
             return { showRoute };
@@ -1638,7 +1906,6 @@
             );
             // Initialize when map loads
             map.on('load', () => {
-
                 initPropertyMarkers();
                 locationServices.getUserLocation();
                 
@@ -1652,7 +1919,12 @@
                             if (state.userLocation) {
                                 showRoute(state.userLocation, coordinates);
                             } else {
-                                alert('Please enable location services to get directions');
+                                Swal.fire({
+                                    title: 'Location Required',
+                                    text: 'Please enable location services to get directions',
+                                    icon: 'info',
+                                    confirmButtonText: 'OK'
+                                });
                             }
                         };
                     }
@@ -1753,7 +2025,6 @@
             window.addEventListener("mousemove", resize);
             window.addEventListener("mouseup", stop);
         });
-
     </script>
 </body>
 </html>
