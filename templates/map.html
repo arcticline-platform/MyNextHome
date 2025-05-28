@@ -1048,7 +1048,7 @@
 
             const initMediaSlider = (property) => {
 
-                console.log(property.images, property.video_url);
+                // console.log(property.images, property.video_url);
 
                 // Destroy existing slider if any
                 if (state.currentMediaSlider) {
@@ -1076,12 +1076,18 @@
                     img.loading = 'lazy';
                     
                     // Add zoom on hover effect
-                    const zoomOverlay = document.createElement('div');
-                    zoomOverlay.className = 'absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-300 flex items-center justify-center';
-                    zoomOverlay.innerHTML = '<i class="fas fa-search-plus text-white opacity-0 group-hover:opacity-100 transform group-hover:scale-110 transition-all duration-300"></i>';
+                    // const zoomOverlay = document.createElement('div');
+                    // zoomOverlay.className = 'absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-300 flex items-center justify-center cursor-zoom-in';
+                    // zoomOverlay.innerHTML = '<i class="fas fa-search-plus text-white opacity-0 group-hover:opacity-100 transform group-hover:scale-110 transition-all duration-300"></i>';
+                    
+                    // // Add click event to zoom image in a new tab or modal
+                    // zoomOverlay.addEventListener('click', (e) => {
+                    //     e.stopPropagation();
+                    //     window.open(imageUrl, '_blank');
+                    // });
                     
                     slide.appendChild(img);
-                    slide.appendChild(zoomOverlay);
+                    // slide.appendChild(zoomOverlay);
                     sliderTrack.appendChild(slide);
                 });
 
@@ -1357,12 +1363,10 @@
                 const propertyDetailsDiv = document.getElementById('property_details');
                 propertyDetailsDiv.className = 'p-4 overflow-y-auto h-full';
                 
-                // Create media slider
-                const mediaSlider = initMediaSlider(property);
-                
+                // Clear previous content
                 propertyDetailsDiv.innerHTML = `
                     <div class="bg-white rounded-lg shadow-md overflow-hidden h-full flex flex-col">
-                        ${mediaSlider.outerHTML}
+                        <div id="media-slider-placeholder"></div>
                         
                         <div class="p-6 flex-1 flex flex-col">
                             <div class="flex justify-between items-start">
@@ -1557,11 +1561,12 @@
                 
                 // Initialize the media slider after DOM insertion
                 const sliderContainer = propertyDetailsDiv.querySelector('.relative.w-full.h-64');
-                if (sliderContainer) {
-                    initMediaSlider(property);
+                // Insert the actual media slider DOM element after DOM insertion
+                const placeholder = propertyDetailsDiv.querySelector('#media-slider-placeholder');
+                if (placeholder) {
+                    const mediaSlider = initMediaSlider(property);
+                    placeholder.appendChild(mediaSlider);
                 }
-
-                // Scroll to details section
                 document.getElementById('sidebar').scrollTo({
                     top: 0,
                     behavior: 'smooth'
