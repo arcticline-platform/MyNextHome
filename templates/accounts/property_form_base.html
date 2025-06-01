@@ -1265,8 +1265,8 @@ document.addEventListener('alpine:init', () => {
 
         // Update location from coordinates
         updateLocationFromCoords(lng, lat, source, accuracy = null) {
-            this.formData.longitude = lng;
-            this.formData.latitude = lat;
+            this.formData.longitude = Number.parseFloat(lng).toFixed(5);
+            this.formData.latitude = Number.parseFloat(lat).toFixed(5);;
             this.locationSource = source;
             this.locationAccuracy = accuracy;
 

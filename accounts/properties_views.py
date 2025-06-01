@@ -33,7 +33,22 @@ def add_property(request):
 
     if request.method == 'POST':
         property_form = PropertyForm(request.POST, user=request.user)
-        address_form = AddressForm(request.POST)
+        # Limit latitude and longitude precision to 8 decimal places if present
+        post_data = request.POST.copy()
+        if 'latitude' in post_data and post_data['latitude']:
+            print(f"Original latitude: {post_data['latitude']}")
+            try:
+                post_data['latitude'] = str(round(float(post_data['latitude']), 8))
+            except Exception:
+                pass
+        if 'longitude' in post_data and post_data['longitude']:
+            print(f"Original longitude: {post_data['longitude']}")
+            try:
+                post_data['longitude'] = str(round(float(post_data['longitude']), 8))
+            except Exception:
+                pass
+
+        address_form = AddressForm(post_data)
         image_form = PropertyImageForm(request.POST, request.FILES)
 
         if property_form.is_valid() and address_form.is_valid():
@@ -43,6 +58,7 @@ def add_property(request):
                 property.address = address
                 property.owner = request.user
                 property.listed_by = request.user
+                property.status = 'published'  # Ensure status is set to published
                 property.save()
                 property_form.save_m2m()
 
@@ -111,8 +127,21 @@ class AddPropertyView(LoginRequiredMixin, TemplateView):
     
     @transaction.atomic
     def post(self, request, *args, **kwargs):
+        # Copy POST data and round latitude/longitude if present
+        post_data = request.POST.copy()
+        if 'latitude' in post_data and post_data['latitude']:
+            try:
+                post_data['latitude'] = str(round(float(post_data['latitude']), 8))
+            except Exception:
+                pass
+        if 'longitude' in post_data and post_data['longitude']:
+            try:
+                post_data['longitude'] = str(round(float(post_data['longitude']), 8))
+            except Exception:
+                pass
+
         property_form = PropertyForm(request.POST, user=request.user)
-        address_form = AddressForm(request.POST)
+        address_form = AddressForm(post_data)
         
         if property_form.is_valid() and address_form.is_valid():
             # Save address first
@@ -123,6 +152,7 @@ class AddPropertyView(LoginRequiredMixin, TemplateView):
             property.address = address
             property.owner = request.user
             property.listed_by = request.user
+            property.status = 'published'  # Ensure status is set to published
             property.save()
             
             # Save many-to-many relationships
