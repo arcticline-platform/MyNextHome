@@ -1,13 +1,15 @@
 import os
-import random
-from datetime import datetime, timedelta
-from decimal import Decimal
-import uuid
 import sys
+import uuid
+import random
+from decimal import Decimal
+from datetime import datetime, timedelta
+
 
 import django
 from django.contrib.auth import get_user_model
 from django.utils.text import slugify
+
 from faker import Faker
 from phonenumber_field.phonenumber import PhoneNumber
 
