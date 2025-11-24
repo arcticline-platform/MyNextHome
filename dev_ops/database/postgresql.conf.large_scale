@@ -1,0 +1,193 @@
+# ============================================================================
+# PostgreSQL Configuration for Large-Scale Deployments (1M+ records)
+# MyNextHome - Production Configuration Template
+# ============================================================================
+# 
+# To use this file:
+# 1. Backup your current postgresql.conf
+# 2. Merge relevant settings into your postgresql.conf
+# 3. Restart PostgreSQL: sudo systemctl restart postgresql
+# 4. Monitor performance and adjust as needed
+#
+# Note: Adjust values based on your server's RAM, CPU, and storage
+# Recommended minimum: 16GB RAM, 8 CPU cores, SSD storage
+# ============================================================================
+
+#------------------------------------------------------------------------------
+# CONNECTIONS AND AUTHENTICATION
+#------------------------------------------------------------------------------
+
+# Maximum number of concurrent connections
+# For large-scale apps, consider using connection pooling (PgBouncer)
+max_connections = 200
+
+#------------------------------------------------------------------------------
+# MEMORY SETTINGS (Adjust based on available RAM)
+#------------------------------------------------------------------------------
+
+# Shared memory buffers (should be ~25% of RAM, but at least 128MB)
+# For 16GB RAM: 4GB, For 32GB RAM: 8GB, For 64GB RAM: 16GB
+shared_buffers = 4GB
+
+# Effective cache size (should be ~50-75% of total RAM)
+# Helps query planner make better decisions
+effective_cache_size = 12GB
+
+# Work memory for sorting and hash operations (per operation)
+# Total work_mem = work_mem * max_connections (should be < RAM)
+# For large queries with 1M+ records, increase this
+work_mem = 512MB
+
+# Memory for maintenance operations (VACUUM, CREATE INDEX, etc.)
+maintenance_work_mem = 2GB
+
+#------------------------------------------------------------------------------
+# QUERY TUNING FOR LARGE DATASETS
+#------------------------------------------------------------------------------
+
+# Random page cost (lower for SSD, higher for HDD)
+random_page_cost = 1.1
+
+# Enable Just-In-Time compilation for complex queries
+jit = on
+
+# Parallel query settings for large table scans
+max_parallel_workers_per_gather = 8
+max_parallel_workers = 16
+max_worker_processes = 16
+
+# Minimum table size to use parallel workers
+min_parallel_table_scan_size = 8MB
+min_parallel_index_scan_size = 512kB
+
+# Increase default statistics target for better query planning
+default_statistics_target = 500
+
+#------------------------------------------------------------------------------
+# WRITE-AHEAD LOG (WAL)
+#------------------------------------------------------------------------------
+
+# Checkpoint completion target (0.0-1.0)
+checkpoint_completion_target = 0.9
+
+# WAL buffer size
+wal_buffers = 16MB
+
+# Maximum WAL size before checkpoint
+max_wal_size = 4GB
+min_wal_size = 1GB
+
+#------------------------------------------------------------------------------
+# AUTOVACUUM FOR LARGE TABLES
+#------------------------------------------------------------------------------
+
+# Number of autovacuum worker processes
+autovacuum_max_workers = 6
+
+# Time between autovacuum runs
+autovacuum_naptime = 10s
+
+# Scale factors for triggering autovacuum
+# Lower values = more frequent vacuuming (important for large, frequently updated tables)
+autovacuum_vacuum_scale_factor = 0.05  # Vacuum when 5% of table changes
+autovacuum_analyze_scale_factor = 0.02  # Analyze when 2% of table changes
+
+# Autovacuum cost settings
+autovacuum_vacuum_cost_delay = 10ms
+autovacuum_vacuum_cost_limit = 2000
+
+#------------------------------------------------------------------------------
+# LOCKS AND CONCURRENCY
+#------------------------------------------------------------------------------
+
+# Maximum locks per transaction (important for bulk operations)
+max_locks_per_transaction = 256
+
+# Deadlock detection timeout
+deadlock_timeout = 1s
+
+#------------------------------------------------------------------------------
+# REPORTING AND LOGGING
+#------------------------------------------------------------------------------
+
+# Log slow queries (in milliseconds)
+log_min_duration_statement = 2000  # Log queries taking > 2 seconds
+
+# Log connections and disconnections
+log_connections = on
+log_disconnections = on
+
+# Log query execution plans for slow queries
+log_plan_min_duration = 2000
+
+# Log lock waits
+log_lock_waits = on
+
+#------------------------------------------------------------------------------
+# QUERY PLANNER
+#------------------------------------------------------------------------------
+
+# Genetic query optimizer threshold
+geqo_threshold = 12
+
+#------------------------------------------------------------------------------
+# CONNECTION POOLING (Recommended: Use PgBouncer)
+#------------------------------------------------------------------------------
+
+# If not using external connection pooling, consider:
+# - Using Django's connection pooling
+# - Implementing application-level connection pooling
+# - Using PgBouncer for better connection management
+
+#------------------------------------------------------------------------------
+# PERFORMANCE MONITORING
+#------------------------------------------------------------------------------
+
+# Enable pg_stat_statements for query performance tracking
+shared_preload_libraries = 'pg_stat_statements'
+
+# pg_stat_statements settings
+pg_stat_statements.max = 10000
+pg_stat_statements.track = all
+
+#------------------------------------------------------------------------------
+# LOCALE AND FORMATTING
+#------------------------------------------------------------------------------
+
+default_text_search_config = 'pg_catalog.english'
+
+#------------------------------------------------------------------------------
+# NOTES FOR LARGE-SCALE DEPLOYMENTS
+#------------------------------------------------------------------------------
+
+# 1. PARTITIONING: Consider table partitioning for tables with 10M+ rows
+#    - Range partitioning by date (e.g., properties by year)
+#    - List partitioning by region or status
+#
+# 2. INDEXING STRATEGY:
+#    - Create indexes on foreign keys
+#    - Use partial indexes for filtered queries
+#    - Consider covering indexes for common queries
+#    - Monitor index usage and remove unused indexes
+#
+# 3. CONNECTION POOLING:
+#    - Use PgBouncer for connection pooling
+#    - Configure pool_mode = transaction
+#    - Set pool_size based on your needs
+#
+# 4. MONITORING:
+#    - Use pg_stat_statements to identify slow queries
+#    - Monitor table bloat regularly
+#    - Track index usage
+#    - Monitor connection counts
+#
+# 5. MAINTENANCE:
+#    - Schedule regular VACUUM ANALYZE for large tables
+#    - Reindex periodically (especially after large data loads)
+#    - Update statistics after bulk inserts
+#
+# 6. BACKUP STRATEGY:
+#    - Use pg_basebackup for continuous archiving
+#    - Consider streaming replication for high availability
+#    - Test restore procedures regularly
+
