@@ -1,4 +1,5 @@
-# import os
+import os
+import io
 # import math
 import uuid
 import random
@@ -7,6 +8,7 @@ import datetime
 import requests
 from datetime import date, datetime, timedelta
 
+# import django_filters
 from django.db import models
 from django.urls import reverse
 from django.conf import settings
@@ -17,6 +19,7 @@ from django.core.cache import cache
 from django.utils.text import slugify
 # from django.shortcuts import redirect
 from django.utils.timezone import now
+from django.core.files.base import ContentFile
 from django_countries.fields import CountryField
 from django.core.exceptions import ValidationError
 from django.contrib.auth.models import AbstractUser
@@ -26,11 +29,13 @@ from django.contrib.gis.db import models as gis_models
 # from django.db.models.signals import pre_save, post_save
 from django.core.validators import FileExtensionValidator, RegexValidator, MinValueValidator, MaxValueValidator
 
-import django_filters
-from .managers import CustomUserManager
-from core.tasks import create_profile
 
-from core.validators import post_file_extension, validate_image_with_face
+from moviepy import VideoFileClip
+from PIL import Image
+
+from .managers import CustomUserManager
+# from core.tasks import create_profile
+# from core.validators import post_file_extension, validate_image_with_face
 
 from ckeditor.fields import RichTextField
 from phonenumber_field.modelfields import PhoneNumberField
@@ -831,9 +836,14 @@ class PropertyImage(models.Model):
     """Images associated with a property listing"""
     property = models.ForeignKey(Property, on_delete=models.CASCADE, related_name='images')
     image = models.ImageField(upload_to='property_images/%Y/%m/%d/')
+    compressed_image = models.ImageField(upload_to='property_images/compressed/%Y/%m/%d/', blank=True, null=True)
     caption = models.CharField(max_length=255, blank=True, null=True)
     is_primary = models.BooleanField(default=False)
     order = models.PositiveIntegerField(default=0)
+    processed = models.BooleanField(default=False)
+    width = models.PositiveIntegerField(null=True, blank=True)
+    height = models.PositiveIntegerField(null=True, blank=True)
+    file_size = models.PositiveIntegerField(null=True, blank=True)  # In bytes
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -844,20 +854,84 @@ class PropertyImage(models.Model):
     def __str__(self):
         return f"Image for {self.property.title}"
 
+    def compress_image(self):
+        """Compress the image while maintaining quality"""
+        if self.image and not self.processed:
+            try:
+                # Open image
+                img = Image.open(self.image)
+                
+                # Get original dimensions
+                self.width = img.width 
+                self.height = img.height
+                self.file_size = self.image.size
+
+                # Convert to RGB if necessary
+                if img.mode != 'RGB':
+                    img = img.convert('RGB')
+
+                # Calculate new dimensions while maintaining aspect ratio
+                max_size = (1920, 1080)  # Full HD
+                img.thumbnail(max_size, Image.Resampling.LANCZOS)
+
+                # Save compressed version
+                output = io.BytesIO()
+                img.save(output, format='JPEG', quality=85, optimize=True)
+                output.seek(0)
+
+                # Save compressed file
+                self.compressed_image.save(
+                    f"{self.image.name.split('/')[-1]}_compressed.jpg",
+                    ContentFile(output.getvalue()),
+                    save=False
+                )
+
+                self.processed = True
+
+            except Exception as e:
+                print(f"Error processing image: {e}")
+            finally:
+                img.close()
+
     def save(self, *args, **kwargs):
         # Ensure only one primary image per property
         if self.is_primary:
             PropertyImage.objects.filter(property=self.property).exclude(pk=self.pk).update(is_primary=False)
+        
+        # Compress image if not already processed
+        if not self.processed:
+            self.compress_image()
+            
         super().save(*args, **kwargs)
+
+    def get_image_url(self):
+        """Returns the URL of the compressed image if available, otherwise original"""
+        return self.compressed_image.url if self.compressed_image else self.image.url
 
 
 class PropertyVideo(models.Model):
     """Videos associated with a property listing"""
     property = models.ForeignKey(Property, on_delete=models.CASCADE, related_name='videos')
-    video_url = models.URLField()
+    video = models.FileField(
+        upload_to='property_videos/%Y/%m/%d/',
+        validators=[
+            FileExtensionValidator(
+                allowed_extensions=['mp4', 'mov', 'avi', 'mkv']
+            )
+        ]
+    )
+    video_url = models.URLField(blank=True, null=True)  # For processed/compressed version
+    thumbnail = models.ImageField(
+        upload_to='property_video_thumbnails/%Y/%m/%d/',
+        blank=True,
+        null=True
+    )
     caption = models.CharField(max_length=255, blank=True, null=True)
     is_primary = models.BooleanField(default=False)
     order = models.PositiveIntegerField(default=0)
+    duration = models.DurationField(null=True, blank=True)
+    file_size = models.BigIntegerField(null=True, blank=True)  # In bytes
+    processed = models.BooleanField(default=False)
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -867,6 +941,64 @@ class PropertyVideo(models.Model):
 
     def __str__(self):
         return f"Video for {self.property.title}"
+
+    def save(self, *args, **kwargs):
+        if not self.processed and self.video:
+            try:
+
+                # Load video
+                video = VideoFileClip(self.video.path)
+                
+                # Get video info
+                self.duration = timedelta(seconds=video.duration)
+                self.file_size = self.video.size
+
+                # Create thumbnail from first frame
+                frame = video.get_frame(0)
+                img = Image.fromarray(frame)
+                thumb_io = io.BytesIO()
+                img.save(thumb_io, format='JPEG', quality=85)
+                
+                # Save thumbnail
+                self.thumbnail.save(
+                    f"{self.video.name.split('/')[-1]}_thumb.jpg",
+                    ContentFile(thumb_io.getvalue()),
+                    save=False
+                )
+
+                # Compress video if needed (over 100MB)
+                if self.file_size > 100 * 1024 * 1024:  # 100MB
+                    output_path = f"{self.video.path}_compressed.mp4"
+                    video.write_videofile(
+                        output_path,
+                        codec='libx264',
+                        audio_codec='aac',
+                        preset='medium',
+                        fps=24,
+                        bitrate="2000k"
+                    )
+                    
+                    # Update video file
+                    with open(output_path, 'rb') as f:
+                        self.video.save(
+                            f"{self.video.name.split('/')[-1]}_compressed.mp4",
+                            ContentFile(f.read()),
+                            save=False
+                        )
+                    
+                    os.remove(output_path)
+
+                video.close()
+                self.processed = True
+
+            except Exception as e:
+                print(f"Error processing video: {e}")
+
+        super().save(*args, **kwargs)
+
+    def get_video_url(self):
+        """Returns the URL of the video (processed version if available)"""
+        return self.video_url or self.video.url if self.video else None
 
 
 class PropertyDocument(models.Model):
