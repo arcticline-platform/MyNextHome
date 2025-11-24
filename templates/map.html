@@ -7,6 +7,39 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MyNextHome | Find your next home</title>
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="MyNextHome is an open-source property search platform in Uganda that empowers users with access to comfortable housing through transparent property discovery tools.">
+    <meta name="keywords" content="Real Estate, Property Search, Open Source, Housing Platform, GeoDjango, MyNextHome, Real Estate in Uganda, Housing in Uganda, Find home, Rentals, Property Listings, House Finder">
+    <meta name="author" content="Arcticline Technologies">
+
+    <!-- Favicons -->
+    <link rel="icon" type="image/x-icon" href="./static/img/mynexthome.png">
+    <link rel="apple-touch-icon" href="./static/img/mynexthome.png">
+
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="MyNextHome - Free Property Search for Everyone">
+    <meta property="og:description" content="Find your next home free, fair and transparent with MyNextHome Finder">
+    <meta property="og:image" content="./static/img/og_image.png">
+    <meta property="og:url" content="https://mynexthome.daraza.net">
+    <meta property="og:type" content="website">
+
+    <!-- Twitter Card Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="MyNextHome - Free Property Search for Everyone">
+    <meta name="twitter:description" content="Find your next home free, fair and transparent with MyNextHome Finder">
+    <meta name="twitter:image" content="./static/img/og_image.png">
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+        {
+            "@context": "http://schema.org",
+            "@type": "WebApplication",
+            "name": "MyNextHome",
+            "applicationCategory": "Productivity, Real Estate",
+            "operatingSystem": "Web",
+            "description": "MyNextHome is an open-source property search platform in Uganda that empowers users with access to comfortable housing through transparent property discovery tools.",
+            "url": "{{ request.build_absolute_uri }}"
+        }
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {

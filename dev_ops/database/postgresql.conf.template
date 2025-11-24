@@ -1,0 +1,104 @@
+# ============================================================================
+# PostgreSQL Configuration Template for MyNextHome
+# Server-level settings for optimal performance with large queries and PostGIS
+# ============================================================================
+# 
+# To use this file:
+# 1. Copy relevant settings to your postgresql.conf
+# 2. Restart PostgreSQL: sudo systemctl restart postgresql
+# 3. Or reload config: SELECT pg_reload_conf();
+#
+# Note: Adjust values based on your server's RAM and CPU resources
+# ============================================================================
+
+#------------------------------------------------------------------------------
+# CONNECTIONS AND AUTHENTICATION
+#------------------------------------------------------------------------------
+
+# Maximum number of concurrent connections
+max_connections = 100
+
+#------------------------------------------------------------------------------
+# MEMORY SETTINGS
+#------------------------------------------------------------------------------
+
+# Shared memory buffers (should be ~25% of RAM, but at least 128MB)
+# For 8GB RAM: 2GB, For 16GB RAM: 4GB
+shared_buffers = 2GB
+
+# Effective cache size (should be ~50-75% of total RAM)
+# This helps the query planner make better decisions
+effective_cache_size = 4GB
+
+# Work memory for sorting and hash operations (per operation)
+# Total work_mem = work_mem * max_connections (should be < RAM)
+work_mem = 256MB
+
+# Memory for maintenance operations (VACUUM, CREATE INDEX, etc.)
+maintenance_work_mem = 1GB
+
+#------------------------------------------------------------------------------
+# QUERY TUNING
+#------------------------------------------------------------------------------
+
+# Random page cost (lower for SSD, higher for HDD)
+# For SSD: 1.1-1.5, For HDD: 4.0
+random_page_cost = 1.1
+
+# Enable Just-In-Time compilation for complex queries (PostgreSQL 11+)
+jit = on
+
+# Parallel query settings
+max_parallel_workers_per_gather = 4
+max_parallel_workers = 8
+max_worker_processes = 8
+
+#------------------------------------------------------------------------------
+# WRITE-AHEAD LOG
+#------------------------------------------------------------------------------
+
+# Checkpoint completion target (0.0-1.0)
+# Higher values spread out checkpoint I/O
+checkpoint_completion_target = 0.9
+
+# WAL buffer size
+wal_buffers = 16MB
+
+#------------------------------------------------------------------------------
+# QUERY PLANNER
+#------------------------------------------------------------------------------
+
+# Genetic query optimizer threshold
+geqo_threshold = 12
+
+#------------------------------------------------------------------------------
+# REPORTING AND LOGGING
+#------------------------------------------------------------------------------
+
+# Log slow queries (in milliseconds, 0 = disabled)
+log_min_duration_statement = 1000
+
+# Log connections and disconnections
+log_connections = on
+log_disconnections = on
+
+# Log query execution plans for slow queries
+log_plan_min_duration = 1000
+
+#------------------------------------------------------------------------------
+# AUTOVACUUM
+#------------------------------------------------------------------------------
+
+# Enable autovacuum
+autovacuum = on
+
+# Autovacuum work memory
+autovacuum_work_mem = 512MB
+
+#------------------------------------------------------------------------------
+# LOCALE AND FORMATTING
+#------------------------------------------------------------------------------
+
+# Default text search config
+default_text_search_config = 'pg_catalog.english'
+
