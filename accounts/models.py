@@ -1118,6 +1118,106 @@ class PropertyContact(TimeStampedModel):
     def __str__(self):
         return f"Contact request for {self.property.title} from {self.name}"
     
+    def create_chat(self):
+        """Create a chat conversation from this contact request"""
+        from .models import Chat
+        chat, created = Chat.objects.get_or_create(
+            property=self.property,
+            participant=self.user if self.user else None,
+            defaults={
+                'property_contact': self,
+                'other_participant_name': self.name,
+                'other_participant_email': self.email,
+            }
+        )
+        if created and self.message:
+            # Create initial message from contact request
+            Message.objects.create(
+                chat=chat,
+                sender=None,  # External user
+                content=self.message,
+                is_read=False
+            )
+        return chat
+
+
+class Chat(TimeStampedModel):
+    """Chat conversation between users about a property"""
+    property = models.ForeignKey(Property, on_delete=models.CASCADE, related_name='chats')
+    participant = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='chats')
+    property_contact = models.OneToOneField(PropertyContact, on_delete=models.SET_NULL, null=True, blank=True, related_name='chat')
+    
+    # For non-authenticated users
+    other_participant_name = models.CharField(max_length=100, blank=True, null=True)
+    other_participant_email = models.EmailField(blank=True, null=True)
+    
+    # Status
+    is_active = models.BooleanField(default=True)
+    last_message_at = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:
+        verbose_name = "Chat"
+        verbose_name_plural = "Chats"
+        ordering = ['-last_message_at', '-created']
+        unique_together = [['property', 'participant']]
+    
+    def __str__(self):
+        if self.participant:
+            return f"Chat: {self.property.title} - {self.participant.username}"
+        return f"Chat: {self.property.title} - {self.other_participant_name or 'Guest'}"
+    
+    def get_other_participant(self, current_user):
+        """Get the other participant in the chat"""
+        if self.property.owner == current_user:
+            return self.participant if self.participant else None
+        return self.property.owner
+    
+    def get_other_participant_name(self, current_user):
+        """Get the name of the other participant"""
+        if self.property.owner == current_user:
+            if self.participant:
+                return self.participant.get_full_name() or self.participant.username
+            return self.other_participant_name or 'Guest'
+        return self.property.owner.get_full_name() or self.property.owner.username
+    
+    def get_unread_count(self, user):
+        """Get unread message count for a user"""
+        return self.messages.filter(is_read=False).exclude(sender=user).count()
+    
+    def mark_as_read(self, user):
+        """Mark all messages as read for a user"""
+        self.messages.filter(is_read=False).exclude(sender=user).update(is_read=True)
+
+
+class Message(TimeStampedModel):
+    """Individual message in a chat"""
+    chat = models.ForeignKey(Chat, on_delete=models.CASCADE, related_name='messages')
+    sender = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='sent_messages')
+    content = models.TextField()
+    is_read = models.BooleanField(default=False)
+    read_at = models.DateTimeField(null=True, blank=True)
+    
+    # For file attachments (future enhancement)
+    attachment = models.FileField(upload_to='chat_attachments/%Y/%m/%d/', blank=True, null=True)
+    attachment_type = models.CharField(max_length=50, blank=True, null=True)  # image, document, etc.
+    
+    class Meta:
+        verbose_name = "Message"
+        verbose_name_plural = "Messages"
+        ordering = ['created']
+    
+    def __str__(self):
+        sender_name = self.sender.username if self.sender else 'Guest'
+        return f"Message from {sender_name} in {self.chat}"
+    
+    def mark_as_read(self):
+        """Mark this message as read"""
+        if not self.is_read:
+            from django.utils import timezone
+            self.is_read = True
+            self.read_at = timezone.now()
+            self.save()
+
 
 class PropertyPayment(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)

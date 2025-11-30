@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Messages - MyNextHome{% endblock %}
+
+{% block body_class %}bg-gray-50{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <!-- Header -->
+        <div class="bg-primary-600 p-6 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold flex items-center">
+                        <i class="fas fa-comments mr-3"></i>
+                        Messages
+                    </h1>
+                    <p class="text-primary-100 mt-2">Your conversations about properties</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat List -->
+        <div class="divide-y divide-gray-200">
+            {% if chats %}
+                {% for chat in chats %}
+                <a href="{% url 'chat_detail' chat.id %}" class="block hover:bg-gray-50 transition-colors">
+                    <div class="p-4 flex items-center space-x-4">
+                        <div class="flex-shrink-0">
+                            {% with primary_image=chat.property.get_primary_image %}
+                                {% if primary_image %}
+                                    <img src="{{ primary_image.get_image_url }}" 
+                                         alt="{{ chat.property.title }}" 
+                                         class="w-16 h-16 rounded-lg object-cover">
+                                {% else %}
+                                    <div class="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-home text-gray-400 text-2xl"></i>
+                                    </div>
+                                {% endif %}
+                            {% endwith %}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center justify-between">
+                                <p class="text-sm font-medium text-gray-900 truncate">
+                                    {% if chat.participant == user %}
+                                        {{ chat.property.owner.get_full_name|default:chat.property.owner.username }}
+                                    {% elif chat.property.owner == user %}
+                                        {% if chat.participant %}
+                                            {{ chat.participant.get_full_name|default:chat.participant.username }}
+                                        {% else %}
+                                            {{ chat.other_participant_name|default:"Guest" }}
+                                        {% endif %}
+                                    {% elif chat.property.agent == user %}
+                                        {% if chat.participant %}
+                                            {{ chat.participant.get_full_name|default:chat.participant.username }}
+                                        {% else %}
+                                            {{ chat.other_participant_name|default:"Guest" }}
+                                        {% endif %}
+                                    {% else %}
+                                        {{ chat.other_participant_name|default:"Guest" }}
+                                    {% endif %}
+                                </p>
+                                {% if chat.last_message_at %}
+                                <p class="text-xs text-gray-500 ml-2">
+                                    {{ chat.last_message_at|naturaltime }}
+                                </p>
+                                {% endif %}
+                            </div>
+                            <div class="flex items-center justify-between mt-1">
+                                <p class="text-sm text-gray-500 truncate">
+                                    {{ chat.property.title }}
+                                </p>
+                                {% if chat.unread_count > 0 %}
+                                <span class="ml-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-primary-600 rounded-full">
+                                    {{ chat.unread_count }}
+                                </span>
+                                {% endif %}
+                            </div>
+                            {% if chat.messages.last %}
+                            <p class="text-sm text-gray-600 truncate mt-1">
+                                {{ chat.messages.last.content|truncatewords:15 }}
+                            </p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </a>
+                {% endfor %}
+            {% else %}
+                <div class="text-center py-12">
+                    <i class="fas fa-comments text-gray-300 text-5xl mb-4"></i>
+                    <h3 class="text-lg font-medium text-gray-900">No messages yet</h3>
+                    <p class="text-gray-600 mt-2">When someone contacts you about a property, conversations will appear here.</p>
+                    <a href="{% url 'home' %}" class="mt-4 inline-block bg-primary-600 hover:bg-primary-700 text-white px-6 py-2 rounded-lg">
+                        Browse Properties
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+

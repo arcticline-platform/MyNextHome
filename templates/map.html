@@ -9,7 +9,7 @@
     <title>MyNextHome | Find your next home</title>
     <!-- SEO Meta Tags -->
     <meta name="description" content="MyNextHome is an open-source property search platform in Uganda that empowers users with access to comfortable housing through transparent property discovery tools.">
-    <meta name="keywords" content="Real Estate, Property Search, Open Source, Housing Platform, GeoDjango, MyNextHome, Real Estate in Uganda, Housing in Uganda, Find home, Rentals, Property Listings, House Finder">
+    <meta name="keywords" content="Real Estate, Property Search, Open Access, Housing Platform, GeoDjango, MyNextHome, Real Estate in Uganda, Housing in Uganda, Find home, Rentals, Property Listings, House Finder">
     <meta name="author" content="Arcticline Technologies">
 
     <!-- Favicons -->
@@ -68,6 +68,12 @@
     <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.4.1/mapbox-gl-draw.js"></script>
     <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.4.1/mapbox-gl-draw.css" type="text/css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <!-- Custom SweetAlert2 Theme -->
+    <link rel="stylesheet" href="{% static 'css/sweetalert2-theme.css' %}">
+    <script src="{% static 'js/sweetalert2-theme.js' %}"></script>
     <link href="https://api.mapbox.com/mapbox-gl-js/v2.14.1/mapbox-gl.css" rel="stylesheet">
     <script src="https://api.mapbox.com/mapbox-gl-js/v2.14.1/mapbox-gl.js"></script>
     <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-directions/v4.1.1/mapbox-gl-directions.js"></script>
@@ -81,6 +87,14 @@
             top: 0;
             bottom: 0;
             width: 100%;
+            min-height: 400px;
+        }
+
+        @media (max-width: 767px) {
+            #map {
+                min-height: 50vh;
+                height: 100%;
+            }
         }
 
         /* ===== Marker Styles ===== */
@@ -183,16 +197,9 @@
         }
 
         /* ===== UI Controls ===== */
-        .mapboxgl-ctrl.mapboxgl-ctrl-group {
-            margin: 10px 0 0 10px;
-        }
-
-        .mapboxgl-ctrl.mapboxgl-ctrl-group button+button {
-            border-top: 1px solid #ddd;
-        }
-
-        .mapboxgl-ctrl-top-right {
-            top: 100px;
+        /* Hide default Mapbox controls - using custom controls instead */
+        .mapboxgl-ctrl-group {
+            display: none !important;
         }
 
         .mapboxgl-ctrl-geocoder {
@@ -243,6 +250,21 @@
         .sidebar.hidden {
             display: none !important;
         }
+
+        @media (max-width: 767px) {
+            /* Better map sizing on small screens */
+            .flex.h-\[calc\(100vh-64px\)\] {
+                height: calc(100vh - 64px);
+                min-height: calc(100vh - 64px);
+            }
+            
+            /* Ensure map container uses full available height on mobile */
+            #map {
+                min-height: 70vh;
+                height: 100%;
+            }
+        }
+
 
         /* Mobile Navigation Menu */
         .mobile-nav-menu {
@@ -779,6 +801,50 @@
         body.mobile-nav-open {
             overflow: hidden;
         }
+
+        /* Force hide navigation items on small screens - must be last to override Tailwind */
+        @media (max-width: 1023px) {
+            .flex.items-center nav.main-nav-items,
+            nav.main-nav-items {
+                display: none !important;
+                visibility: hidden !important;
+                opacity: 0 !important;
+                width: 0 !important;
+                height: 0 !important;
+                min-width: 0 !important;
+                max-width: 0 !important;
+                overflow: hidden !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                flex: 0 0 0 !important;
+                flex-shrink: 0 !important;
+                flex-grow: 0 !important;
+            }
+            
+            nav.main-nav-items a,
+            .flex.items-center nav.main-nav-items a {
+                display: none !important;
+                visibility: hidden !important;
+                width: 0 !important;
+                height: 0 !important;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            nav.main-nav-items {
+                display: flex !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+                margin-left: 1.5rem !important;
+                align-items: center !important;
+                gap: 2rem !important;
+            }
+            
+            nav.main-nav-items a {
+                display: inline-flex !important;
+                visibility: visible !important;
+            }
+        }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -791,19 +857,22 @@
                         <i class="fas fa-home text-primary-600 text-2xl mr-2"></i>
                         <span class="text-xl font-bold text-primary-800">MyNextHome</span>
                     </div>
-                    <nav class="hidden sm:ml-6 sm:flex sm:items-center sm:space-x-8">
-                        <a href="#" class="border-primary-500 text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium whitespace-nowrap">
-                            Property
+                    <nav class="main-nav-items">
+                        <a href="{% url 'home' %}" class="border-primary-500 text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium whitespace-nowrap">
+                            Listings
                         </a>
                         <!-- <a href="#" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium whitespace-nowrap">
                             Rentals
                         </a> -->
                         <a href="{% url 'saved_properties_list' %}" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium whitespace-nowrap">
-                            Saved
+                            Saved Listings
                         </a>
                         <!-- <a href="#" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium whitespace-nowrap">
                             Agents
                         </a> -->
+                        <a href="{% url 'chat_list' %}" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium whitespace-nowrap">
+                            Messages
+                        </a>
                     </nav>
                 </div>
                 <div class="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
@@ -837,7 +906,7 @@
                                     </a>
                                     <a href="{% url 'saved_properties_list' %}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-primary-50 hover:text-primary-700 transition duration-150" role="menuitem">
                                         <i class="fas fa-heart w-5 mr-3 text-gray-400"></i>
-                                        Saved Properties
+                                        Saved Listings
                                     </a>
                                     <a href="{% url 'profile' %}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-primary-50 hover:text-primary-700 transition duration-150" role="menuitem">
                                         <i class="fas fa-user w-5 mr-3 text-gray-400"></i>
@@ -931,11 +1000,7 @@
             </div>
         </div>
         <div class="px-4 py-3 space-y-1 overflow-y-auto">
-            
-            <a href="{% url 'saved_properties_list' %}" class="block px-3 py-2 text-base font-medium text-gray-500 hover:bg-primary-50 hover:text-primary-700 rounded-md">
-                <i class="fas fa-heart mr-2"></i> Saved Properties
-            </a>
-            
+
             <div class="border-t border-gray-200 pt-2 mt-2">
                 <!-- List Your Property Button -->
                 <a href="{% if user.is_authenticated %}{% url 'add_property' %}{% else %}{% url 'login' %}{% endif %}" class="block px-3 py-2 text-base font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-md text-center mb-2">
@@ -952,8 +1017,14 @@
                     <a href="{% url 'profile' %}" class="block px-3 py-2 text-base font-medium text-gray-700 hover:bg-primary-50 hover:text-primary-700 rounded-md">
                         <i class="fas fa-user mr-2"></i> Profile
                     </a>
+                    <a href="{% url 'home' %}" class="block px-3 py-2 text-base font-medium text-gray-700 hover:bg-primary-50 hover:text-primary-700 rounded-md">
+                        <i class="fas fa-home mr-2"></i> Listings
+                    </a>
                     <a href="{% url 'saved_properties_list' %}" class="block px-3 py-2 text-base font-medium text-gray-700 hover:bg-primary-50 hover:text-primary-700 rounded-md">
-                        <i class="fas fa-heart mr-2"></i> Saved Properties
+                        <i class="fas fa-heart mr-2"></i> Saved Listings
+                    </a>
+                    <a href="{% url 'chat_list' %}" class="block px-3 py-2 text-base font-medium text-gray-700 hover:bg-primary-50 hover:text-primary-700 rounded-md">
+                        <i class="fas fa-comments mr-2"></i> Messages
                     </a>
                     <a href="{% url 'profile' %}" class="block px-3 py-2 text-base font-medium text-gray-700 hover:bg-primary-50 hover:text-primary-700 rounded-md">
                         <i class="fas fa-cog mr-2"></i> Account Settings
@@ -978,7 +1049,7 @@
     </div>
 
     <!-- Main Content -->
-    <div class="flex h-[calc(100vh-64px)] relative">
+    <div class="flex h-[calc(100vh-64px)] min-h-0 relative">
         
         <!-- Sidebar Toggle Button (Desktop) - Shows when sidebar is hidden -->
         <button id="showSidebarDesktop" class="sidebar-toggle-desktop" aria-label="Toggle property list" style="display: none;">
@@ -1048,7 +1119,7 @@
                 <div class="p-4">
                     <div class="relative">
                         <div class="aspect-w-16 aspect-h-9 overflow-hidden rounded-lg">
-                            <img src="{{ selected_property.image_url }}" alt="{{ selected_property.title }}" class="w-full h-48 object-cover">
+                            <img src="{{ selected_property.image_url }}" alt="{{ selected_property.title }}" class="w-full h-48 object-cover" loading="lazy">
                         </div>
                         <div class="absolute top-2 right-2">
                             <button class="heart-icon p-2 bg-white rounded-full shadow-md text-gray-400 hover:text-red-500">
@@ -1107,8 +1178,8 @@
                             <button id="getDirections" class="w-full bg-white border border-primary-600 text-primary-600 hover:bg-primary-50 py-3 px-4 rounded-md font-medium">
                                 <i class="fas fa-directions mr-2"></i> Get Directions
                             </button>
-                            <button class="w-full bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 py-3 px-4 rounded-md font-medium">
-                                <i class="fas fa-phone mr-2"></i> Contact Agent
+                            <button class="contact-agent-btn w-full bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 py-3 px-4 rounded-md font-medium flex items-center justify-center" data-property-id="{{ property.id }}">
+                                <i class="fas fa-comments mr-2"></i> Message {% if property.agent %}Agent{% else %}Owner{% endif %}
                             </button>
                         </div>
                     </div>
@@ -1121,7 +1192,7 @@
                             <div class="property-card p-3 border rounded-lg cursor-pointer hover:border-primary-300" data-property-id="{{ property.id }}">
                                 <div class="flex">
                                     <div class="flex-shrink-0 w-24 h-20">
-                                        <img class="w-full h-full object-cover rounded" src="{{ property.image_url }}" alt="{{ property.title }}">
+                                        <img class="w-full h-full object-cover rounded" src="{{ property.image_url }}" alt="{{ property.title }}" loading="lazy">
                                     </div>
                                     <div class="ml-3">
                                         <h6 class="text-sm font-medium text-gray-900">${{ property.price|floatformat:0|intcomma }}</h6>
@@ -1151,7 +1222,7 @@
                     <div class="property-card p-4 cursor-pointer hover:bg-gray-50" data-property-id="{{ property.id }}">
                         <div class="flex">
                             <div class="flex-shrink-0 w-32 h-24">
-                                <img class="w-full h-full object-cover rounded" src="{{ property.image_url }}" alt="{{ property.title }}">
+                                <img class="w-full h-full object-cover rounded" src="{{ property.image_url }}" alt="{{ property.title }}" loading="lazy">
                             </div>
                             <div class="ml-4">
                                 <div class="flex justify-between">
@@ -1286,18 +1357,36 @@
         <div id="leftOverlayOverlay" class="left-overlay-overlay"></div>
 
         <!-- Map -->
-        <div id="map" class="flex-1"></div>
+        <div id="map" class="flex-1 min-h-0 min-w-0"></div>
         
         <!-- Map Controls -->
         <div class="absolute right-4 top-24 z-10 flex flex-col space-y-2">
-            <button id="zoomIn" class="p-2 bg-white rounded-full shadow-md hover:bg-gray-100">
+            <button id="zoomIn" 
+                    class="p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition-all duration-200 hover:shadow-lg group relative" 
+                    title="Zoom In"
+                    aria-label="Zoom In">
                 <i class="fas fa-plus text-gray-700"></i>
+                <span class="absolute right-full mr-2 top-1/2 -translate-y-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+                    Zoom In
+                </span>
             </button>
-            <button id="zoomOut" class="p-2 bg-white rounded-full shadow-md hover:bg-gray-100">
+            <button id="zoomOut" 
+                    class="p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition-all duration-200 hover:shadow-lg group relative" 
+                    title="Zoom Out"
+                    aria-label="Zoom Out">
                 <i class="fas fa-minus text-gray-700"></i>
+                <span class="absolute right-full mr-2 top-1/2 -translate-y-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+                    Zoom Out
+                </span>
             </button>
-            <button id="currentLocation" class="p-2 bg-white rounded-full shadow-md hover:bg-gray-100">
+            <button id="currentLocation" 
+                    class="p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition-all duration-200 hover:shadow-lg group relative" 
+                    title="My Location"
+                    aria-label="My Location">
                 <i class="fas fa-location-arrow text-gray-700"></i>
+                <span class="absolute right-full mr-2 top-1/2 -translate-y-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+                    My Location
+                </span>
             </button>
         </div>
 
@@ -1305,8 +1394,18 @@
         
         <!-- View Toggle -->
         <div class="view-toggle">
-            <button id="streetView" class="active">Street</button>
-            <button id="satelliteView">Satellite</button>
+            <button id="streetView" class="active group relative" title="Street View" aria-label="Street View">
+                Street
+                <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-gray-900 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50">
+                    Street View
+                </span>
+            </button>
+            <button id="satelliteView" class="group relative" title="Satellite View" aria-label="Satellite View">
+                Satellite
+                <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-gray-900 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50">
+                    Satellite View
+                </span>
+            </button>
         </div>
 
         <!-- Directions Panel Toggle Button (shown when panel is closed) -->
@@ -1422,8 +1521,87 @@
             <i class="fas fa-info-circle"></i>
         </button>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- Contact Agent/Owner Modal -->
+    <div id="contactModal" class="fixed inset-0 bg-black bg-opacity-50 z-[9999] hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div class="sticky top-0 bg-white border-b px-6 py-4 flex justify-between items-center">
+                <h3 class="text-xl font-bold text-gray-900" id="contactModalTitle">Message <span id="contactPersonType">Agent</span></h3>
+                <button id="closeContactModal" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <form id="contactForm" class="p-6">
+                <input type="hidden" id="contactPropertyId" name="property_id">
+                
+                {% if user.is_authenticated %}
+                <div class="mb-4 p-3 bg-primary-50 border border-primary-200 rounded-lg">
+                    <div class="flex items-start">
+                        <i class="fas fa-comments text-primary-600 mt-0.5 mr-2"></i>
+                        <p class="text-sm text-primary-800">
+                            Start a conversation with the property {% if property.agent %}agent{% else %}owner{% endif %}. You can send a message now or start chatting directly.
+                        </p>
+                    </div>
+                </div>
+                {% else %}
+                <div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div class="flex items-start">
+                        <i class="fas fa-info-circle text-blue-600 mt-0.5 mr-2"></i>
+                        <p class="text-sm text-blue-800">
+                            <strong>Please login</strong> to start a conversation with the property {% if property.agent %}agent{% else %}owner{% endif %}.
+                        </p>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <div class="mb-6">
+                    <label for="contactMessage" class="block text-sm font-medium text-gray-700 mb-2">
+                        Initial Message (Optional)
+                    </label>
+                    <textarea id="contactMessage" name="message" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent" placeholder="Type your message here... (You can also start chatting without a message)"></textarea>
+                    <p class="mt-1 text-xs text-gray-500">Leave empty to start a new conversation</p>
+                </div>
+                
+                <div class="flex space-x-3">
+                    <button type="button" id="cancelContact" class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors">
+                        Cancel
+                    </button>
+                    <button type="submit" id="submitContact" class="flex-1 px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors">
+                        <span id="submitContactText">Start Chat</span>
+                        <span id="submitContactLoading" class="hidden">
+                            <i class="fas fa-spinner fa-spin mr-2"></i> Opening...
+                        </span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Contact Modal User Data and Script -->
     <script>
+        // Pass user data to contact modal JavaScript
+        window.contactModalUserData = {
+            is_authenticated: {% if user.is_authenticated %}true{% else %}false{% endif %},
+            {% if user.is_authenticated %}
+            name: '{{ user.get_full_name|default:user.username|escapejs }}',
+            email: '{{ user.email|escapejs }}',
+            {% if user.user_profile.phone %}
+            phone: '{{ user.user_profile.phone|escapejs }}',
+            {% else %}
+            phone: '',
+            {% endif %}
+            {% else %}
+            name: '',
+            email: '',
+            phone: '',
+            {% endif %}
+        };
+    </script>
+    <script src="{% static 'js/contactModal.js' %}"></script>
+    
+    <script>
+        // SweetAlert2 theme configuration is now in static/js/sweetalert2-theme.js
+        // CSS styles are in static/css/sweetalert2-theme.css
         // Bottom Sheet functionality
         document.addEventListener('DOMContentLoaded', function() {
             // Elements
@@ -1820,10 +1998,8 @@
                 zoom: 15
             });
 
-            // Add controls
-            map.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
-            
             // Set up geocoder with search suggestions
+            // Note: Default NavigationControl removed - using custom controls instead
             const geocoder = new MapboxGeocoder({
                 accessToken: mapboxgl.accessToken,
                 mapboxgl: mapboxgl,
@@ -2837,8 +3013,8 @@
                                 <button class="w-full bg-primary-600 hover:bg-primary-700 text-white py-3 px-4 rounded-md font-medium get-directions-btn transition-colors duration-300 flex items-center justify-center">
                                     <i class="fas fa-directions mr-2"></i> Get Directions
                                 </button>
-                                <button class="w-full bg-white border border-primary-600 text-primary-600 hover:bg-primary-50 py-3 px-4 rounded-md font-medium transition-colors duration-300 flex items-center justify-center">
-                                    <i class="fas fa-phone mr-2"></i> Contact Agent
+                                <button class="contact-agent-btn w-full bg-white border border-primary-600 text-primary-600 hover:bg-primary-50 py-3 px-4 rounded-md font-medium transition-colors duration-300 flex items-center justify-center" data-property-id="${property.id}">
+                                    <i class="fas fa-comments mr-2"></i> Message ${property.has_agent ? 'Agent' : 'Owner'}
                                 </button>
                                 <button class="w-full bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 py-3 px-4 rounded-md font-medium transition-colors duration-300 flex items-center justify-center">
                                     <i class="fas fa-share-alt mr-2"></i> Share Property
@@ -2889,6 +3065,18 @@
                     }
                 }
 
+                // Attach contact button handler after property details are shown
+                const contactBtn = propertyDetailsDiv.querySelector('.contact-agent-btn');
+                if (contactBtn && window.attachContactButtonHandlers) {
+                    // Use the property data directly to open modal
+                    contactBtn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        if (window.openContactModal) {
+                            window.openContactModal(property);
+                        }
+                    });
+                }
+                
                 // Add click handler for the directions button
                 propertyDetailsDiv.querySelector('.get-directions-btn').addEventListener('click', async (e) => {
                     e.stopPropagation();
@@ -3511,9 +3699,13 @@
                             showSidebarDesktop.style.display = 'none';
                         }
                     } else {
-                        // On mobile, hide sidebar by default
-                        sidebar.classList.add('hidden');
-                        sidebar.classList.remove('open');
+                        // On mobile, show sidebar by default (user can hide it)
+                        sidebar.classList.remove('hidden');
+                        sidebar.classList.add('open');
+                        if (sidebarBackdrop) {
+                            sidebarBackdrop.classList.add('visible');
+                        }
+                        document.body.classList.add('sidebar-open');
                     }
                 }
             });
@@ -3709,6 +3901,8 @@
             
             // Property data from Django template
             const properties = {{ properties|safe }};
+            // Make properties globally accessible for contact modal
+            window.properties = properties;
 
             // Setup property markers and handlers
             const { showRoute } = setupDirections(map, directions, state);
@@ -3745,6 +3939,63 @@
                         };
                     }
                 });
+
+                // Check for property ID in URL query parameters
+                const urlParams = new URLSearchParams(window.location.search);
+                const propertyIdParam = urlParams.get('property');
+                if (propertyIdParam) {
+                    const propertyId = parseInt(propertyIdParam);
+                    if (!isNaN(propertyId)) {
+                        // Function to show property from URL parameter
+                        const showPropertyFromUrl = () => {
+                            // First, try to find property in the loaded properties array
+                            const property = properties.find(p => p.id === propertyId);
+                            
+                            if (property && propertyClickHandler) {
+                                // Use the propertyClickHandler which handles everything
+                                const mockEvent = {
+                                    currentTarget: document.createElement('div'),
+                                    stopPropagation: () => {}
+                                };
+                                propertyClickHandler(propertyId, mockEvent);
+                                
+                                // Open sidebar on desktop
+                                if (window.innerWidth >= 768) {
+                                    const sidebar = document.getElementById('sidebar');
+                                    if (sidebar) {
+                                        sidebar.classList.remove('hidden');
+                                    }
+                                }
+                                
+                                // Clean up URL parameter
+                                const newUrl = window.location.pathname;
+                                window.history.replaceState({}, '', newUrl);
+                            } else {
+                                // Property not in initial load, try to find property card after infinite scroll loads it
+                                setTimeout(() => {
+                                    const propertyCard = document.querySelector(`.property-card[data-property-id="${propertyId}"]`);
+                                    if (propertyCard && propertyClickHandler) {
+                                        const mockEvent = {
+                                            currentTarget: propertyCard,
+                                            stopPropagation: () => {}
+                                        };
+                                        propertyClickHandler(propertyId, mockEvent);
+                                        
+                                        // Clean up URL parameter
+                                        const newUrl = window.location.pathname;
+                                        window.history.replaceState({}, '', newUrl);
+                                    } else {
+                                        // If still not found, show a message
+                                        console.warn(`Property ${propertyId} not found in loaded properties`);
+                                    }
+                                }, 2000);
+                            }
+                        };
+                        
+                        // Wait for markers to be fully initialized
+                        setTimeout(showPropertyFromUrl, 1500);
+                    }
+                }
             });
 
             // Setup UI event handlers
@@ -4733,6 +4984,8 @@
             window.initInfiniteScroll = initInfiniteScroll;
             window.checkScroll = checkScroll;
         })();
+
+        // Contact modal functionality is now in static/js/contactModal.js
     </script>
 </body>
 </html>

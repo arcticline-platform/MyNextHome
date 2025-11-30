@@ -5,7 +5,6 @@
 {% block title %}Saved Properties - MyNextHome{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 <style>
     .property-card {
         transition: transform 0.3s ease, box-shadow 0.3s ease;
@@ -14,8 +13,36 @@
         transform: translateY(-5px);
         box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
     }
+    
+    /* Ensure all text is visible */
+    h1, h2, h3, h4, h5, h6 {
+        color: #111827 !important; /* gray-900 */
+    }
+    
+    .container h1,
+    .container h2,
+    .container h3,
+    .container h4,
+    .container h5,
+    .container h6 {
+        color: #111827 !important;
+    }
+    
+    .container p {
+        color: #374151 !important; /* gray-700 */
+    }
+    
+    /* Property card text */
+    .property-card h3,
+    .property-card h4 {
+        color: #111827 !important;
+    }
 </style>
 {% endblock %}
+
+{% block body_class %}bg-gray-50{% endblock %}
+
+{% block nav_saved_class %}border-primary-500 text-gray-900{% endblock %}
 
 {% block content %}
 <div class="container mx-auto px-4 py-8 max-w-7xl">
@@ -45,13 +72,15 @@
                     <div class="relative">
                         {% with primary_image=property.get_primary_image %}
                             {% if primary_image %}
-                                <img src="{{ primary_image.get_image_url }}" 
-                                     alt="{{ property.title }}" 
-                                     class="w-full h-48 object-cover">
+                                <a href="{% url 'property_detail' property.id %}">
+                                    <img src="{{ primary_image.get_image_url }}" alt="{{ property.title }}" class="w-full h-48 object-cover" loading="lazy">
+                                </a>
                             {% else %}
-                                <div class="w-full h-48 bg-gray-200 flex items-center justify-center">
-                                    <i class="fas fa-home text-gray-400 text-4xl"></i>
-                                </div>
+                                <a href="{% url 'property_detail' property.id %}">
+                                    <div class="w-full h-48 bg-gray-200 flex items-center justify-center">
+                                        <i class="fas fa-home text-gray-400 text-4xl"></i>
+                                    </div>
+                                </a>
                             {% endif %}
                         {% endwith %}
                         <button onclick="removeSavedProperty({{ property.id }})" 
@@ -60,7 +89,7 @@
                         </button>
                     </div>
                     <div class="p-4">
-                        <h3 class="font-bold text-lg mb-1">{{ property.title }}</h3>
+                        <h3 class="font-bold text-lg mb-1 text-gray-900">{{ property.title }}</h3>
                         <p class="text-gray-600 text-sm mb-2">
                             <i class="fas fa-map-marker-alt text-primary-500 mr-1"></i>
                             {{ property.address }}
@@ -76,12 +105,12 @@
                             </div>
                         </div>
                         <div class="flex justify-between">
-                            <a href="/properties/property/{{ property.id }}/" 
+                            <a href="{% url 'property_detail' property.id %}" 
                                class="text-primary-600 hover:text-primary-800 text-sm font-medium">
                                 View Details
                             </a>
-                            <button class="text-sm bg-primary-600 hover:bg-primary-700 text-white px-3 py-1 rounded">
-                                Contact Agent
+                            <button class="contact-agent-btn text-sm bg-primary-600 hover:bg-primary-700 text-white px-3 py-1 rounded flex items-center" data-property-id="{{ property.id }}">
+                                <i class="fas fa-comments mr-1"></i> Message {% if property.agent %}Agent{% else %}Owner{% endif %}
                             </button>
                         </div>
                     </div>
@@ -91,8 +120,8 @@
             {% else %}
             <div class="text-center py-12">
                 <i class="fas fa-heart text-gray-300 text-5xl mb-4"></i>
-                <h3 class="text-lg font-medium text-gray-700">No saved properties yet</h3>
-                <p class="text-gray-500 mt-2">When you save properties, they'll appear here.</p>
+                <h3 class="text-lg font-medium text-gray-900">No saved properties yet</h3>
+                <p class="text-gray-600 mt-2">When you save properties, they'll appear here.</p>
                 <a href="{% url 'home' %}" class="mt-4 inline-block bg-primary-600 hover:bg-primary-700 text-white px-6 py-2 rounded-lg">
                     Browse Properties
                 </a>
@@ -101,78 +130,121 @@
         </div>
     </div>
 </div>
+{% endblock %}
 
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script>
-    function removeSavedProperty(propertyId) {
-        Swal.fire({
-            title: 'Remove from saved?',
-            text: "This property will be removed from your saved list.",
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonColor: '#ef4444',
-            cancelButtonColor: '#6b7280',
-            confirmButtonText: 'Yes, remove it',
-            cancelButtonText: 'Cancel'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                fetch(`/accounts/saved-properties/${propertyId}/remove/`, {
-                    method: 'POST',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'X-CSRFToken': getCookie('csrftoken'),
-                        'Content-Type': 'application/json',
-                    },
-                    credentials: 'same-origin'
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        Swal.fire({
-                            title: 'Removed!',
-                            text: 'The property has been removed from your saved list.',
-                            icon: 'success',
-                            timer: 1500,
-                            showConfirmButton: false
-                        }).then(() => {
-                            location.reload();
-                        });
-                    } else {
+{% block scripts %}
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        function removeSavedProperty(propertyId) {
+            Swal.fire({
+                title: 'Remove from saved?',
+                text: "This property will be removed from your saved list.",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Yes, remove it',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch(`/accounts/saved-properties/${propertyId}/remove/`, {
+                        method: 'POST',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRFToken': getCookie('csrftoken'),
+                            'Content-Type': 'application/json',
+                        },
+                        credentials: 'same-origin'
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire({
+                                title: 'Removed!',
+                                text: 'The property has been removed from your saved list.',
+                                icon: 'success',
+                                timer: 1500,
+                                showConfirmButton: false
+                            }).then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire({
+                                title: 'Error',
+                                text: data.error || 'Failed to remove property',
+                                icon: 'error',
+                                confirmButtonText: 'OK'
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
                         Swal.fire({
                             title: 'Error',
-                            text: data.error || 'Failed to remove property',
+                            text: 'An error occurred. Please try again.',
                             icon: 'error',
                             confirmButtonText: 'OK'
                         });
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    Swal.fire({
-                        title: 'Error',
-                        text: 'An error occurred. Please try again.',
-                        icon: 'error',
-                        confirmButtonText: 'OK'
                     });
-                });
-            }
-        });
-    }
+                }
+            });
+        }
 
-    function getCookie(name) {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
                 }
             }
+            return cookieValue;
         }
-        return cookieValue;
-    }
-</script>
+
+        // Initialize contact button handlers for saved properties
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.contact-agent-btn').forEach(button => {
+                const propertyId = parseInt(button.getAttribute('data-property-id'));
+                
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Fetch property data to open modal
+                    fetch(`/accounts/properties/property/${propertyId}/`, {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(property => {
+                        if (property && property.id && window.openContactModal) {
+                            window.openContactModal(property);
+                        } else {
+                            Swal.fire({
+                                title: 'Error',
+                                text: 'Property not found.',
+                                icon: 'error',
+                                confirmButtonText: 'OK'
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching property:', error);
+                        Swal.fire({
+                            title: 'Error',
+                            text: 'Failed to load property information.',
+                            icon: 'error',
+                            confirmButtonText: 'OK'
+                        });
+                    });
+                });
+            });
+        });
+    </script>
 {% endblock %}
 

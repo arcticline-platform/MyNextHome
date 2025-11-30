@@ -20,9 +20,36 @@
     <meta name="twitter:image" content="{% static 'img/mynexthome.png' %}">
     <link rel="canonical" href="https://mynexthome.daraza.net">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            200: '#bbf7d0',
+                            300: '#86efac',
+                            400: '#4ade80',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            800: '#166534',
+                            900: '#14532d',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     <!-- <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script> -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/alpinejs/3.12.0/cdn.min.js" defer></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <!-- Custom SweetAlert2 Theme -->
+    <link rel="stylesheet" href="{% static 'css/sweetalert2-theme.css' %}">
+    <script src="{% static 'js/sweetalert2-theme.js' %}"></script>
     <style>
         @keyframes fadeIn {
             from {
@@ -53,15 +80,372 @@
         a:hover {
             color: #11ca2c;
         }
+        
+        /* Ensure text is visible by default */
+        body {
+            color: #111827; /* gray-900 */
+        }
+        
+        h1, h2, h3, h4, h5, h6 {
+            color: #111827; /* gray-900 */
+        }
+        
+        p {
+            color: #374151; /* gray-700 */
+        }
+
+        /* Mobile Navigation Menu */
+        .mobile-nav-menu {
+            position: fixed;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: 85%;
+            max-width: 400px;
+            background: white;
+            box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+            z-index: 1001;
+            transform: translateX(100%);
+            transition: transform 0.3s ease-out;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            display: none;
+        }
+
+        .mobile-nav-menu.open {
+            transform: translateX(0);
+            display: block;
+        }
+
+        .mobile-nav-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            display: none;
+        }
+
+        .mobile-nav-overlay.visible {
+            opacity: 1;
+            pointer-events: auto;
+            display: block;
+        }
+
+        @media (min-width: 640px) {
+            .mobile-nav-menu,
+            .mobile-nav-overlay {
+                display: none !important;
+            }
+        }
+
+        /* Ensure mobile menu toggle button is visible on small screens */
+        #mobileMenuToggle {
+            display: flex !important;
+        }
+
+        @media (min-width: 640px) {
+            #mobileMenuToggle {
+                display: none !important;
+            }
+        }
+
+        /* SweetAlert2 theme styles are now in static/css/sweetalert2-theme.css */
     </style>
     {% block extra_css %}{% endblock %}
 </head>
 
 {% block body %}
-<body class="bg-gradient-to-br from-green-50 to-green-100 min-h-screen flex items-center justify-center p-4">
+<body class="{% block body_class %}bg-gradient-to-br from-green-50 to-green-100 min-h-screen flex items-center justify-center p-4{% endblock %}">
+    {% block navigation %}
+    <!-- Navigation -->
+    <nav class="bg-white shadow-md sticky top-0" style="z-index: 1000;">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16 w-full">
+                <div class="flex items-center flex-shrink-0 min-w-0">
+                    <div class="flex-shrink-0 flex items-center">
+                        <a href="{% url 'home' %}" class="flex items-center">
+                            <i class="fas fa-home text-primary-600 text-2xl mr-2"></i>
+                            <span class="text-xl font-bold text-primary-800">MyNextHome</span>
+                        </a>
+                    </div>
+                    <nav class="hidden sm:ml-6 sm:flex sm:items-center sm:space-x-8">
+                        <a href="{% url 'home' %}" class="{% block nav_property_class %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endblock %} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium whitespace-nowrap">
+                            Listings
+                        </a>
+                        <a href="{% url 'saved_properties_list' %}" class="{% block nav_saved_class %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endblock %} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium whitespace-nowrap">
+                            Saved Listings
+                        </a>
+                        <a href="{% url 'chat_list' %}" class="{% block nav_messages_class %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endblock %} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium whitespace-nowrap">Messages</a>
+                    </nav>
+                </div>
+                <div class="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
+                    <div class="hidden sm:flex sm:items-center sm:space-x-4">
+                        <a href="{% if user.is_authenticated %}{% url 'add_property' %}{% else %}{% url 'login' %}{% endif %}" class="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-md text-sm font-medium whitespace-nowrap flex-shrink-0">
+                            List Your Property
+                        </a>
+                        <div class="relative flex-shrink-0">
+                            <button id="account-button" class="group flex items-center bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-md text-sm font-medium transition duration-150 ease-in-out whitespace-nowrap">
+                                <i class="fas fa-user-circle mr-2 text-gray-500 group-hover:text-primary-600"></i>
+                                {% if user.is_authenticated %}
+                                    {{ user.username }}
+                                {% else %}
+                                    Account
+                                {% endif %}
+                                <i class="fas fa-caret-down ml-2 transform transition-transform duration-200"></i>
+                            </button>
+                            <!-- Account Dropdown -->
+                            <div id="account-dropdown" class="absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 divide-y divide-gray-100 transform opacity-0 scale-95 transition-all duration-200 ease-out pointer-events-none">
+                                <div class="py-1" role="menu" aria-orientation="vertical">
+                                    {% if user.is_authenticated %}
+                                        <a href="{% url 'profile' %}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-primary-50 hover:text-primary-700 transition duration-150" role="menuitem">
+                                            <i class="fas fa-user w-5 mr-3 text-gray-400"></i>
+                                            Profile
+                                        </a>
+                                        <a href="{% url 'saved_properties_list' %}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-primary-50 hover:text-primary-700 transition duration-150" role="menuitem">
+                                            <i class="fas fa-heart w-5 mr-3 text-gray-400"></i>
+                                            Saved Listings
+                                        </a>
+                                        <a href="{% url 'chat_list' %}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-primary-50 hover:text-primary-700 transition duration-150 relative" role="menuitem" id="messagesDropdownLink">
+                                            <i class="fas fa-comments w-5 mr-3 text-gray-400"></i>
+                                            Messages
+                                            <span id="messagesUnreadBadge" class="hidden ml-auto inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold leading-none text-white bg-primary-600 rounded-full">
+                                                <span id="messagesUnreadCount">0</span>
+                                            </span>
+                                        </a>
+                                        <div class="border-t border-gray-100"></div>
+                                        <form action="{% url 'logout' %}" method="POST" class="block">
+                                            {% csrf_token %}
+                                            <button type="submit" class="w-full text-left flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition duration-150" role="menuitem">
+                                                <i class="fas fa-sign-out-alt w-5 mr-3 text-red-400"></i>
+                                                Sign Out
+                                            </button>
+                                        </form>
+                                    {% else %}
+                                        <a href="{% url 'login' %}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-primary-50 hover:text-primary-700 transition duration-150" role="menuitem">
+                                            <i class="fas fa-sign-in-alt w-5 mr-3 text-gray-400"></i>
+                                            Sign In
+                                        </a>
+                                        <a href="{% url 'signup' %}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-primary-50 hover:text-primary-700 transition duration-150" role="menuitem">
+                                            <i class="fas fa-user-plus w-5 mr-3 text-gray-400"></i>
+                                            Sign Up
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Mobile menu toggle button - visible on small screens only -->
+                <button id="mobileMenuToggle" class="sm:hidden flex items-center justify-center p-2 text-gray-700 hover:text-primary-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500 rounded-md transition-colors relative z-20" aria-label="Toggle menu" style="min-width: 40px; flex-shrink: 0;">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Navigation Overlay -->
+    <div id="mobileNavOverlay" class="mobile-nav-overlay"></div>
+
+    <!-- Mobile Navigation Menu -->
+    <div id="mobileNavMenu" class="mobile-nav-menu">
+        <div class="p-4 border-b bg-white sticky top-0 z-10">
+            <div class="flex justify-between items-center">
+                <h2 class="text-xl font-bold text-gray-900">Menu</h2>
+                <button id="closeMobileNav" class="text-primary-600 hover:text-primary-800 p-2">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+        </div>
+        <div class="px-4 py-3 space-y-1 overflow-y-auto">
+            <a href="{% url 'home' %}" class="block px-3 py-2 text-base font-medium text-gray-700 hover:bg-primary-50 hover:text-primary-700 rounded-md">
+                <i class="fas fa-home mr-2"></i> Listings
+            </a>
+            <a href="{% url 'saved_properties_list' %}" class="block px-3 py-2 text-base font-medium text-gray-700 hover:bg-primary-50 hover:text-primary-700 rounded-md">
+                <i class="fas fa-heart mr-2"></i> Saved Listings
+            </a>
+            <a href="{% url 'chat_list' %}" class="block px-3 py-2 text-base font-medium text-gray-700 hover:bg-primary-50 hover:text-primary-700 rounded-md relative" id="messagesMobileLink">
+                <i class="fas fa-comments mr-2"></i> Messages
+                <span id="messagesUnreadBadgeMobile" class="hidden ml-auto inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold leading-none text-white bg-primary-600 rounded-full">
+                    <span id="messagesUnreadCountMobile">0</span>
+                </span>
+            </a>
+            
+            <div class="border-t border-gray-200 pt-2 mt-2">
+                <!-- List Your Property Button -->
+                <a href="{% if user.is_authenticated %}{% url 'add_property' %}{% else %}{% url 'login' %}{% endif %}" class="block px-3 py-2 text-base font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-md text-center mb-2">
+                    <i class="fas fa-plus mr-2"></i> List Your Property
+                </a>
+            </div>
+            
+            <!-- Account Section -->
+            <div class="border-t border-gray-200 pt-2 mt-2">
+                <div class="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    Account
+                </div>
+                {% if user.is_authenticated %}
+                    <a href="{% url 'profile' %}" class="block px-3 py-2 text-base font-medium text-gray-700 hover:bg-primary-50 hover:text-primary-700 rounded-md">
+                        <i class="fas fa-user mr-2"></i> Profile
+                    </a>
+                    <a href="{% url 'saved_properties_list' %}" class="block px-3 py-2 text-base font-medium text-gray-700 hover:bg-primary-50 hover:text-primary-700 rounded-md">
+                        <i class="fas fa-heart mr-2"></i> Saved Listings
+                    </a>
+                    <div class="border-t border-gray-200 mt-1"></div>
+                    <form action="{% url 'logout' %}" method="POST" class="block">
+                        {% csrf_token %}
+                        <button type="submit" class="w-full text-left block px-3 py-2 text-base font-medium text-red-600 hover:bg-red-50 rounded-md">
+                            <i class="fas fa-sign-out-alt mr-2"></i> Sign Out
+                        </button>
+                    </form>
+                {% else %}
+                    <a href="{% url 'login' %}" class="block px-3 py-2 text-base font-medium text-gray-700 hover:bg-primary-50 hover:text-primary-700 rounded-md">
+                        <i class="fas fa-sign-in-alt mr-2"></i> Sign In
+                    </a>
+                    <a href="{% url 'signup' %}" class="block px-3 py-2 text-base font-medium text-gray-700 hover:bg-primary-50 hover:text-primary-700 rounded-md">
+                        <i class="fas fa-user-plus mr-2"></i> Sign Up
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const accountButton = document.getElementById('account-button');
+            const accountDropdown = document.getElementById('account-dropdown');
+            const caretIcon = accountButton?.querySelector('.fa-caret-down');
+            let isOpen = false;
+
+            const toggleDropdown = (show) => {
+                isOpen = show;
+                if (accountDropdown && caretIcon) {
+                    accountDropdown.style.transform = show ? 'scale(1)' : 'scale(0.95)';
+                    accountDropdown.style.opacity = show ? '1' : '0';
+                    accountDropdown.style.pointerEvents = show ? 'auto' : 'none';
+                    caretIcon.style.transform = show ? 'rotate(180deg)' : 'rotate(0)';
+                    if (accountButton) {
+                        accountButton.setAttribute('aria-expanded', show);
+                    }
+                }
+            };
+
+            if (accountButton && accountDropdown) {
+                accountButton.addEventListener('click', function(event) {
+                    event.stopPropagation();
+                    toggleDropdown(!isOpen);
+                });
+
+                document.addEventListener('click', function(event) {
+                    if (isOpen && !accountDropdown.contains(event.target) && !accountButton.contains(event.target)) {
+                        toggleDropdown(false);
+                    }
+                });
+
+                document.addEventListener('keydown', function(event) {
+                    if (event.key === 'Escape' && isOpen) {
+                        toggleDropdown(false);
+                    }
+                });
+
+                const menuItems = accountDropdown.querySelectorAll('a');
+                menuItems.forEach(item => {
+                    item.addEventListener('mouseenter', () => {
+                        const icon = item.querySelector('i');
+                        if (icon) icon.classList.add('text-primary-500');
+                    });
+                    item.addEventListener('mouseleave', () => {
+                        const icon = item.querySelector('i');
+                        if (icon) icon.classList.remove('text-primary-500');
+                    });
+                });
+            }
+
+            // Mobile Navigation Menu functionality
+            const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+            const mobileNavMenu = document.getElementById('mobileNavMenu');
+            const mobileNavOverlay = document.getElementById('mobileNavOverlay');
+            const closeMobileNav = document.getElementById('closeMobileNav');
+
+            function openMobileNav() {
+                if (mobileNavMenu) {
+                    mobileNavMenu.classList.add('open');
+                    if (mobileNavOverlay) {
+                        mobileNavOverlay.classList.add('visible');
+                    }
+                    document.body.classList.add('mobile-nav-open');
+                }
+            }
+
+            function closeMobileNavFunc() {
+                if (mobileNavMenu) {
+                    mobileNavMenu.classList.remove('open');
+                    if (mobileNavOverlay) {
+                        mobileNavOverlay.classList.remove('visible');
+                    }
+                    document.body.classList.remove('mobile-nav-open');
+                    // Reset icon
+                    if (mobileMenuToggle) {
+                        const icon = mobileMenuToggle.querySelector('i');
+                        if (icon) {
+                            icon.classList.remove('fa-times');
+                            icon.classList.add('fa-bars');
+                        }
+                    }
+                }
+            }
+
+            if (mobileMenuToggle && mobileNavMenu) {
+                mobileMenuToggle.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    if (mobileNavMenu.classList.contains('open')) {
+                        closeMobileNavFunc();
+                    } else {
+                        openMobileNav();
+                        // Change icon to X
+                        const icon = this.querySelector('i');
+                        if (icon) {
+                            icon.classList.remove('fa-bars');
+                            icon.classList.add('fa-times');
+                        }
+                    }
+                });
+            }
+
+            if (closeMobileNav) {
+                closeMobileNav.addEventListener('click', closeMobileNavFunc);
+            }
+
+            if (mobileNavOverlay) {
+                mobileNavOverlay.addEventListener('click', closeMobileNavFunc);
+            }
+
+            // Close on escape key
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && mobileNavMenu && mobileNavMenu.classList.contains('open')) {
+                    closeMobileNavFunc();
+                }
+            });
+
+            // Close on window resize to desktop
+            window.addEventListener('resize', function() {
+                if (window.innerWidth >= 640 && mobileNavMenu && mobileNavMenu.classList.contains('open')) {
+                    closeMobileNavFunc();
+                }
+            });
+        });
+
+        // SweetAlert2 theme configuration is now in static/js/sweetalert2-theme.js
+    </script>
+    {% endblock %}
+    
     <!-- Display messages if any -->
     {% if messages %}
-        <div class="fixed top-4 inset-x-0 z-50 flex flex-col items-center space-y-2 p-2">
+        <div class="fixed top-4 inset-x-0 z-[10000] flex flex-col items-center space-y-2 p-2">
             {% for message in messages %}
                 <div 
                     x-data="{ show: true }" 
@@ -113,6 +497,96 @@
     {% endif %}
 
     {% block content %}{% endblock %}
+    
+    <!-- User authentication status for JavaScript -->
+    <script>
+        document.body.setAttribute('data-user-authenticated', '{% if user.is_authenticated %}true{% else %}false{% endif %}');
+        {% if user.is_authenticated %}
+        document.body.setAttribute('data-user-id', '{{ user.id }}');
+        {% endif %}
+    </script>
+    
+    <!-- Contact Agent/Owner Modal - Available on all pages -->
+    <div id="contactModal" class="fixed inset-0 bg-black bg-opacity-50 z-[9999] hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div class="sticky top-0 bg-white border-b px-6 py-4 flex justify-between items-center">
+                <h3 class="text-xl font-bold text-gray-900" id="contactModalTitle">Message <span id="contactPersonType">Agent</span></h3>
+                <button id="closeContactModal" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <form id="contactForm" class="p-6">
+                <input type="hidden" id="contactPropertyId" name="property_id">
+                
+                {% if user.is_authenticated %}
+                <div class="mb-4 p-3 bg-primary-50 border border-primary-200 rounded-lg">
+                    <div class="flex items-start">
+                        <i class="fas fa-comments text-primary-600 mt-0.5 mr-2"></i>
+                        <p class="text-sm text-primary-800">
+                            Start a conversation with the property {% if property.agent %}agent{% else %}owner{% endif %}. You can send a message now or start chatting directly.
+                        </p>
+                    </div>
+                </div>
+                {% else %}
+                <div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div class="flex items-start">
+                        <i class="fas fa-info-circle text-blue-600 mt-0.5 mr-2"></i>
+                        <p class="text-sm text-blue-800">
+                            <strong>Please login</strong> to start a conversation with the property {% if property.agent %}agent{% else %}owner{% endif %}.
+                        </p>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <div class="mb-6">
+                    <label for="contactMessage" class="block text-sm font-medium text-gray-700 mb-2">
+                        Initial Message (Optional)
+                    </label>
+                    <textarea id="contactMessage" name="message" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent" placeholder="Type your message here... (You can also start chatting without a message)"></textarea>
+                    <p class="mt-1 text-xs text-gray-500">Leave empty to start a new conversation</p>
+                </div>
+                
+                <div class="flex space-x-3">
+                    <button type="button" id="cancelContact" class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors">
+                        Cancel
+                    </button>
+                    <button type="submit" id="submitContact" class="flex-1 px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors">
+                        <span id="submitContactText">Start Chat</span>
+                        <span id="submitContactLoading" class="hidden">
+                            <i class="fas fa-spinner fa-spin mr-2"></i> Opening...
+                        </span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Contact Modal User Data and Script -->
+    <script>
+        // Pass user data to contact modal JavaScript
+        window.contactModalUserData = {
+            is_authenticated: {% if user.is_authenticated %}true{% else %}false{% endif %},
+            {% if user.is_authenticated %}
+            name: '{{ user.get_full_name|default:user.username|escapejs }}',
+            email: '{{ user.email|escapejs }}',
+            {% if user.user_profile.phone %}
+            phone: '{{ user.user_profile.phone|escapejs }}',
+            {% else %}
+            phone: '',
+            {% endif %}
+            {% else %}
+            name: '',
+            email: '',
+            phone: '',
+            {% endif %}
+        };
+    </script>
+    <script src="{% static 'js/contactModal.js' %}"></script>
+    
+    <!-- Unread Messages Counter -->
+    {% if user.is_authenticated %}
+    <script src="{% static 'js/unreadMessages.js' %}"></script>
+    {% endif %}
     
     {% block scripts %}{% endblock %}
 </body>

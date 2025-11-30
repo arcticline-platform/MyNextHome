@@ -56,6 +56,7 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',
     'django.contrib.sites',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -66,6 +67,10 @@ INSTALLED_APPS = [
     'django.contrib.gis',
     # 'django.contrib.sitemaps',
     'django.contrib.humanize',
+
+    # Channels (must be before local apps for proper routing)
+    'channels',
+    'channels_redis',
 
     # Local Apps
     'core',
@@ -166,11 +171,14 @@ CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TASK_SERIALIZER = 'json'
 # CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 
+# Channels Configuration for WebSockets
 CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
             "hosts": [("127.0.0.1", 6379)],
+            "capacity": 1500,  # Maximum number of messages to store in a channel
+            "expiry": 10,  # Message expiry time in seconds
         },
     },
 }
