@@ -857,6 +857,7 @@ class PropertyImage(models.Model):
     def compress_image(self):
         """Compress the image while maintaining quality"""
         if self.image and not self.processed:
+            img = None
             try:
                 # Open image
                 img = Image.open(self.image)
@@ -891,7 +892,8 @@ class PropertyImage(models.Model):
             except Exception as e:
                 print(f"Error processing image: {e}")
             finally:
-                img.close()
+                if img is not None:
+                    img.close()
 
     def save(self, *args, **kwargs):
         # Ensure only one primary image per property
@@ -918,7 +920,9 @@ class PropertyVideo(models.Model):
             FileExtensionValidator(
                 allowed_extensions=['mp4', 'mov', 'avi', 'mkv']
             )
-        ]
+        ],
+        null=True,
+        blank=True
     )
     video_url = models.URLField(blank=True, null=True)  # For processed/compressed version
     thumbnail = models.ImageField(
