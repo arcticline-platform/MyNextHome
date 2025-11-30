@@ -5,7 +5,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>MyNextHome | Find your next home</title>
     <!-- SEO Meta Tags -->
     <meta name="description" content="MyNextHome is an open-source property search platform in Uganda that empowers users with access to comfortable housing through transparent property discovery tools.">
@@ -240,6 +240,60 @@
             transition: all 0.3s ease;
         }
 
+        .sidebar.hidden {
+            display: none !important;
+        }
+
+        /* Mobile Navigation Menu */
+        .mobile-nav-menu {
+            position: fixed;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: 85%;
+            max-width: 400px;
+            background: white;
+            box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+            z-index: 1001;
+            transform: translateX(100%);
+            transition: transform 0.3s ease-out;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            display: none;
+        }
+
+        .mobile-nav-menu.open {
+            transform: translateX(0);
+            display: block;
+        }
+
+        .mobile-nav-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            display: none;
+        }
+
+        .mobile-nav-overlay.visible {
+            opacity: 1;
+            pointer-events: auto;
+            display: block;
+        }
+
+        @media (min-width: 640px) {
+            .mobile-nav-menu,
+            .mobile-nav-overlay {
+                display: none !important;
+            }
+        }
+
         /* ===== Interactive Elements ===== */
         .heart-icon {
             transition: all 0.2s ease;
@@ -284,91 +338,405 @@
             cursor: not-allowed;
             background-color: #ccc;
         }
+
+        /* ===== Mobile Bottom Sheet ===== */
+        .bottom-sheet {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-radius: 20px 20px 0 0;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            z-index: 100;
+            transform: translateY(calc(100% - 60px));
+            transition: transform 0.3s ease-out;
+            max-height: 80vh;
+            overflow: hidden;
+            touch-action: none;
+            display: none; /* Hidden by default */
+        }
+
+        .bottom-sheet.open {
+            transform: translateY(0);
+            display: block;
+        }
+
+        .bottom-sheet.fullscreen {
+            transform: translateY(0);
+            border-radius: 0;
+            height: 100vh;
+            max-height: 100vh;
+        }
+
+        .bottom-sheet-header {
+            padding: 16px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            border-bottom: 1px solid #eee;
+            touch-action: none;
+        }
+
+        .bottom-sheet-handle {
+            width: 40px;
+            height: 4px;
+            background: #ddd;
+            border-radius: 2px;
+        }
+
+        .bottom-sheet-close {
+            position: absolute;
+            right: 16px;
+            top: 16px;
+            background: none;
+            border: none;
+            font-size: 20px;
+            color: #666;
+        }
+
+        .bottom-sheet-content {
+            padding: 16px;
+            overflow-y: auto;
+            height: calc(100% - 60px);
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .bottom-sheet-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 99;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .bottom-sheet-overlay.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* Mobile optimizations */
+        @media (max-width: 767px) {
+            .mapboxgl-popup-content {
+                max-width: 280px !important;
+            }
+            
+            .property-card {
+                padding: 12px;
+            }
+            
+            .property-card img {
+                width: 80px;
+                height: 80px;
+            }
+            
+            .property-card .ml-3 {
+                margin-left: 12px;
+            }
+            
+            .mapboxgl-ctrl-geocoder {
+                width: 90%;
+                max-width: 300px;
+                margin: 10px auto;
+                left: 0;
+                right: 0;
+            }
+            
+            #directionsPanel {
+                width: 95%;
+                max-width: none;
+                left: 2.5%;
+                transform: none;
+            }
+
+            /* Sidebar toggleable on mobile */
+            #sidebar {
+                position: fixed;
+                top: 64px;
+                left: 0;
+                bottom: 0;
+                width: 85%;
+                max-width: 400px;
+                transform: translateX(-100%);
+                transition: transform 0.3s ease-out;
+                z-index: 1001;
+            }
+
+            #sidebar.open {
+                transform: translateX(0);
+            }
+
+            /* Sidebar backdrop overlay */
+            .sidebar-backdrop {
+                position: fixed;
+                top: 64px;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0,0,0,0.5);
+                z-index: 1000;
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity 0.3s ease;
+            }
+
+            .sidebar-backdrop.visible {
+                opacity: 1;
+                pointer-events: auto;
+            }
+
+            /* Show bottom sheet on mobile */
+            .bottom-sheet {
+                display: block;
+            }
+        }
+
+        @media (min-width: 768px) {
+            /* Hide bottom sheet on desktop */
+            .bottom-sheet {
+                display: none !important;
+            }
+
+            /* Show desktop sidebar - reset mobile styles */
+            #sidebar {
+                position: relative !important;
+                top: auto !important;
+                left: auto !important;
+                bottom: auto !important;
+                transform: none !important;
+                display: block;
+                width: 24rem; /* md:w-96 equivalent */
+                max-width: 24rem;
+            }
+
+            /* Hide mobile toggle button on desktop */
+            #showPropertyList {
+                display: none;
+            }
+
+            /* Hide mobile sidebar toggle button */
+            #showSidebar {
+                display: none !important;
+            }
+
+            /* Hide sidebar backdrop on desktop */
+            .sidebar-backdrop {
+                display: none !important;
+            }
+        }
+
+        /* Prevent scrolling when bottom sheet is open */
+        body.bottom-sheet-open {
+            overflow: hidden;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* ===== Left Side Overlay Panel ===== */
+        .left-overlay-panel {
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 85%;
+            max-width: 400px;
+            background: white;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease-out;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .left-overlay-panel.open {
+            transform: translateX(0);
+        }
+
+        .left-overlay-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .left-overlay-overlay.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .left-overlay-toggle {
+            position: fixed;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 998;
+            background: white;
+            border: none;
+            border-radius: 0 8px 8px 0;
+            padding: 16px 8px;
+            box-shadow: 2px 0 8px rgba(0,0,0,0.15);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: none;
+        }
+
+        .left-overlay-toggle:hover {
+            background: #f3f4f6;
+            box-shadow: 2px 0 12px rgba(0,0,0,0.2);
+        }
+
+        .left-overlay-toggle i {
+            font-size: 20px;
+            color: #22c55e;
+        }
+
+        .left-overlay-toggle.open {
+            left: 85%;
+            max-width: calc(85% + 8px);
+        }
+        
+        @media (min-width: 470px) {
+            .left-overlay-toggle.open {
+                left: 400px;
+            }
+        }
+
+        .left-overlay-toggle.open i {
+            transform: rotate(180deg);
+        }
+
+        @media (max-width: 1024px) {
+            .left-overlay-toggle {
+                display: block;
+            }
+        }
+
+        @media (min-width: 1025px) {
+            .left-overlay-toggle {
+                display: none !important;
+            }
+            .left-overlay-panel {
+                display: none !important;
+            }
+            .left-overlay-overlay {
+                display: none !important;
+            }
+        }
+
+        /* Prevent body scroll when overlay is open */
+        body.left-overlay-open,
+        body.sidebar-open,
+        body.mobile-nav-open {
+            overflow: hidden;
+        }
     </style>
 </head>
 <body class="bg-gray-50">
     <!-- Navigation -->
     <nav class="bg-white shadow-md z-10 relative">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16">
-                <div class="flex items-center">
+            <div class="flex justify-between items-center h-16 w-full">
+                <div class="flex items-center flex-shrink-0">
                     <div class="flex-shrink-0 flex items-center">
                         <i class="fas fa-home text-primary-600 text-2xl mr-2"></i>
                         <span class="text-xl font-bold text-primary-800">MyNextHome</span>
                     </div>
-                    <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
-                        <a href="#" class="border-primary-500 text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                    <nav class="hidden sm:ml-6 sm:flex sm:items-center sm:space-x-8">
+                        <a href="#" class="border-primary-500 text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium whitespace-nowrap">
                             Property Sales
                         </a>
-                        <a href="#" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                        <a href="#" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium whitespace-nowrap">
                             Rentals
                         </a>
-                        <a href="#" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                        <a href="#" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium whitespace-nowrap">
                             Saved
                         </a>
-                        <a href="#" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                        <a href="#" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium whitespace-nowrap">
                             Agents
                         </a>
-                    </div>
+                    </nav>
                 </div>
-                <div class="hidden sm:ml-6 sm:flex sm:items-center">
-                    <div class="relative w-64 mr-4">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <i class="fas fa-search text-gray-400"></i>
+                <div class="flex items-center space-x-4 flex-shrink-0">
+                    <div class="hidden sm:flex sm:items-center sm:space-x-4">
+                        <div class="relative w-64 flex-shrink-0">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fas fa-search text-gray-400"></i>
+                            </div>
+                            <input id="search" name="search" class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 focus:border-transparent sm:text-sm" placeholder="Search locations..." type="search">
                         </div>
-                        <input id="search" name="search" class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 focus:border-transparent sm:text-sm" placeholder="Search locations..." type="search">
-                    </div>
-                    <a href="{% if user.is_authenticated %}{% url 'add_property' %}{% else %}{% url 'login' %}{% endif %}" class="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-md text-sm font-medium">
-                        List Your Property
-                    </a>
-                </div>
-                <div class="hidden sm:ml-6 sm:flex sm:items-center relative">
-                    <button id="account-button" class="group flex items-center bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-md text-sm font-medium transition duration-150 ease-in-out">
-                        <i class="fas fa-user-circle mr-2 text-gray-500 group-hover:text-primary-600"></i>
-                        {% if user.is_authenticated %}
-                            {{ user.username }}
-                        {% else %}
-                            Account
-                        {% endif %}
-                        <i class="fas fa-caret-down ml-2 transform transition-transform duration-200"></i>
-                    </button>
-                    <!-- Account Dropdown -->
-                    <div id="account-dropdown" class="absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 divide-y divide-gray-100 transform opacity-0 scale-95 transition-all duration-200 ease-out pointer-events-none">
-                        <div class="py-1" role="menu" aria-orientation="vertical">
-                            {% if user.is_authenticated %}
-                                <a href="{% url 'profile' %}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-primary-50 hover:text-primary-700 transition duration-150" role="menuitem">
-                                    <i class="fas fa-user w-5 mr-3 text-gray-400"></i>
-                                    Profile
-                                </a>
-                                <a href="#" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-primary-50 hover:text-primary-700 transition duration-150" role="menuitem">
-                                    <i class="fas fa-heart w-5 mr-3 text-gray-400"></i>
-                                    Saved Properties
-                                </a>
-                                <a href="{% url 'profile' %}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-primary-50 hover:text-primary-700 transition duration-150" role="menuitem">
-                                    <i class="fas fa-user w-5 mr-3 text-gray-400"></i>
+                        <a href="{% if user.is_authenticated %}{% url 'add_property' %}{% else %}{% url 'login' %}{% endif %}" class="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-md text-sm font-medium whitespace-nowrap flex-shrink-0">
+                            List Your Property
+                        </a>
+                        <div class="relative flex-shrink-0">
+                            <button id="account-button" class="group flex items-center bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-md text-sm font-medium transition duration-150 ease-in-out whitespace-nowrap">
+                                <i class="fas fa-user-circle mr-2 text-gray-500 group-hover:text-primary-600"></i>
+                                {% if user.is_authenticated %}
+                                    {{ user.username }}
+                                {% else %}
                                     Account
-                                </a>
-                                <div class="border-t border-gray-100"></div>
-                                <form action="{% url 'logout' %}" method="POST" class="block">
-                                    {% csrf_token %}
-                                    <button type="submit" class="w-full text-left flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition duration-150" role="menuitem">
-                                        <i class="fas fa-sign-out-alt w-5 mr-3 text-red-400"></i>
-                                        Sign Out
-                                    </button>
-                                </form>
-                            {% else %}
-                                <a href="{% url 'login' %}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-primary-50 hover:text-primary-700 transition duration-150" role="menuitem">
-                                    <i class="fas fa-sign-in-alt w-5 mr-3 text-gray-400"></i>
-                                    Sign In
-                                </a>
-                                <a href="{% url 'signup' %}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-primary-50 hover:text-primary-700 transition duration-150" role="menuitem">
-                                    <i class="fas fa-user-plus w-5 mr-3 text-gray-400"></i>
-                                    Sign Up
-                                </a>
-                            {% endif %}
+                                {% endif %}
+                                <i class="fas fa-caret-down ml-2 transform transition-transform duration-200"></i>
+                                </button>
+                            <!-- Account Dropdown -->
+                            <div id="account-dropdown" class="absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 divide-y divide-gray-100 transform opacity-0 scale-95 transition-all duration-200 ease-out pointer-events-none">
+                            <div class="py-1" role="menu" aria-orientation="vertical">
+                                {% if user.is_authenticated %}
+                                    <a href="{% url 'profile' %}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-primary-50 hover:text-primary-700 transition duration-150" role="menuitem">
+                                        <i class="fas fa-user w-5 mr-3 text-gray-400"></i>
+                                        Profile
+                                    </a>
+                                    <a href="#" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-primary-50 hover:text-primary-700 transition duration-150" role="menuitem">
+                                        <i class="fas fa-heart w-5 mr-3 text-gray-400"></i>
+                                        Saved Properties
+                                    </a>
+                                    <a href="{% url 'profile' %}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-primary-50 hover:text-primary-700 transition duration-150" role="menuitem">
+                                        <i class="fas fa-user w-5 mr-3 text-gray-400"></i>
+                                        Account
+                                    </a>
+                                    <div class="border-t border-gray-100"></div>
+                                    <form action="{% url 'logout' %}" method="POST" class="block">
+                                        {% csrf_token %}
+                                        <button type="submit" class="w-full text-left flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition duration-150" role="menuitem">
+                                            <i class="fas fa-sign-out-alt w-5 mr-3 text-red-400"></i>
+                                            Sign Out
+                                        </button>
+                                    </form>
+                                {% else %}
+                                    <a href="{% url 'login' %}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-primary-50 hover:text-primary-700 transition duration-150" role="menuitem">
+                                        <i class="fas fa-sign-in-alt w-5 mr-3 text-gray-400"></i>
+                                        Sign In
+                                    </a>
+                                    <a href="{% url 'signup' %}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-primary-50 hover:text-primary-700 transition duration-150" role="menuitem">
+                                        <i class="fas fa-user-plus w-5 mr-3 text-gray-400"></i>
+                                        Sign Up
+                                    </a>
+                                {% endif %}
+                            </div>
                         </div>
                     </div>
-                    <script>
+                    <!-- Mobile menu toggle button -->
+                    <button id="mobileMenuToggle" class="sm:hidden p-2 text-gray-600 hover:text-primary-600 focus:outline-none">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+    <script>
                         document.addEventListener('DOMContentLoaded', function() {
                             const accountButton = document.getElementById('account-button');
                             const accountDropdown = document.getElementById('account-dropdown');
@@ -413,19 +781,55 @@
                         });
                     </script>
                 </div>
-                    
-                <div class="-mr-2 flex items-center sm:hidden">
-                    <button type="button" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500" aria-controls="mobile-menu" aria-expanded="false">
-                        <span class="sr-only">Open main menu</span>
-                        <i class="fas fa-bars"></i>
-                    </button>
-                </div>
+            </nav>
+
+    <!-- Mobile Navigation Overlay -->
+    <div id="mobileNavOverlay" class="mobile-nav-overlay"></div>
+
+    <!-- Mobile Navigation Menu -->
+    <div id="mobileNavMenu" class="mobile-nav-menu">
+        <div class="p-4 border-b bg-white sticky top-0 z-10">
+            <div class="flex justify-between items-center">
+                <h2 class="text-xl font-bold text-gray-900">Menu</h2>
+                <button id="closeMobileNav" class="text-primary-600 hover:text-primary-800 p-2">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
             </div>
         </div>
-    </nav>
+        <div class="px-4 py-3 space-y-1">
+            <a href="#" class="block px-3 py-2 text-base font-medium text-gray-900 hover:bg-primary-50 hover:text-primary-700 rounded-md">
+                Property Sales
+            </a>
+            <a href="#" class="block px-3 py-2 text-base font-medium text-gray-500 hover:bg-primary-50 hover:text-primary-700 rounded-md">
+                Rentals
+            </a>
+            <a href="#" class="block px-3 py-2 text-base font-medium text-gray-500 hover:bg-primary-50 hover:text-primary-700 rounded-md">
+                Saved
+            </a>
+            <a href="#" class="block px-3 py-2 text-base font-medium text-gray-500 hover:bg-primary-50 hover:text-primary-700 rounded-md">
+                Agents
+            </a>
+            <div class="border-t border-gray-200 pt-2 mt-2">
+                <div class="px-3 py-2">
+                    <input class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 focus:border-transparent text-sm" placeholder="Search locations..." type="search">
+                </div>
+                <a href="{% if user.is_authenticated %}{% url 'add_property' %}{% else %}{% url 'login' %}{% endif %}" class="block px-3 py-2 text-base font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-md text-center">
+                    List Your Property
+                </a>
+            </div>
+        </div>
+    </div>
 
     <!-- Main Content -->
     <div class="flex h-[calc(100vh-64px)] relative">
+        <!-- Sidebar Toggle Button (Mobile) -->
+        <button id="showSidebar" class="md:hidden fixed top-20 left-4 z-20 p-3 bg-primary-600 text-white rounded-full shadow-lg hover:bg-primary-700">
+            <i class="fas fa-list"></i>
+        </button>
+
+        <!-- Sidebar Backdrop (Mobile) -->
+        <div id="sidebarBackdrop" class="sidebar-backdrop md:hidden"></div>
+
         <!-- Sidebar -->
         <div id="sidebar" class="sidebar w-full md:w-96 bg-white shadow-lg z-10 overflow-y-auto">
             <div class="p-4 border-b">
@@ -437,7 +841,7 @@
                         Available Properties
                         {% endif %}
                     </h2>
-                    <button id="toggleSidebar" class="md:hidden text-primary-600 hover:text-primary-800">
+                    <button id="toggleSidebar" class="text-primary-600 hover:text-primary-800 p-2">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
@@ -566,7 +970,7 @@
                 </div>
                 {% else %}
                 <!-- List View -->
-                <div class="divide-y divide-gray-200">
+                <div id="desktopPropertyList" class="divide-y divide-gray-200">
                     {% for property in properties %}
                     <div class="property-card p-4 cursor-pointer hover:bg-gray-50" data-property-id="{{ property.id }}">
                         <div class="flex">
@@ -603,11 +1007,106 @@
                         <p class="mt-1 text-sm text-gray-500">Try adjusting your search or filter to find what you're looking for.</p>
                     </div>
                     {% endfor %}
+                    <!-- Loading indicator for infinite scroll -->
+                    <div id="desktopLoadingIndicator" class="hidden p-4 text-center">
+                        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+                        <p class="mt-2 text-sm text-gray-500">Loading more properties...</p>
+                    </div>
+                    <!-- End of list message -->
+                    <div id="desktopEndOfList" class="hidden p-4 text-center text-sm text-gray-500">
+                        <p>No more properties to load</p>
+                    </div>
                 </div>
                 {% endif %}
             </div>
         </div>
         
+        <!-- Left Overlay Toggle Button (Mobile/Tablet) -->
+        <button id="leftOverlayToggle" class="left-overlay-toggle" aria-label="Toggle property list">
+            <i class="fas fa-chevron-right"></i>
+        </button>
+
+        <!-- Left Overlay Panel (Mobile/Tablet) -->
+        <div id="leftOverlayPanel" class="left-overlay-panel">
+            <div class="p-4 border-b bg-white sticky top-0 z-10">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-xl font-bold text-gray-900">Available Properties</h2>
+                    <button id="closeLeftOverlay" class="text-primary-600 hover:text-primary-800 p-2">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                
+                <!-- Search and Filters -->
+                <div class="mt-4">
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-search text-gray-400"></i>
+                        </div>
+                        <input id="leftOverlaySearch" name="leftOverlaySearch" class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 focus:border-transparent sm:text-sm" placeholder="Search locations..." type="search">
+                    </div>
+                    <div class="mt-2 flex overflow-x-auto space-x-2 pb-2">
+                        <button class="px-3 py-1 text-xs border rounded-full bg-primary-100 text-primary-800 border-primary-300">Houses</button>
+                        <button class="px-3 py-1 text-xs border rounded-full bg-white text-gray-700 border-gray-300">Apartments</button>
+                        <button class="px-3 py-1 text-xs border rounded-full bg-white text-gray-700 border-gray-300">Condos</button>
+                        <button class="px-3 py-1 text-xs border rounded-full bg-white text-gray-700 border-gray-300">Price</button>
+                        <button class="px-3 py-1 text-xs border rounded-full bg-white text-gray-700 border-gray-300">Beds</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Property List -->
+            <div id="leftOverlayPropertyList" class="divide-y divide-gray-200">
+                {% for property in properties %}
+                <div class="property-card p-4 cursor-pointer hover:bg-gray-50" data-property-id="{{ property.id }}">
+                    <div class="flex">
+                        <div class="flex-shrink-0 w-24 h-20">
+                            <img class="w-full h-full object-cover rounded" src="{{ property.image_url }}" alt="{{ property.title }}">
+                        </div>
+                        <div class="ml-4">
+                            <div class="flex justify-between">
+                                <h3 class="text-lg font-bold text-gray-900">UGX {{ property.price|floatformat:0|intcomma }}</h3>
+                                <button class="heart-icon text-gray-400 hover:text-red-500">
+                                    <i class="far fa-heart"></i>
+                                </button>
+                            </div>
+                            <h4 class="text-md font-medium text-gray-800 mt-1">{{ property.title }}</h4>
+                            <p class="text-sm text-gray-600 mt-1"><i class="fas fa-map-marker-alt text-primary-500 mr-1"></i> {{ property.address }}</p>
+                            <div class="mt-2 flex text-sm text-gray-500">
+                                <span class="flex items-center mr-3">
+                                    <i class="fas fa-bed text-primary-500 mr-1"></i> {{ property.bedrooms }}
+                                </span>
+                                <span class="flex items-center mr-3">
+                                    <i class="fas fa-bath text-primary-500 mr-1"></i> {{ property.bathrooms }}
+                                </span>
+                                <span class="flex items-center">
+                                    <i class="fas fa-ruler-combined text-primary-500 mr-1"></i> {{ property.area }} sqft
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="p-8 text-center">
+                    <i class="fas fa-home text-gray-300 text-4xl mb-4"></i>
+                    <h3 class="text-lg font-medium text-gray-900">No properties found</h3>
+                    <p class="mt-1 text-sm text-gray-500">Try adjusting your search or filter to find what you're looking for.</p>
+                </div>
+                {% endfor %}
+                <!-- Loading indicator for infinite scroll -->
+                <div id="leftOverlayLoadingIndicator" class="hidden p-4 text-center">
+                    <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+                    <p class="mt-2 text-sm text-gray-500">Loading more properties...</p>
+                </div>
+                <!-- End of list message -->
+                <div id="leftOverlayEndOfList" class="hidden p-4 text-center text-sm text-gray-500">
+                    <p>No more properties to load</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Left Overlay Backdrop -->
+        <div id="leftOverlayOverlay" class="left-overlay-overlay"></div>
+
         <!-- Map -->
         <div id="map" class="flex-1"></div>
         
@@ -689,13 +1188,432 @@
             <div id="resizeHandle" class="h-2 cursor-row-resize bg-gray-300 w-full"></div>
         </div>
 
-        <!-- Mobile Sidebar Toggle -->
-        <button id="showSidebar" class="md:hidden absolute bottom-4 left-4 z-10 p-3 bg-primary-600 text-white rounded-full shadow-lg">
+        <!-- Mobile Bottom Sheet for Property List -->
+        <div id="propertyListSheet" class="bottom-sheet">
+            <div class="bottom-sheet-header" id="propertyListSheetHandle">
+                <div class="bottom-sheet-handle"></div>
+                <button class="bottom-sheet-close" id="closePropertyListSheet">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="bottom-sheet-content">
+                <div class="p-4 border-b">
+                    <h2 class="text-xl font-bold text-gray-900">
+                        Available Properties
+                    </h2>
+                </div>
+                
+                <!-- List View -->
+                <div id="mobilePropertyList" class="divide-y divide-gray-200">
+                    {% for property in properties %}
+                    <div class="property-card p-4 cursor-pointer hover:bg-gray-50" data-property-id="{{ property.id }}">
+                        <div class="flex">
+                            <div class="flex-shrink-0 w-24 h-20">
+                                <img class="w-full h-full object-cover rounded" src="{{ property.image_url }}" alt="{{ property.title }}">
+                            </div>
+                            <div class="ml-4">
+                                <div class="flex justify-between">
+                                    <h3 class="text-lg font-bold text-gray-900">UGX {{ property.price|floatformat:0|intcomma }}</h3>
+                                    <button class="heart-icon text-gray-400 hover:text-red-500">
+                                        <i class="far fa-heart"></i>
+                                    </button>
+                                </div>
+                                <h4 class="text-md font-medium text-gray-800 mt-1">{{ property.title }}</h4>
+                                <p class="text-sm text-gray-600 mt-1"><i class="fas fa-map-marker-alt text-primary-500 mr-1"></i> {{ property.address }}</p>
+                                <div class="mt-2 flex text-sm text-gray-500">
+                                    <span class="flex items-center mr-3">
+                                        <i class="fas fa-bed text-primary-500 mr-1"></i> {{ property.bedrooms }}
+                                    </span>
+                                    <span class="flex items-center mr-3">
+                                        <i class="fas fa-bath text-primary-500 mr-1"></i> {{ property.bathrooms }}
+                                    </span>
+                                    <span class="flex items-center">
+                                        <i class="fas fa-ruler-combined text-primary-500 mr-1"></i> {{ property.area }} sqft
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="p-8 text-center">
+                        <i class="fas fa-home text-gray-300 text-4xl mb-4"></i>
+                        <h3 class="text-lg font-medium text-gray-900">No properties found</h3>
+                        <p class="mt-1 text-sm text-gray-500">Try adjusting your search or filter to find what you're looking for.</p>
+                    </div>
+                    {% endfor %}
+                    <!-- Loading indicator for infinite scroll -->
+                    <div id="mobileLoadingIndicator" class="hidden p-4 text-center">
+                        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+                        <p class="mt-2 text-sm text-gray-500">Loading more properties...</p>
+                    </div>
+                    <!-- End of list message -->
+                    <div id="mobileEndOfList" class="hidden p-4 text-center text-sm text-gray-500">
+                        <p>No more properties to load</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Bottom Sheet for Property Details -->
+        <div id="propertyDetailsSheet" class="bottom-sheet">
+            <div class="bottom-sheet-header" id="propertyDetailsSheetHandle">
+                <div class="bottom-sheet-handle"></div>
+                <button class="bottom-sheet-close" id="closePropertyDetailsSheet">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="bottom-sheet-content" id="propertyDetailsContent">
+                <!-- Content will be loaded dynamically -->
+            </div>
+        </div>
+
+        <!-- Overlay for bottom sheets -->
+        <div id="bottomSheetOverlay" class="bottom-sheet-overlay"></div>
+
+        <!-- Mobile Property List Toggle -->
+        <button id="showPropertyList" class="md:hidden absolute bottom-4 left-4 z-10 p-3 bg-primary-600 text-white rounded-full shadow-lg">
             <i class="fas fa-list"></i>
         </button>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
+        // Bottom Sheet functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            // Elements
+            const propertyListSheet = document.getElementById('propertyListSheet');
+            const propertyDetailsSheet = document.getElementById('propertyDetailsSheet');
+            const bottomSheetOverlay = document.getElementById('bottomSheetOverlay');
+            const showPropertyListBtn = document.getElementById('showPropertyList');
+            const closePropertyListSheetBtn = document.getElementById('closePropertyListSheet');
+            const closePropertyDetailsSheetBtn = document.getElementById('closePropertyDetailsSheet');
+            
+            // Property list sheet handle
+            const propertyListSheetHandle = document.getElementById('propertyListSheetHandle');
+            
+            // Property details sheet handle
+            const propertyDetailsSheetHandle = document.getElementById('propertyDetailsSheetHandle');
+            
+            // Show property list sheet
+            if (showPropertyListBtn) {
+                showPropertyListBtn.addEventListener('click', function() {
+                    openBottomSheet(propertyListSheet);
+                });
+            }
+            
+            // Close property list sheet
+            if (closePropertyListSheetBtn) {
+                closePropertyListSheetBtn.addEventListener('click', function() {
+                    closeBottomSheet(propertyListSheet);
+                });
+            }
+            
+            // Close property details sheet
+            if (closePropertyDetailsSheetBtn) {
+                closePropertyDetailsSheetBtn.addEventListener('click', function() {
+                    closeBottomSheet(propertyDetailsSheet);
+                });
+            }
+            
+            // Overlay click closes both sheets
+            if (bottomSheetOverlay) {
+                bottomSheetOverlay.addEventListener('click', function() {
+                    closeBottomSheet(propertyListSheet);
+                    closeBottomSheet(propertyDetailsSheet);
+                });
+            }
+            
+            // Open bottom sheet function
+            function openBottomSheet(sheet) {
+                if (!sheet) return;
+                document.body.classList.add('bottom-sheet-open');
+                if (bottomSheetOverlay) {
+                    bottomSheetOverlay.classList.add('visible');
+                }
+                sheet.classList.add('open');
+                
+                // Add touch/mouse event listeners for dragging
+                if (sheet === propertyListSheet && propertyListSheetHandle) {
+                    setupDragHandlers(propertyListSheetHandle, sheet);
+                } else if (sheet === propertyDetailsSheet && propertyDetailsSheetHandle) {
+                    setupDragHandlers(propertyDetailsSheetHandle, sheet);
+                }
+            }
+            
+            // Close bottom sheet function
+            function closeBottomSheet(sheet) {
+                if (!sheet) return;
+                document.body.classList.remove('bottom-sheet-open');
+                if (bottomSheetOverlay) {
+                    bottomSheetOverlay.classList.remove('visible');
+                }
+                sheet.classList.remove('open');
+                sheet.classList.remove('fullscreen');
+                
+                // If all sheets are closed, remove overlay
+                if (propertyListSheet && propertyDetailsSheet) {
+                    if (!propertyListSheet.classList.contains('open') && !propertyDetailsSheet.classList.contains('open')) {
+                        if (bottomSheetOverlay) {
+                            bottomSheetOverlay.classList.remove('visible');
+                        }
+                    }
+                }
+            }
+            
+            // Setup drag handlers for bottom sheet
+            function setupDragHandlers(handle, sheet) {
+                if (!handle || !sheet) return;
+                let startY, startHeight, isDragging = false;
+                
+                handle.addEventListener('touchstart', handleDragStart, { passive: false });
+                handle.addEventListener('mousedown', handleDragStart);
+                
+                function handleDragStart(e) {
+                    isDragging = true;
+                    startY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
+                    startHeight = sheet.offsetHeight;
+                    
+                    // Prevent scrolling when dragging
+                    document.body.style.overflow = 'hidden';
+                    
+                    // Add move and end listeners
+                    document.addEventListener('touchmove', handleDragMove, { passive: false });
+                    document.addEventListener('mousemove', handleDragMove);
+                    document.addEventListener('touchend', handleDragEnd);
+                    document.addEventListener('mouseup', handleDragEnd);
+                }
+                
+                function handleDragMove(e) {
+                    if (!isDragging) return;
+                    
+                    const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
+                    const deltaY = clientY - startY;
+                    const newHeight = startHeight - deltaY;
+                    const sheetHeight = window.innerHeight;
+                    
+                    // Calculate percentage of screen height
+                    const percentage = (newHeight / sheetHeight) * 100;
+                    
+                    // Limit min and max height
+                    if (percentage < 30) {
+                        // Snap to closed position (showing just the handle)
+                        sheet.style.transform = `translateY(calc(100% - 60px))`;
+                    } else if (percentage > 85) {
+                        // Snap to fullscreen
+                        sheet.classList.add('fullscreen');
+                        sheet.style.transform = 'translateY(0)';
+                    } else {
+                        // Normal drag
+                        sheet.classList.remove('fullscreen');
+                        sheet.style.transform = `translateY(calc(100% - ${newHeight}px))`;
+                    }
+                }
+                
+                function handleDragEnd(e) {
+                    if (!isDragging) return;
+                    isDragging = false;
+                    
+                    // Remove event listeners
+                    document.removeEventListener('touchmove', handleDragMove);
+                    document.removeEventListener('mousemove', handleDragMove);
+                    document.removeEventListener('touchend', handleDragEnd);
+                    document.removeEventListener('mouseup', handleDragEnd);
+                    
+                    // Restore scrolling
+                    document.body.style.overflow = '';
+                    
+                    // Get current transform
+                    const transform = sheet.style.transform;
+                    const match = transform.match(/translateY\(calc\(100% - (\d+)px\)\)/);
+                    if (match) {
+                        const currentY = parseInt(match[1]);
+                        const sheetHeight = window.innerHeight;
+                        const percentage = (currentY / sheetHeight) * 100;
+                        
+                        // Snap to nearest position
+                        if (percentage < 40) {
+                            // Snap closed
+                            closeBottomSheet(sheet);
+                        } else if (percentage > 70) {
+                            // Snap to full height
+                            sheet.classList.add('fullscreen');
+                            sheet.style.transform = 'translateY(0)';
+                        } else {
+                            // Snap to 60% height
+                            const midHeight = sheetHeight * 0.6;
+                            sheet.style.transform = `translateY(calc(100% - ${midHeight}px))`;
+                        }
+                    }
+                }
+            }
+        });
+
+        // Left Overlay Panel functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const leftOverlayToggle = document.getElementById('leftOverlayToggle');
+            const leftOverlayPanel = document.getElementById('leftOverlayPanel');
+            const leftOverlayOverlay = document.getElementById('leftOverlayOverlay');
+            const closeLeftOverlayBtn = document.getElementById('closeLeftOverlay');
+
+            function openLeftOverlay() {
+                if (leftOverlayPanel) {
+                    leftOverlayPanel.classList.add('open');
+                    if (leftOverlayToggle) {
+                        leftOverlayToggle.classList.add('open');
+                    }
+                    if (leftOverlayOverlay) {
+                        leftOverlayOverlay.classList.add('visible');
+                    }
+                    document.body.classList.add('left-overlay-open');
+                    
+                    // Attach property card listeners for left overlay
+                    setTimeout(function() {
+                        if (window.attachPropertyCardListeners) {
+                            window.attachPropertyCardListeners();
+                        }
+                        // Re-initialize infinite scroll for left overlay
+                        if (window.initInfiniteScroll) {
+                            const oldContainer = window.getScrollContainer ? window.getScrollContainer() : null;
+                            if (oldContainer) {
+                                oldContainer.removeEventListener('scroll', window.checkScroll || function() {});
+                            }
+                            setTimeout(function() {
+                                if (window.initInfiniteScroll) {
+                                    window.initInfiniteScroll();
+                                }
+                            }, 100);
+                        }
+                    }, 100);
+                }
+            }
+
+            function closeLeftOverlay() {
+                if (leftOverlayPanel) {
+                    leftOverlayPanel.classList.remove('open');
+                    if (leftOverlayToggle) {
+                        leftOverlayToggle.classList.remove('open');
+                    }
+                    if (leftOverlayOverlay) {
+                        leftOverlayOverlay.classList.remove('visible');
+                    }
+                    document.body.classList.remove('left-overlay-open');
+                }
+            }
+
+            // Toggle button click
+            if (leftOverlayToggle) {
+                leftOverlayToggle.addEventListener('click', function() {
+                    if (leftOverlayPanel && leftOverlayPanel.classList.contains('open')) {
+                        closeLeftOverlay();
+                    } else {
+                        openLeftOverlay();
+                    }
+                });
+            }
+
+            // Close button click
+            if (closeLeftOverlayBtn) {
+                closeLeftOverlayBtn.addEventListener('click', closeLeftOverlay);
+            }
+
+            // Overlay backdrop click
+            if (leftOverlayOverlay) {
+                leftOverlayOverlay.addEventListener('click', closeLeftOverlay);
+            }
+
+            // Close on escape key
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && leftOverlayPanel && leftOverlayPanel.classList.contains('open')) {
+                    closeLeftOverlay();
+                }
+            });
+
+            // Handle window resize
+            let resizeTimeout;
+            window.addEventListener('resize', function() {
+                clearTimeout(resizeTimeout);
+                resizeTimeout = setTimeout(function() {
+                    // Close overlay if switching to desktop view
+                    if (window.innerWidth >= 1025 && leftOverlayPanel && leftOverlayPanel.classList.contains('open')) {
+                        closeLeftOverlay();
+                    }
+                }, 250);
+            });
+        });
+
+        // Mobile Navigation Menu functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+            const mobileNavMenu = document.getElementById('mobileNavMenu');
+            const mobileNavOverlay = document.getElementById('mobileNavOverlay');
+            const closeMobileNav = document.getElementById('closeMobileNav');
+
+            function openMobileNav() {
+                if (mobileNavMenu) {
+                    mobileNavMenu.classList.add('open');
+                    if (mobileNavOverlay) {
+                        mobileNavOverlay.classList.add('visible');
+                    }
+                    document.body.classList.add('mobile-nav-open');
+                }
+            }
+
+            function closeMobileNavFunc() {
+                if (mobileNavMenu) {
+                    mobileNavMenu.classList.remove('open');
+                    if (mobileNavOverlay) {
+                        mobileNavOverlay.classList.remove('visible');
+                    }
+                    document.body.classList.remove('mobile-nav-open');
+                    // Reset icon
+                    if (mobileMenuToggle) {
+                        const icon = mobileMenuToggle.querySelector('i');
+                        if (icon) {
+                            icon.classList.remove('fa-times');
+                            icon.classList.add('fa-bars');
+                        }
+                    }
+                }
+            }
+
+            if (mobileMenuToggle && mobileNavMenu) {
+                mobileMenuToggle.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    if (mobileNavMenu.classList.contains('open')) {
+                        closeMobileNavFunc();
+                    } else {
+                        openMobileNav();
+                        // Change icon to X
+                        const icon = this.querySelector('i');
+                        if (icon) {
+                            icon.classList.remove('fa-bars');
+                            icon.classList.add('fa-times');
+                        }
+                    }
+                });
+            }
+
+            if (closeMobileNav) {
+                closeMobileNav.addEventListener('click', closeMobileNavFunc);
+            }
+
+            if (mobileNavOverlay) {
+                mobileNavOverlay.addEventListener('click', closeMobileNavFunc);
+            }
+
+            // Close on escape key
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && mobileNavMenu && mobileNavMenu.classList.contains('open')) {
+                    closeMobileNavFunc();
+                }
+            });
+
+            // Close on window resize to desktop
+            window.addEventListener('resize', function() {
+                if (window.innerWidth >= 640 && mobileNavMenu && mobileNavMenu.classList.contains('open')) {
+                    closeMobileNavFunc();
+                }
+            });
+        });
         // Map Initialization and Configuration
         const initializeMap = () => {
             mapboxgl.accessToken = 'pk.eyJ1IjoiYWpyYWxsYW4iLCJhIjoiY21hd3N5bWJjMGY4YzJqc2V6aG55MHU4byJ9.LHLL7YKtl_V-1xkGVyFhcw';
@@ -1393,7 +2311,14 @@
             };
 
             const showPropertyDetails = (property, state, directionsHandlers) => {
-                const propertyDetailsDiv = document.getElementById('property_details');
+                // Check if we're on mobile
+                const isMobile = window.innerWidth < 768;
+                const propertyDetailsDiv = isMobile 
+                    ? document.getElementById('propertyDetailsContent')
+                    : document.getElementById('property_details');
+                
+                if (!propertyDetailsDiv) return;
+                
                 propertyDetailsDiv.className = 'p-4 overflow-y-auto h-full';
                 
                 // Clear previous content
@@ -1600,10 +2525,31 @@
                     const mediaSlider = initMediaSlider(property);
                     placeholder.appendChild(mediaSlider);
                 }
-                document.getElementById('sidebar').scrollTo({
-                    top: 0,
-                    behavior: 'smooth'
-                });
+                
+                // Scroll to top and open bottom sheet on mobile
+                if (isMobile) {
+                    const propertyDetailsSheet = document.getElementById('propertyDetailsSheet');
+                    const bottomSheetOverlay = document.getElementById('bottomSheetOverlay');
+                    if (propertyDetailsSheet) {
+                        propertyDetailsSheet.classList.add('open');
+                        document.body.classList.add('bottom-sheet-open');
+                        if (bottomSheetOverlay) {
+                            bottomSheetOverlay.classList.add('visible');
+                        }
+                    }
+                    propertyDetailsDiv.scrollTo({
+                        top: 0,
+                        behavior: 'smooth'
+                    });
+                } else {
+                    const sidebar = document.getElementById('sidebar');
+                    if (sidebar) {
+                        sidebar.scrollTo({
+                            top: 0,
+                            behavior: 'smooth'
+                        });
+                    }
+                }
 
                 // Add click handler for the directions button
                 propertyDetailsDiv.querySelector('.get-directions-btn').addEventListener('click', async (e) => {
@@ -1877,8 +2823,12 @@
 
         // UI Event Handlers
         const setupUIHandlers = (map, state, handlers) => {
+            // Store handler globally for infinite scroll integration
+            window.propertyClickHandler = handlers.handlePropertyClick;
+            
             // Property card click handlers
             document.querySelectorAll('.property-card').forEach(card => {
+                card.setAttribute('data-listener-attached', 'true');
                 card.addEventListener('click', function(event) {
                     const propertyId = parseInt(this.getAttribute('data-property-id'));
                     handlers.handlePropertyClick(propertyId, event);
@@ -1889,10 +2839,104 @@
             document.getElementById('zoomIn').addEventListener('click', () => map.zoomIn());
             document.getElementById('zoomOut').addEventListener('click', () => map.zoomOut());
 
-            // Mobile sidebar toggle
+            // Sidebar toggle functionality
             const sidebar = document.getElementById('sidebar');
-            document.getElementById('toggleSidebar').addEventListener('click', () => sidebar.classList.add('hidden'));
-            document.getElementById('showSidebar').addEventListener('click', () => sidebar.classList.remove('hidden'));
+            const toggleSidebarBtn = document.getElementById('toggleSidebar');
+            const showSidebarBtn = document.getElementById('showSidebar');
+            const sidebarBackdrop = document.getElementById('sidebarBackdrop');
+            
+            function closeSidebar() {
+                if (sidebar) {
+                    sidebar.classList.add('hidden');
+                    if (window.innerWidth < 768) {
+                        sidebar.classList.remove('open');
+                    }
+                    if (sidebarBackdrop) {
+                        sidebarBackdrop.classList.remove('visible');
+                    }
+                    document.body.classList.remove('sidebar-open');
+                }
+            }
+
+            function openSidebar() {
+                if (sidebar) {
+                    sidebar.classList.remove('hidden');
+                    if (window.innerWidth < 768) {
+                        sidebar.classList.add('open');
+                        if (sidebarBackdrop) {
+                            sidebarBackdrop.classList.add('visible');
+                        }
+                        document.body.classList.add('sidebar-open');
+                    }
+                }
+            }
+
+            function toggleSidebar() {
+                if (sidebar) {
+                    if (sidebar.classList.contains('hidden') || (window.innerWidth < 768 && !sidebar.classList.contains('open'))) {
+                        openSidebar();
+                    } else {
+                        closeSidebar();
+                    }
+                }
+            }
+
+            if (toggleSidebarBtn) {
+                toggleSidebarBtn.addEventListener('click', closeSidebar);
+            }
+
+            if (showSidebarBtn) {
+                showSidebarBtn.addEventListener('click', openSidebar);
+            }
+
+            // Close sidebar when clicking backdrop
+            if (sidebarBackdrop) {
+                sidebarBackdrop.addEventListener('click', closeSidebar);
+            }
+
+            // Close sidebar on escape key
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && sidebar && !sidebar.classList.contains('hidden')) {
+                    closeSidebar();
+                }
+            });
+
+            // Handle window resize
+            let resizeTimeout;
+            window.addEventListener('resize', function() {
+                clearTimeout(resizeTimeout);
+                resizeTimeout = setTimeout(function() {
+                    // On desktop, ensure sidebar is visible (not hidden)
+                    if (window.innerWidth >= 768 && sidebar) {
+                        sidebar.classList.remove('hidden', 'open');
+                        if (sidebarBackdrop) {
+                            sidebarBackdrop.classList.remove('visible');
+                        }
+                        document.body.classList.remove('sidebar-open');
+                    } else {
+                        // On mobile, ensure sidebar starts closed
+                        if (sidebar && !sidebar.classList.contains('open')) {
+                            sidebar.classList.add('hidden');
+                        }
+                    }
+                }, 250);
+            });
+
+            // Initialize sidebar state on page load
+            document.addEventListener('DOMContentLoaded', function() {
+                if (sidebar) {
+                    // On desktop, show sidebar by default (remove hidden class)
+                    if (window.innerWidth >= 768) {
+                        sidebar.classList.remove('hidden', 'open');
+                    } else {
+                        // On mobile, hide sidebar by default
+                        sidebar.classList.add('hidden');
+                        sidebar.classList.remove('open');
+                    }
+                }
+            });
+
+            // Mobile navigation menu toggle (already handled above in separate block)
 
             // Favorite heart icons
             document.querySelectorAll('.heart-icon').forEach(icon => {
@@ -2063,6 +3107,304 @@
             window.addEventListener("mousemove", resize);
             window.addEventListener("mouseup", stop);
         });
+
+        // ===== Infinite Scroll for Property Listings =====
+        (function() {
+            let currentPage = 1;
+            let isLoading = false;
+            let hasMore = true;
+            const perPage = 15;
+
+            // Get the appropriate container based on screen size and active panel
+            function getPropertyListContainer() {
+                const isTabletOrMobile = window.innerWidth <= 1024;
+                
+                // Check if left overlay is open
+                const leftOverlay = document.getElementById('leftOverlayPanel');
+                if (isTabletOrMobile && leftOverlay && leftOverlay.classList.contains('open')) {
+                    return document.getElementById('leftOverlayPropertyList');
+                }
+                
+                const isMobile = window.innerWidth < 768;
+                return isMobile 
+                    ? document.getElementById('mobilePropertyList')
+                    : document.getElementById('desktopPropertyList');
+            }
+
+            function getLoadingIndicator() {
+                const isTabletOrMobile = window.innerWidth <= 1024;
+                
+                // Check if left overlay is open
+                const leftOverlay = document.getElementById('leftOverlayPanel');
+                if (isTabletOrMobile && leftOverlay && leftOverlay.classList.contains('open')) {
+                    return document.getElementById('leftOverlayLoadingIndicator');
+                }
+                
+                const isMobile = window.innerWidth < 768;
+                return isMobile
+                    ? document.getElementById('mobileLoadingIndicator')
+                    : document.getElementById('desktopLoadingIndicator');
+            }
+
+            function getEndOfListMessage() {
+                const isTabletOrMobile = window.innerWidth <= 1024;
+                
+                // Check if left overlay is open
+                const leftOverlay = document.getElementById('leftOverlayPanel');
+                if (isTabletOrMobile && leftOverlay && leftOverlay.classList.contains('open')) {
+                    return document.getElementById('leftOverlayEndOfList');
+                }
+                
+                const isMobile = window.innerWidth < 768;
+                return isMobile
+                    ? document.getElementById('mobileEndOfList')
+                    : document.getElementById('desktopEndOfList');
+            }
+
+            function getScrollContainer() {
+                const isTabletOrMobile = window.innerWidth <= 1024;
+                
+                // Check if left overlay is open
+                const leftOverlay = document.getElementById('leftOverlayPanel');
+                if (isTabletOrMobile && leftOverlay && leftOverlay.classList.contains('open')) {
+                    return leftOverlay;
+                }
+                
+                const isMobile = window.innerWidth < 768;
+                if (isMobile) {
+                    const bottomSheet = document.getElementById('propertyListSheet');
+                    return bottomSheet ? bottomSheet.querySelector('.bottom-sheet-content') : null;
+                } else {
+                    return document.getElementById('sidebar');
+                }
+            }
+
+            // Create property card HTML
+            function createPropertyCard(property) {
+                const price = parseFloat(property.price) || 0;
+                const formattedPrice = price.toLocaleString('en-US');
+                
+                return `
+                    <div class="property-card p-4 cursor-pointer hover:bg-gray-50" data-property-id="${property.id}">
+                        <div class="flex">
+                            <div class="flex-shrink-0 ${window.innerWidth < 768 ? 'w-24 h-20' : 'w-32 h-24'}">
+                                <img class="w-full h-full object-cover rounded" src="${property.image_url || ''}" alt="${property.title || ''}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'100\\' height=\\'100\\'%3E%3Crect fill=\\'%23ddd\\' width=\\'100\\' height=\\'100\\'/%3E%3Ctext x=\\'50%25\\' y=\\'50%25\\' text-anchor=\\'middle\\' dy=\\'.3em\\' fill=\\'%23999\\'%3ENo Image%3C/text%3E%3C/svg%3E'">
+                            </div>
+                            <div class="ml-4">
+                                <div class="flex justify-between">
+                                    <h3 class="text-lg font-bold text-gray-900">${property.price_currency || 'UGX'} ${formattedPrice}</h3>
+                                    <button class="heart-icon text-gray-400 hover:text-red-500">
+                                        <i class="far fa-heart"></i>
+                                    </button>
+                                </div>
+                                <h4 class="text-md font-medium text-gray-800 mt-1">${property.title || ''}</h4>
+                                <p class="text-sm text-gray-600 mt-1"><i class="fas fa-map-marker-alt text-primary-500 mr-1"></i> ${property.address || ''}</p>
+                                <div class="mt-2 flex text-sm text-gray-500">
+                                    <span class="flex items-center mr-3">
+                                        <i class="fas fa-bed text-primary-500 mr-1"></i> ${property.bedrooms || '0'}
+                                    </span>
+                                    <span class="flex items-center mr-3">
+                                        <i class="fas fa-bath text-primary-500 mr-1"></i> ${property.bathrooms || '0'}
+                                    </span>
+                                    <span class="flex items-center">
+                                        <i class="fas fa-ruler-combined text-primary-500 mr-1"></i> ${property.area || '0'} sqft
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Load more properties from API
+            async function loadMoreProperties() {
+                if (isLoading || !hasMore) return;
+
+                isLoading = true;
+                const loadingIndicator = getLoadingIndicator();
+                const container = getPropertyListContainer();
+                
+                if (loadingIndicator) {
+                    loadingIndicator.classList.remove('hidden');
+                }
+
+                try {
+                    const response = await fetch(`/api/properties/?page=${currentPage + 1}&per_page=${perPage}`);
+                    const data = await response.json();
+
+                    if (data.success && data.properties.length > 0) {
+                        currentPage++;
+                        hasMore = data.has_more;
+
+                        // Create document fragment for better performance
+                        const fragment = document.createDocumentFragment();
+                        const tempDiv = document.createElement('div');
+                        tempDiv.innerHTML = data.properties.map(createPropertyCard).join('');
+                        
+                        // Move nodes to fragment
+                        while (tempDiv.firstChild) {
+                            fragment.appendChild(tempDiv.firstChild);
+                        }
+
+                        // Insert before loading indicator
+                        if (container && loadingIndicator) {
+                            container.insertBefore(fragment, loadingIndicator);
+                        } else if (container) {
+                            container.appendChild(fragment);
+                        }
+
+                        // Re-attach event listeners to new property cards
+                        attachPropertyCardListeners();
+
+                        // Add markers to map if map is available
+                        if (window.map && window.state && window.setupPropertyMarkers) {
+                            // Add new markers for the new properties
+                            data.properties.forEach(property => {
+                                if (property.coordinates && property.coordinates.length === 2) {
+                                    // This would need to be integrated with the existing marker system
+                                    // For now, we'll just add the properties to the state
+                                    if (window.state.properties) {
+                                        window.state.properties.push(property);
+                                    }
+                                }
+                            });
+                        }
+
+                        // Show end of list message if no more properties
+                        if (!hasMore) {
+                            const endMessage = getEndOfListMessage();
+                            if (endMessage) {
+                                endMessage.classList.remove('hidden');
+                            }
+                        }
+                    } else {
+                        hasMore = false;
+                        const endMessage = getEndOfListMessage();
+                        if (endMessage) {
+                            endMessage.classList.remove('hidden');
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error loading more properties:', error);
+                } finally {
+                    isLoading = false;
+                    if (loadingIndicator) {
+                        loadingIndicator.classList.add('hidden');
+                    }
+                }
+            }
+
+            // Attach click listeners to property cards
+            function attachPropertyCardListeners() {
+                const container = getPropertyListContainer();
+                if (!container) return;
+
+                // Get newly added cards (ones that don't have the data-listener-attached attribute)
+                container.querySelectorAll('.property-card:not([data-listener-attached])').forEach(card => {
+                    // Mark as having listener attached
+                    card.setAttribute('data-listener-attached', 'true');
+
+                    // Add click handler - use the existing handler if available
+                    card.addEventListener('click', function(event) {
+                        const propertyId = parseInt(this.getAttribute('data-property-id'));
+                        if (propertyId) {
+                            // Try to use the existing handler system
+                            if (window.propertyClickHandler) {
+                                window.propertyClickHandler(propertyId, event);
+                            } else {
+                                // Fallback: trigger click on existing property cards to use their handler
+                                const existingCard = document.querySelector(`.property-card[data-property-id="${propertyId}"]:not([data-listener-attached])`);
+                                if (existingCard) {
+                                    existingCard.click();
+                                }
+                            }
+                        }
+                    });
+
+                    // Add heart icon click handler
+                    const heartIcon = card.querySelector('.heart-icon');
+                    if (heartIcon) {
+                        heartIcon.addEventListener('click', function(e) {
+                            e.stopPropagation();
+                            this.classList.toggle('text-red-500');
+                            const heart = this.querySelector('i');
+                            if (heart) {
+                                heart.classList.toggle('far');
+                                heart.classList.toggle('fas');
+                            }
+                        });
+                    }
+                });
+            }
+
+            // Check if user has scrolled near the bottom
+            function checkScroll() {
+                const scrollContainer = getScrollContainer();
+                if (!scrollContainer || !hasMore || isLoading) return;
+
+                const scrollTop = scrollContainer.scrollTop;
+                const scrollHeight = scrollContainer.scrollHeight;
+                const clientHeight = scrollContainer.clientHeight;
+                const threshold = 200; // Load when 200px from bottom
+
+                if (scrollTop + clientHeight >= scrollHeight - threshold) {
+                    loadMoreProperties();
+                }
+            }
+
+            // Initialize infinite scroll
+            function initInfiniteScroll() {
+                const scrollContainer = getScrollContainer();
+                if (scrollContainer) {
+                    scrollContainer.addEventListener('scroll', checkScroll);
+                }
+            }
+
+            // Initialize on page load
+            document.addEventListener('DOMContentLoaded', function() {
+                // Wait a bit for the page to fully load
+                setTimeout(initInfiniteScroll, 1000);
+                
+                // Also initialize when window is resized (to handle mobile/desktop switch)
+                let resizeTimeout;
+                window.addEventListener('resize', function() {
+                    clearTimeout(resizeTimeout);
+                    resizeTimeout = setTimeout(function() {
+                        const oldContainer = getScrollContainer();
+                        if (oldContainer) {
+                            oldContainer.removeEventListener('scroll', checkScroll);
+                        }
+                        initInfiniteScroll();
+                    }, 250);
+                });
+
+                // Re-initialize scroll when left overlay opens/closes
+                const leftOverlayPanelForObserver = document.getElementById('leftOverlayPanel');
+                if (leftOverlayPanelForObserver && leftOverlayPanelForObserver instanceof Node) {
+                    const observer = new MutationObserver(function(mutations) {
+                        mutations.forEach(function(mutation) {
+                            if (mutation.attributeName === 'class') {
+                                // Remove old scroll listener
+                                const oldContainer = getScrollContainer();
+                                if (oldContainer) {
+                                    oldContainer.removeEventListener('scroll', checkScroll);
+                                }
+                                // Re-initialize after a short delay
+                                setTimeout(initInfiniteScroll, 100);
+                            }
+                        });
+                    });
+                    observer.observe(leftOverlayPanelForObserver, { attributes: true });
+                }
+            });
+
+            // Expose functions globally for integration with existing code
+            window.loadMoreProperties = loadMoreProperties;
+            window.attachPropertyCardListeners = attachPropertyCardListeners;
+            window.getScrollContainer = getScrollContainer;
+            window.initInfiniteScroll = initInfiniteScroll;
+            window.checkScroll = checkScroll;
+        })();
     </script>
 </body>
 </html>
