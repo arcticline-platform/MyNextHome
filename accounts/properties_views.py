@@ -12,7 +12,7 @@ from django.shortcuts import redirect
 from django.core.files.base import ContentFile
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
-from .models import Property, Address, PropertyImage
+from .models import Property, Address, PropertyImage, PropertyContact
 from django.core.files.storage import default_storage
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -325,6 +325,23 @@ def property_detail(request, id):
         amenities_data = [{'id': a.id, 'name': a.name} for a in property.amenities.all()]
         features_data = [{'id': f.id, 'name': f.name} for f in property.neighborhood_features.all()]
 
+        # Get owner and agent info
+        owner_info = {
+            'id': property.owner.id,
+            'username': property.owner.username,
+            'name': property.owner.get_full_name() or property.owner.username,
+            'email': property.owner.email,
+        }
+        
+        agent_info = None
+        if property.agent:
+            agent_info = {
+                'id': property.agent.id,
+                'username': property.agent.username,
+                'name': property.agent.get_full_name() or property.agent.username,
+                'email': property.agent.email,
+            }
+        
         # Construct property data
         property_data = {
             'id': property.pk,
@@ -354,13 +371,30 @@ def property_detail(request, id):
             'parking_spaces': property.parking_spaces,
             'internet_included': property.internet_included,
             'availability_status': property.availability_status,
+            'owner': owner_info,
+            'agent': agent_info,
+            'has_agent': property.agent is not None,
             'created': property.created.isoformat(),
             'modified': property.updated.isoformat(),
         }
 
-        return JsonResponse(property_data)
+        # Check if request is AJAX/API call
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 'application/json' in request.headers.get('Accept', ''):
+            return JsonResponse(property_data)
+        
+        # For regular browser requests, render HTML template
+        context = {
+            'property': property,
+            'property_data': property_data,
+            'images': images,
+            'amenities': property.amenities.all(),
+            'neighborhood_features': property.neighborhood_features.all(),
+        }
+        return render(request, 'accounts/property_detail.html', context)
     except Property.DoesNotExist:
-        return JsonResponse({'error': 'Property not found'}, status=404)
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 'application/json' in request.headers.get('Accept', ''):
+            return JsonResponse({'error': 'Property not found'}, status=404)
+        return render(request, 'accounts/property_detail.html', {'error': 'Property not found'}, status=404)
 
 
 @require_http_methods(["DELETE"])
@@ -432,3 +466,81 @@ def delete_property(request, property_id):
         return JsonResponse({'success': True})
     except Property.DoesNotExist:
         return JsonResponse({'error': 'Property not found'}, status=404)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def contact_property_owner(request, property_id):
+    """Handle contact requests - simplified to directly create/open chat"""
+    try:
+        property = Property.objects.select_related('owner', 'agent').get(id=property_id)
+    except Property.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Property not found'}, status=404)
+    
+    # Check if user is authenticated
+    if not request.user.is_authenticated:
+        return JsonResponse({
+            'success': False, 
+            'error': 'Please login to start a conversation',
+            'requires_login': True
+        }, status=401)
+    
+    # Get optional initial message
+    import json
+    if request.headers.get('Content-Type') == 'application/json':
+        data = json.loads(request.body)
+    else:
+        data = request.POST
+    
+    initial_message = data.get('message', '').strip()
+    
+    # Determine who to contact (agent if exists, otherwise owner)
+    contact_person = property.agent if property.agent else property.owner
+    contact_type = 'agent' if property.agent else 'owner'
+    
+    # Check if user is trying to contact themselves
+    if contact_person == request.user:
+        return JsonResponse({
+            'success': False, 
+            'error': 'You cannot start a conversation with yourself'
+        }, status=400)
+    
+    try:
+        from .models import Chat, Message
+        from django.utils import timezone
+        
+        # Get or create chat
+        chat, created = Chat.objects.get_or_create(
+            property=property,
+            participant=request.user,
+            defaults={
+                'last_message_at': timezone.now() if initial_message else None
+            }
+        )
+        
+        # If chat already exists, update last_message_at
+        if not created:
+            if initial_message:
+                chat.last_message_at = timezone.now()
+                chat.save()
+        
+        # Create initial message if provided
+        if initial_message:
+            Message.objects.create(
+                chat=chat,
+                sender=request.user,
+                content=initial_message,
+                is_read=False
+            )
+            # Notify unread count update
+            from .chat_views import notify_unread_count_update
+            notify_unread_count_update(chat)
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Chat opened successfully',
+            'chat_id': chat.id,
+            'redirect_url': f'/accounts/chat/?chat={chat.id}'
+        })
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': f'Failed to create chat: {str(e)}'}, status=500)

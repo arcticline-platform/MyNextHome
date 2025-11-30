@@ -2,6 +2,7 @@ from django.urls import include, path, re_path
 
 from . import views, utils, apis
 from django.contrib.auth import views as auth_views
+from .chat_views import chat_list, chat_detail, send_message, get_messages, create_chat_from_contact, get_unread_count
 
 from rest_framework.routers import DefaultRouter
 
@@ -53,4 +54,12 @@ urlpatterns = [
     path('saved-properties/<int:property_id>/toggle/', views.toggle_save_property, name='toggle_save_property'),
     path('saved-properties/<int:property_id>/check/', views.check_property_saved, name='check_property_saved'),
     path('saved-properties/<int:property_id>/remove/', views.remove_saved_property, name='remove_saved_property'),
+    
+    # Chat URLs
+    path('chat/', chat_list, name='chat_list'),
+    path('chat/<int:chat_id>/', chat_detail, name='chat_detail'),  # Keep for direct access
+    path('chat/<int:chat_id>/send/', send_message, name='send_message'),
+    path('chat/<int:chat_id>/messages/', get_messages, name='get_messages'),
+    path('contact/<int:contact_id>/create-chat/', create_chat_from_contact, name='create_chat_from_contact'),
+    path('chat/unread-count/', get_unread_count, name='get_unread_count'),
 ]

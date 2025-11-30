@@ -1,0 +1,231 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Property Details{% endblock %}
+
+{% block body_class %}bg-gray-50{% endblock %}
+
+{% block nav_property_class %}border-primary-500 text-gray-900{% endblock %}
+
+{% block content %}
+{% if error %}
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div class="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+            <i class="fas fa-exclamation-circle text-red-600 text-4xl mb-4"></i>
+            <h2 class="text-2xl font-bold text-red-800 mb-2">Property Not Found</h2>
+            <p class="text-red-600">{{ error }}</p>
+            <a href="{% url 'home' %}" class="mt-4 inline-block bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700">
+                Return to Home
+            </a>
+        </div>
+    </div>
+    {% elif property %}
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+            <!-- Image Gallery -->
+            <div class="relative">
+                {% if images %}
+                <div class="aspect-w-16 aspect-h-9 bg-gray-200">
+                    <img src="{{ images.0.image.url }}" alt="{{ property.title }}" class="w-full h-96 object-cover" loading="lazy">
+                </div>
+                {% else %}
+                <div class="w-full h-96 bg-gray-200 flex items-center justify-center">
+                    <i class="fas fa-image text-gray-400 text-6xl"></i>
+                </div>
+                {% endif %}
+                <div class="absolute top-4 right-4">
+                    <button class="heart-icon p-3 bg-white rounded-full shadow-lg text-gray-400 hover:text-red-500 transition-colors">
+                        <i class="far fa-heart text-xl"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="p-6 lg:p-8">
+                <!-- Header -->
+                <div class="flex justify-between items-start mb-6">
+                    <div>
+                        <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ property.title }}</h1>
+                        <p class="text-gray-600 flex items-center">
+                            <i class="fas fa-map-marker-alt text-primary-500 mr-2"></i>
+                            {{ property.address.street_address }}, {{ property.address.city }}, {{ property.address.state }}
+                        </p>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-3xl font-bold text-primary-600">
+                            {{ property.price_currency }} {{ property.price|floatformat:0|intcomma }}
+                        </div>
+                        <div class="text-sm text-gray-500 mt-1">{{ property.category|title }}</div>
+                    </div>
+                </div>
+
+                <!-- Key Features -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 p-4 bg-gray-50 rounded-lg">
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-primary-600">{{ property.bedrooms }}</div>
+                        <div class="text-sm text-gray-600 mt-1">
+                            <i class="fas fa-bed text-primary-500 mr-1"></i> Bedrooms
+                        </div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-primary-600">{{ property.bathrooms }}</div>
+                        <div class="text-sm text-gray-600 mt-1">
+                            <i class="fas fa-bath text-primary-500 mr-1"></i> Bathrooms
+                        </div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-primary-600">{{ property.square_feet|intcomma }}</div>
+                        <div class="text-sm text-gray-600 mt-1">
+                            <i class="fas fa-ruler-combined text-primary-500 mr-1"></i> Sqft
+                        </div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-primary-600">{{ property.parking_spaces|default:"0" }}</div>
+                        <div class="text-sm text-gray-600 mt-1">
+                            <i class="fas fa-car text-primary-500 mr-1"></i> Parking
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Description -->
+                <div class="mb-8">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-4">Description</h2>
+                    <p class="text-gray-700 whitespace-pre-line leading-relaxed">{{ property.description }}</p>
+                </div>
+
+                <!-- Property Details -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                    <div class="bg-gray-50 p-6 rounded-lg">
+                        <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                            <i class="fas fa-info-circle text-primary-500 mr-2"></i> Property Details
+                        </h3>
+                        <div class="space-y-3">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Property Type:</span>
+                                <span class="font-semibold text-gray-900">{{ property.property_type.name }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Listing Type:</span>
+                                <span class="font-semibold text-gray-900">{{ property.category|title }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Furnishing:</span>
+                                <span class="font-semibold text-gray-900">{{ property.furnishing_status|title|default:"Not Stated" }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Internet Included:</span>
+                                <span class="font-semibold text-gray-900">{% if property.internet_included %}Yes{% else %}No{% endif %}</span>
+                            </div>
+                            {% if property.year_built %}
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Year Built:</span>
+                                <span class="font-semibold text-gray-900">{{ property.year_built }}</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Amenities -->
+                    <div class="bg-gray-50 p-6 rounded-lg">
+                        <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                            <i class="fas fa-star text-primary-500 mr-2"></i> Amenities
+                        </h3>
+                        {% if amenities %}
+                        <div class="grid grid-cols-2 gap-2">
+                            {% for amenity in amenities %}
+                            <div class="flex items-center text-gray-700">
+                                <i class="fas fa-check-circle text-primary-500 mr-2"></i>
+                                <span>{{ amenity.name }}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <p class="text-gray-500">No amenities listed</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Neighborhood Features -->
+                {% if neighborhood_features %}
+                <div class="mb-8 bg-gray-50 p-6 rounded-lg">
+                    <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                        <i class="fas fa-map-marked-alt text-primary-500 mr-2"></i> Neighborhood Features
+                    </h3>
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
+                        {% for feature in neighborhood_features %}
+                        <div class="flex items-center text-gray-700">
+                            <i class="fas fa-check-circle text-primary-500 mr-2"></i>
+                            <span>{{ feature.name }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Action Buttons -->
+                <div class="flex flex-col sm:flex-row gap-4 mt-8">
+                    <a href="{% url 'home' %}?property={{ property.id }}" class="flex-1 bg-primary-600 hover:bg-primary-700 text-white py-3 px-6 rounded-lg font-medium text-center transition-colors">
+                        <i class="fas fa-map-marker-alt mr-2"></i> View on Map
+                    </a>
+                    <button class="contact-agent-btn flex-1 bg-white border-2 border-primary-600 text-primary-600 hover:bg-primary-50 py-3 px-6 rounded-lg font-medium transition-colors flex items-center justify-center" data-property-id="{{ property.id }}">
+                        <i class="fas fa-comments mr-2"></i> Message {% if property.agent %}Agent{% else %}Owner{% endif %}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Format numbers with commas
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize contact button handler for this page
+        const contactBtn = document.querySelector('.contact-agent-btn');
+        if (contactBtn && window.attachContactButtonHandlers) {
+            // Attach handler to the contact button
+            const propertyId = parseInt(contactBtn.getAttribute('data-property-id'));
+            
+            contactBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Fetch property data to open modal
+                fetch(`/accounts/properties/property/${propertyId}/`, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(property => {
+                    if (property && property.id && window.openContactModal) {
+                        window.openContactModal(property);
+                    } else {
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                title: 'Error',
+                                text: 'Property not found.',
+                                icon: 'error',
+                                confirmButtonText: 'OK'
+                            });
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching property:', error);
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            title: 'Error',
+                            text: 'Failed to load property information.',
+                            icon: 'error',
+                            confirmButtonText: 'OK'
+                        });
+                    }
+                });
+            });
+        }
+    });
+</script>
+{% endblock %}
+
