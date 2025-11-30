@@ -1,10 +1,11 @@
-# from django.db.models import Q
+from django.db.models import Q
 from django.shortcuts import render
 # from django.contrib import messages
 # from django.template.loader import render_to_string
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.shortcuts import render, redirect #,get_object_or_404,
+from decimal import Decimal, InvalidOperation
 
 # from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
@@ -13,7 +14,7 @@ from .models import SystemUtility
 from finance.models import Subscription
 from tracking_analyzer.models import Tracker
 
-from accounts.models import Property
+from accounts.models import Property, PropertyType, Amenity, AmenityCategory
 # from accounts.models import User, UserProfile, ProfileFilter, SearchFilter
 
 channel_layer = get_channel_layer()
@@ -149,20 +150,156 @@ def format_property_data(property):
 
 
 def properties_api(request):
-    """API endpoint for fetching paginated properties"""
+    """API endpoint for fetching paginated and filtered properties"""
     try:
         page = int(request.GET.get('page', 1))
         per_page = int(request.GET.get('per_page', 15))
         offset = (page - 1) * per_page
         
-        properties = (
-            Property.objects.filter(status='published')
-            .select_related('address', 'property_type')
-            .prefetch_related('amenities__category', 'images', 'neighborhood_features__category')
-            .order_by('-listed_date')[offset:offset + per_page]
-        )
+        # Start with base queryset
+        properties = Property.objects.filter(status='published').select_related('address', 'property_type').prefetch_related('amenities__category', 'images', 'neighborhood_features__category')
         
-        total_count = Property.objects.filter(status='published').count()
+        # Apply filters
+        # Property Type
+        property_type = request.GET.get('property_type')
+        if property_type:
+            try:
+                property_type_id = int(property_type)
+                properties = properties.filter(property_type_id=property_type_id)
+            except (ValueError, TypeError):
+                pass
+        
+        # Category (listing type)
+        category = request.GET.get('category')
+        if category:
+            properties = properties.filter(category=category)
+        
+        # Price range
+        min_price = request.GET.get('min_price')
+        max_price = request.GET.get('max_price')
+        if min_price:
+            try:
+                min_price_decimal = Decimal(min_price)
+                properties = properties.filter(price__gte=min_price_decimal)
+            except (ValueError, InvalidOperation, TypeError):
+                pass
+        if max_price:
+            try:
+                max_price_decimal = Decimal(max_price)
+                properties = properties.filter(price__lte=max_price_decimal)
+            except (ValueError, InvalidOperation, TypeError):
+                pass
+        
+        # Currency
+        currency = request.GET.get('currency')
+        if currency:
+            properties = properties.filter(price_currency=currency)
+        
+        # Bedrooms
+        min_bedrooms = request.GET.get('min_bedrooms')
+        max_bedrooms = request.GET.get('max_bedrooms')
+        if min_bedrooms:
+            try:
+                properties = properties.filter(bedrooms__gte=int(min_bedrooms))
+            except (ValueError, TypeError):
+                pass
+        if max_bedrooms:
+            try:
+                properties = properties.filter(bedrooms__lte=int(max_bedrooms))
+            except (ValueError, TypeError):
+                pass
+        
+        # Bathrooms
+        min_bathrooms = request.GET.get('min_bathrooms')
+        max_bathrooms = request.GET.get('max_bathrooms')
+        if min_bathrooms:
+            try:
+                properties = properties.filter(bathrooms__gte=Decimal(min_bathrooms))
+            except (ValueError, InvalidOperation, TypeError):
+                pass
+        if max_bathrooms:
+            try:
+                properties = properties.filter(bathrooms__lte=Decimal(max_bathrooms))
+            except (ValueError, InvalidOperation, TypeError):
+                pass
+        
+        # Square feet
+        min_sqft = request.GET.get('min_sqft')
+        max_sqft = request.GET.get('max_sqft')
+        if min_sqft:
+            try:
+                properties = properties.filter(square_feet__gte=int(min_sqft))
+            except (ValueError, TypeError):
+                pass
+        if max_sqft:
+            try:
+                properties = properties.filter(square_feet__lte=int(max_sqft))
+            except (ValueError, TypeError):
+                pass
+        
+        # Furnishing status
+        furnishing = request.GET.get('furnishing')
+        if furnishing:
+            properties = properties.filter(Q(furnishing_status=furnishing) | Q(furnish_status=furnishing))
+        
+        # Availability status
+        availability = request.GET.get('availability')
+        if availability:
+            properties = properties.filter(availability_status=availability)
+        
+        # Amenities (multiple)
+        amenities = request.GET.getlist('amenities')
+        if amenities:
+            try:
+                amenity_ids = [int(aid) for aid in amenities]
+                properties = properties.filter(amenities__id__in=amenity_ids).distinct()
+            except (ValueError, TypeError):
+                pass
+        
+        # Location filters
+        city = request.GET.get('city')
+        if city:
+            properties = properties.filter(address__city__icontains=city)
+        
+        state = request.GET.get('state')
+        if state:
+            properties = properties.filter(address__state__icontains=state)
+        
+        country = request.GET.get('country')
+        if country:
+            properties = properties.filter(address__country=country)
+        
+        # Features
+        parking_spaces = request.GET.get('parking_spaces')
+        if parking_spaces:
+            try:
+                properties = properties.filter(parking_spaces__gte=int(parking_spaces))
+            except (ValueError, TypeError):
+                pass
+        
+        internet_included = request.GET.get('internet_included')
+        if internet_included == 'true':
+            properties = properties.filter(internet_included=True)
+        elif internet_included == 'false':
+            properties = properties.filter(internet_included=False)
+        
+        # Price negotiable
+        price_negotiable = request.GET.get('price_negotiable')
+        if price_negotiable == 'true':
+            properties = properties.filter(is_price_negotiable=True)
+        
+        # Featured properties
+        featured = request.GET.get('featured')
+        if featured == 'true':
+            properties = properties.filter(is_featured=True)
+        
+        # Get total count before pagination
+        total_count = properties.count()
+        
+        # Apply ordering and pagination
+        order_by = request.GET.get('order_by', '-listed_date')
+        properties = properties.order_by(order_by)[offset:offset + per_page]
+        
         property_list = [format_property_data(property) for property in properties]
         
         has_more = offset + len(property_list) < total_count
@@ -174,6 +311,115 @@ def properties_api(request):
             'per_page': per_page,
             'total': total_count,
             'has_more': has_more
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+def filter_options_api(request):
+    """API endpoint for getting filter options (property types, amenities, etc.)"""
+    try:
+        # Get all property types
+        property_types = [
+            {
+                'id': pt.id,
+                'name': pt.name,
+                'icon': pt.icon or '',
+                'description': pt.description or ''
+            }
+            for pt in PropertyType.objects.all().order_by('name')
+        ]
+        
+        # Get all amenities grouped by category
+        amenities_by_category = {}
+        for category in AmenityCategory.objects.all().order_by('name'):
+            amenities = Amenity.objects.filter(category=category).order_by('name')
+            amenities_by_category[category.name] = [
+                {
+                    'id': a.id,
+                    'name': a.name,
+                    'icon': a.icon or '',
+                    'is_featured': a.is_featured
+                }
+                for a in amenities
+            ]
+        
+        # Get amenities without category
+        uncategorized_amenities = Amenity.objects.filter(category__isnull=True).order_by('name')
+        if uncategorized_amenities.exists():
+            amenities_by_category['Other'] = [
+                {
+                    'id': a.id,
+                    'name': a.name,
+                    'icon': a.icon or '',
+                    'is_featured': a.is_featured
+                }
+                for a in uncategorized_amenities
+            ]
+        
+        # Get unique cities, states, and countries from addresses
+        from accounts.models import Address
+        cities = list(Address.objects.values_list('city', flat=True).distinct().exclude(city='').order_by('city'))
+        states = list(Address.objects.values_list('state', flat=True).distinct().exclude(state='').order_by('state'))
+        countries = list(Address.objects.values_list('country', flat=True).distinct().exclude(country='').order_by('country'))
+        
+        # Get price range
+        from django.db.models import Min, Max
+        price_range = Property.objects.filter(status='published').aggregate(
+            min_price=Min('price'),
+            max_price=Max('price')
+        )
+        
+        # Get bedroom/bathroom/square feet ranges
+        bedroom_range = Property.objects.filter(status='published').aggregate(
+            min_bedrooms=Min('bedrooms'),
+            max_bedrooms=Max('bedrooms')
+        )
+        
+        bathroom_range = Property.objects.filter(status='published').aggregate(
+            min_bathrooms=Min('bathrooms'),
+            max_bathrooms=Max('bathrooms')
+        )
+        
+        sqft_range = Property.objects.filter(status='published').aggregate(
+            min_sqft=Min('square_feet'),
+            max_sqft=Max('square_feet')
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'property_types': property_types,
+            'amenities_by_category': amenities_by_category,
+            'locations': {
+                'cities': cities,
+                'states': states,
+                'countries': countries
+            },
+            'ranges': {
+                'price': {
+                    'min': float(price_range['min_price']) if price_range['min_price'] else 0,
+                    'max': float(price_range['max_price']) if price_range['max_price'] else 0
+                },
+                'bedrooms': {
+                    'min': bedroom_range['min_bedrooms'] or 0,
+                    'max': bedroom_range['max_bedrooms'] or 0
+                },
+                'bathrooms': {
+                    'min': float(bathroom_range['min_bathrooms']) if bathroom_range['min_bathrooms'] else 0,
+                    'max': float(bathroom_range['max_bathrooms']) if bathroom_range['max_bathrooms'] else 0
+                },
+                'square_feet': {
+                    'min': sqft_range['min_sqft'] or 0,
+                    'max': sqft_range['max_sqft'] or 0
+                }
+            },
+            'categories': [choice[0] for choice in Property.LISTING_CATEGORY],
+            'furnishing_statuses': [choice[0] for choice in Property.FURNISHING_STATUS],
+            'availability_statuses': [choice[0] for choice in Property.PROPERTY_AVAILABILITY_CHOICE],
+            'currencies': [choice[0] for choice in Property.CURRENCY_CHOICES]
         })
     except Exception as e:
         return JsonResponse({

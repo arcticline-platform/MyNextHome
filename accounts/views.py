@@ -19,6 +19,7 @@ from django.http import HttpResponseNotAllowed
 # from django.template.loader import render_to_string
 # from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_protect
+from django.views.decorators.http import require_http_methods
 from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth import update_session_auth_hash
 # from django.utils.encoding import force_bytes, force_str
@@ -41,7 +42,7 @@ from core.utils import send_email_alert
 from .tokens import account_activation_token
 from tracking_analyzer.models import Tracker
 from .serializers import UserSignupSerializer, LoginSerializer
-from .models import User, UserProfile, Property,  Receipt, VerificationToken
+from .models import User, UserProfile, Property, Receipt, VerificationToken, FavoriteProperty
 from .forms import AboutMeForm, CoverPhotoForm, UserSignUpForm, ProfileChangeForm, PortfolioForm, ImageForm, ReportUserForm, ReportEvidenceForm
 
 logger = logging.getLogger(__name__)
@@ -421,11 +422,21 @@ def profile(request, template_name='accounts/user_profile.html'):
 	try:
 		profile = UserProfile.objects.get(user__id=request.user.id, username=request.user.username)
 		user_listings = Property.objects.filter(listed_by=profile.user).select_related('address').prefetch_related('amenities', 'images')
+		# Get saved properties for the user
+		from .models import FavoriteProperty
+		saved_properties = Property.objects.filter(
+			favorites__user=request.user
+		).select_related('address', 'property_type').prefetch_related('images', 'amenities').distinct()
 	except UserProfile.DoesNotExist:
 		messages.error(request, 'User profile could not be found!')
 		return redirect(request.META.get('HTTP_REFERER', 'redirect_if_referer_not_found'))
 	current_user = request.user
-	context = {'profile': profile, 'current_user':current_user, 'user_listings': user_listings}
+	context = {
+		'profile': profile, 
+		'current_user': current_user, 
+		'user_listings': user_listings,
+		'saved_properties': saved_properties if 'saved_properties' in locals() else Property.objects.none()
+	}
 	Tracker.objects.create_from_request(request, profile)
 	return render(request, template_name, context)
 
@@ -593,3 +604,140 @@ def view_receipt(request, transaction_id):
 	except Receipt.DoesNotExist:
 		messages.error(request, "Receipt not found.")
 		return redirect('dashboard')
+
+
+# Saved Properties Views
+@login_required
+@require_http_methods(["POST"])
+def toggle_save_property(request, property_id):
+	"""Toggle save/unsave a property for the current user"""
+	try:
+		property_obj = get_object_or_404(Property, id=property_id)
+		favorite, created = FavoriteProperty.objects.get_or_create(
+			user=request.user,
+			property=property_obj
+		)
+		
+		if not created:
+			# Property was already saved, so unsave it
+			favorite.delete()
+			is_saved = False
+			message = 'Property removed from saved list'
+		else:
+			# Property was just saved
+			is_saved = True
+			message = 'Property saved successfully'
+		
+		# Update favorite count
+		property_obj.update_favorite_count()
+		
+		return JsonResponse({
+			'success': True,
+			'is_saved': is_saved,
+			'message': message,
+			'favorite_count': property_obj.favorite_count
+		})
+	except Exception as e:
+		logger.error(f"Error toggling save property: {str(e)}")
+		return JsonResponse({
+			'success': False,
+			'error': 'An error occurred while saving the property'
+		}, status=500)
+
+
+@login_required
+def check_property_saved(request, property_id):
+	"""Check if a property is saved by the current user"""
+	try:
+		property_obj = get_object_or_404(Property, id=property_id)
+		is_saved = FavoriteProperty.objects.filter(
+			user=request.user,
+			property=property_obj
+		).exists()
+		
+		return JsonResponse({
+			'is_saved': is_saved
+		})
+	except Exception as e:
+		logger.error(f"Error checking property saved status: {str(e)}")
+		return JsonResponse({
+			'is_saved': False,
+			'error': 'An error occurred'
+		}, status=500)
+
+
+@login_required
+@require_http_methods(["POST", "DELETE"])
+def remove_saved_property(request, property_id):
+	"""Remove a property from saved list"""
+	try:
+		property_obj = get_object_or_404(Property, id=property_id)
+		favorite = FavoriteProperty.objects.filter(
+			user=request.user,
+			property=property_obj
+		).first()
+		
+		if favorite:
+			favorite.delete()
+			# Update favorite count
+			property_obj.update_favorite_count()
+			
+			return JsonResponse({
+				'success': True,
+				'message': 'Property removed from saved list',
+				'favorite_count': property_obj.favorite_count
+			})
+		else:
+			return JsonResponse({
+				'success': False,
+				'error': 'Property not found in saved list'
+			}, status=404)
+	except Exception as e:
+		logger.error(f"Error removing saved property: {str(e)}")
+		return JsonResponse({
+			'success': False,
+			'error': 'An error occurred while removing the property'
+		}, status=500)
+
+
+@login_required
+def saved_properties_list(request):
+	"""List all saved properties for the current user"""
+	try:
+		saved_properties = Property.objects.filter(
+			favorites__user=request.user
+		).select_related('address', 'property_type').prefetch_related(
+			'images', 'amenities'
+		).distinct().order_by('-favorites__created')
+		
+		# If AJAX request, return JSON
+		if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+			properties_data = []
+			for prop in saved_properties:
+				primary_image = prop.get_primary_image()
+				properties_data.append({
+					'id': prop.id,
+					'title': prop.title,
+					'price': float(prop.price),
+					'currency': prop.price_currency,
+					'bedrooms': prop.bedrooms,
+					'bathrooms': float(prop.bathrooms),
+					'square_feet': prop.square_feet,
+					'address': str(prop.address),
+					'image_url': primary_image.image.url if primary_image else None,
+				})
+			return JsonResponse({
+				'success': True,
+				'properties': properties_data
+			})
+		
+		# Regular request, render template
+		context = {
+			'saved_properties': saved_properties,
+			'user': request.user
+		}
+		return render(request, 'accounts/saved_properties.html', context)
+	except Exception as e:
+		logger.error(f"Error listing saved properties: {str(e)}")
+		messages.error(request, 'An error occurred while loading saved properties')
+		return redirect('profile')

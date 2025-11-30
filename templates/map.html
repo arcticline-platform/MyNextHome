@@ -294,6 +294,17 @@
             }
         }
 
+        /* Ensure mobile menu toggle button is visible on small screens */
+        #mobileMenuToggle {
+            display: flex !important;
+        }
+
+        @media (min-width: 640px) {
+            #mobileMenuToggle {
+                display: none !important;
+            }
+        }
+
         /* ===== Interactive Elements ===== */
         .heart-icon {
             transition: all 0.2s ease;
@@ -349,17 +360,25 @@
             border-radius: 20px 20px 0 0;
             box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
             z-index: 100;
-            transform: translateY(calc(100% - 60px));
+            transform: translateY(100%); /* Completely hidden by default */
             transition: transform 0.3s ease-out;
             max-height: 80vh;
             overflow: hidden;
             touch-action: none;
-            display: none; /* Hidden by default */
+            display: block; /* Always in DOM but hidden via transform */
+        }
+
+        /* Property details sheet specific styling */
+        #propertyDetailsSheet {
+            height: 50vh !important;
+            max-height: 50vh !important;
+            display: flex !important;
+            flex-direction: column !important;
+            overflow: hidden !important; /* Container should not scroll */
         }
 
         .bottom-sheet.open {
-            transform: translateY(0);
-            display: block;
+            transform: translateY(0); /* Fully visible when open */
         }
 
         .bottom-sheet.fullscreen {
@@ -377,6 +396,7 @@
             position: relative;
             border-bottom: 1px solid #eee;
             touch-action: none;
+            flex-shrink: 0; /* Prevent header from shrinking */
         }
 
         .bottom-sheet-handle {
@@ -403,6 +423,18 @@
             -webkit-overflow-scrolling: touch;
         }
 
+        /* Property details sheet content - make it scrollable with 50% height */
+        #propertyDetailsSheet .bottom-sheet-content {
+            flex: 1 !important;
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            -webkit-overflow-scrolling: touch;
+            min-height: 0 !important; /* Critical for flex children to allow scrolling */
+            height: 0 !important; /* Force flex to work */
+            max-height: 100%;
+            padding: 16px;
+        }
+
         .bottom-sheet-overlay {
             position: fixed;
             top: 0;
@@ -423,6 +455,16 @@
 
         /* Mobile optimizations */
         @media (max-width: 767px) {
+            /* Ensure navigation is visible on mobile */
+            nav {
+                display: block !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+                position: sticky !important;
+                top: 0 !important;
+                z-index: 1000 !important;
+            }
+            
             .mapboxgl-popup-content {
                 max-width: 280px !important;
             }
@@ -449,10 +491,49 @@
             }
             
             #directionsPanel {
+                width: 95% !important;
+                max-width: none !important;
+                left: 50% !important;
+                transform: translateX(-50%) !important;
+                right: auto !important;
+                margin-left: 0 !important;
+                margin-right: 0 !important;
+            }
+            
+            /* Ensure directions panel header is visible, centered, and not obstructed on mobile */
+            #directionsPanelHeader {
+                position: relative !important;
+                z-index: 1 !important;
+                min-height: 48px !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: space-between !important;
+                width: 100% !important;
+                padding: 0.5rem !important;
+                background-color: #f3f4f6 !important;
+                border-bottom: 1px solid #e5e7eb !important;
+                box-sizing: border-box !important;
+                cursor: default !important; /* Disable grab cursor on mobile */
+            }
+            
+            /* Disable dragging on mobile - enforce centered position */
+            #directionsPanelHeader.grab,
+            #directionsPanelHeader.grabbing {
+                cursor: default !important;
+            }
+            
+            /* Reset any dragged positions on mobile */
+            #directionsPanel {
+                top: auto !important;
+                bottom: 1rem !important;
+            }
+            
+            #directionsPanelToggle {
                 width: 95%;
                 max-width: none;
-                left: 2.5%;
-                transform: none;
+                left: 50% !important;
+                transform: translateX(-50%) !important;
+                right: auto !important;
             }
 
             /* Sidebar toggleable on mobile */
@@ -465,7 +546,16 @@
                 max-width: 400px;
                 transform: translateX(-100%);
                 transition: transform 0.3s ease-out;
-                z-index: 1001;
+                z-index: 1004;
+            }
+
+            /* Ensure search suggestions container can overflow sidebar on mobile */
+            #sidebar .relative {
+                overflow: visible;
+            }
+
+            #sidebar .suggestions-container {
+                z-index: 10002 !important;
             }
 
             #sidebar.open {
@@ -480,7 +570,7 @@
                 right: 0;
                 bottom: 0;
                 background: rgba(0,0,0,0.5);
-                z-index: 1000;
+                z-index: 1003;
                 opacity: 0;
                 pointer-events: none;
                 transition: opacity 0.3s ease;
@@ -515,9 +605,9 @@
                 max-width: 24rem;
             }
 
-            /* Hide mobile toggle button on desktop */
-            #showPropertyList {
-                display: none;
+            /* Hide mobile property details toggle button on desktop */
+            #showPropertyDetails {
+                display: none !important;
             }
 
             /* Hide mobile sidebar toggle button */
@@ -637,6 +727,52 @@
             }
         }
 
+        /* Desktop Sidebar Toggle Button */
+        .sidebar-toggle-desktop {
+            position: fixed;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 998;
+            background: white;
+            border: none;
+            border-radius: 0 8px 8px 0;
+            padding: 16px 8px;
+            box-shadow: 2px 0 8px rgba(0,0,0,0.15);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: none;
+        }
+
+        .sidebar-toggle-desktop:hover {
+            background: #f3f4f6;
+            box-shadow: 2px 0 12px rgba(0,0,0,0.2);
+        }
+
+        .sidebar-toggle-desktop i {
+            font-size: 20px;
+            color: #22c55e;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar-toggle-desktop:hover i {
+            color: #16a34a;
+        }
+
+        @media (min-width: 768px) {
+            .sidebar-toggle-desktop {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+        }
+
+        @media (max-width: 767px) {
+            .sidebar-toggle-desktop {
+                display: none !important;
+            }
+        }
+
         /* Prevent body scroll when overlay is open */
         body.left-overlay-open,
         body.sidebar-open,
@@ -647,30 +783,30 @@
 </head>
 <body class="bg-gray-50">
     <!-- Navigation -->
-    <nav class="bg-white shadow-md z-10 relative">
+    <nav class="bg-white shadow-md sticky top-0" style="z-index: 1000;">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16 w-full">
-                <div class="flex items-center flex-shrink-0">
+                <div class="flex items-center flex-shrink-0 min-w-0">
                     <div class="flex-shrink-0 flex items-center">
                         <i class="fas fa-home text-primary-600 text-2xl mr-2"></i>
                         <span class="text-xl font-bold text-primary-800">MyNextHome</span>
                     </div>
                     <nav class="hidden sm:ml-6 sm:flex sm:items-center sm:space-x-8">
                         <a href="#" class="border-primary-500 text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium whitespace-nowrap">
-                            Property Sales
+                            Property
                         </a>
-                        <a href="#" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium whitespace-nowrap">
+                        <!-- <a href="#" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium whitespace-nowrap">
                             Rentals
-                        </a>
-                        <a href="#" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium whitespace-nowrap">
+                        </a> -->
+                        <a href="{% url 'saved_properties_list' %}" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium whitespace-nowrap">
                             Saved
                         </a>
-                        <a href="#" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium whitespace-nowrap">
+                        <!-- <a href="#" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium whitespace-nowrap">
                             Agents
-                        </a>
+                        </a> -->
                     </nav>
                 </div>
-                <div class="flex items-center space-x-4 flex-shrink-0">
+                <div class="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
                     <div class="hidden sm:flex sm:items-center sm:space-x-4">
                         <div class="relative w-64 flex-shrink-0">
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -699,7 +835,7 @@
                                         <i class="fas fa-user w-5 mr-3 text-gray-400"></i>
                                         Profile
                                     </a>
-                                    <a href="#" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-primary-50 hover:text-primary-700 transition duration-150" role="menuitem">
+                                    <a href="{% url 'saved_properties_list' %}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-primary-50 hover:text-primary-700 transition duration-150" role="menuitem">
                                         <i class="fas fa-heart w-5 mr-3 text-gray-400"></i>
                                         Saved Properties
                                     </a>
@@ -728,60 +864,58 @@
                             </div>
                         </div>
                     </div>
-                    <!-- Mobile menu toggle button -->
-                    <button id="mobileMenuToggle" class="sm:hidden p-2 text-gray-600 hover:text-primary-600 focus:outline-none">
-                        <i class="fas fa-bars text-xl"></i>
-                    </button>
                 </div>
+                <!-- Mobile menu toggle button - visible on small screens only -->
+                <button id="mobileMenuToggle" class="sm:hidden flex items-center justify-center p-2 text-gray-700 hover:text-primary-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500 rounded-md transition-colors relative z-20" aria-label="Toggle menu" style="min-width: 40px; flex-shrink: 0;">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
             </div>
         </div>
     </nav>
     <script>
-                        document.addEventListener('DOMContentLoaded', function() {
-                            const accountButton = document.getElementById('account-button');
-                            const accountDropdown = document.getElementById('account-dropdown');
-                            const caretIcon = accountButton.querySelector('.fa-caret-down');
-                            let isOpen = false;
+        document.addEventListener('DOMContentLoaded', function() {
+            const accountButton = document.getElementById('account-button');
+            const accountDropdown = document.getElementById('account-dropdown');
+            const caretIcon = accountButton.querySelector('.fa-caret-down');
+            let isOpen = false;
 
-                            const toggleDropdown = (show) => {
-                                isOpen = show;
-                                accountDropdown.style.transform = show ? 'scale(1)' : 'scale(0.95)';
-                                accountDropdown.style.opacity = show ? '1' : '0';
-                                accountDropdown.style.pointerEvents = show ? 'auto' : 'none';
-                                caretIcon.style.transform = show ? 'rotate(180deg)' : 'rotate(0)';
-                                accountButton.setAttribute('aria-expanded', show);
-                            };
+            const toggleDropdown = (show) => {
+                isOpen = show;
+                accountDropdown.style.transform = show ? 'scale(1)' : 'scale(0.95)';
+                accountDropdown.style.opacity = show ? '1' : '0';
+                accountDropdown.style.pointerEvents = show ? 'auto' : 'none';
+                caretIcon.style.transform = show ? 'rotate(180deg)' : 'rotate(0)';
+                accountButton.setAttribute('aria-expanded', show);
+            };
 
-                            accountButton.addEventListener('click', function(event) {
-                                event.stopPropagation();
-                                toggleDropdown(!isOpen);
-                            });
+            accountButton.addEventListener('click', function(event) {
+                event.stopPropagation();
+                toggleDropdown(!isOpen);
+            });
 
-                            document.addEventListener('click', function(event) {
-                                if (isOpen && !accountDropdown.contains(event.target)) {
-                                    toggleDropdown(false);
-                                }
-                            });
+            document.addEventListener('click', function(event) {
+                if (isOpen && !accountDropdown.contains(event.target)) {
+                    toggleDropdown(false);
+                }
+            });
 
-                            document.addEventListener('keydown', function(event) {
-                                if (event.key === 'Escape' && isOpen) {
-                                    toggleDropdown(false);
-                                }
-                            });
+            document.addEventListener('keydown', function(event) {
+                if (event.key === 'Escape' && isOpen) {
+                    toggleDropdown(false);
+                }
+            });
 
-                            const menuItems = accountDropdown.querySelectorAll('a');
-                            menuItems.forEach(item => {
-                                item.addEventListener('mouseenter', () => {
-                                    item.querySelector('i').classList.add('text-primary-500');
-                                });
-                                item.addEventListener('mouseleave', () => {
-                                    item.querySelector('i').classList.remove('text-primary-500');
-                                });
-                            });
-                        });
-                    </script>
-                </div>
-            </nav>
+            const menuItems = accountDropdown.querySelectorAll('a');
+            menuItems.forEach(item => {
+                item.addEventListener('mouseenter', () => {
+                    item.querySelector('i').classList.add('text-primary-500');
+                });
+                item.addEventListener('mouseleave', () => {
+                    item.querySelector('i').classList.remove('text-primary-500');
+                });
+            });
+        });
+    </script>
 
     <!-- Mobile Navigation Overlay -->
     <div id="mobileNavOverlay" class="mobile-nav-overlay"></div>
@@ -796,35 +930,59 @@
                 </button>
             </div>
         </div>
-        <div class="px-4 py-3 space-y-1">
-            <a href="#" class="block px-3 py-2 text-base font-medium text-gray-900 hover:bg-primary-50 hover:text-primary-700 rounded-md">
-                Property Sales
+        <div class="px-4 py-3 space-y-1 overflow-y-auto">
+            
+            <a href="{% url 'saved_properties_list' %}" class="block px-3 py-2 text-base font-medium text-gray-500 hover:bg-primary-50 hover:text-primary-700 rounded-md">
+                <i class="fas fa-heart mr-2"></i> Saved Properties
             </a>
-            <a href="#" class="block px-3 py-2 text-base font-medium text-gray-500 hover:bg-primary-50 hover:text-primary-700 rounded-md">
-                Rentals
-            </a>
-            <a href="#" class="block px-3 py-2 text-base font-medium text-gray-500 hover:bg-primary-50 hover:text-primary-700 rounded-md">
-                Saved
-            </a>
-            <a href="#" class="block px-3 py-2 text-base font-medium text-gray-500 hover:bg-primary-50 hover:text-primary-700 rounded-md">
-                Agents
-            </a>
+            
             <div class="border-t border-gray-200 pt-2 mt-2">
-                <div class="px-3 py-2">
-                    <input class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 focus:border-transparent text-sm" placeholder="Search locations..." type="search">
-                </div>
-                <a href="{% if user.is_authenticated %}{% url 'add_property' %}{% else %}{% url 'login' %}{% endif %}" class="block px-3 py-2 text-base font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-md text-center">
-                    List Your Property
+                <!-- List Your Property Button -->
+                <a href="{% if user.is_authenticated %}{% url 'add_property' %}{% else %}{% url 'login' %}{% endif %}" class="block px-3 py-2 text-base font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-md text-center mb-2">
+                    <i class="fas fa-plus mr-2"></i> List Your Property
                 </a>
+            </div>
+            
+            <!-- Account Section -->
+            <div class="border-t border-gray-200 pt-2 mt-2">
+                <div class="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    Account
+                </div>
+                {% if user.is_authenticated %}
+                    <a href="{% url 'profile' %}" class="block px-3 py-2 text-base font-medium text-gray-700 hover:bg-primary-50 hover:text-primary-700 rounded-md">
+                        <i class="fas fa-user mr-2"></i> Profile
+                    </a>
+                    <a href="{% url 'saved_properties_list' %}" class="block px-3 py-2 text-base font-medium text-gray-700 hover:bg-primary-50 hover:text-primary-700 rounded-md">
+                        <i class="fas fa-heart mr-2"></i> Saved Properties
+                    </a>
+                    <a href="{% url 'profile' %}" class="block px-3 py-2 text-base font-medium text-gray-700 hover:bg-primary-50 hover:text-primary-700 rounded-md">
+                        <i class="fas fa-cog mr-2"></i> Account Settings
+                    </a>
+                    <div class="border-t border-gray-200 mt-1"></div>
+                    <form action="{% url 'logout' %}" method="POST" class="block">
+                        {% csrf_token %}
+                        <button type="submit" class="w-full text-left block px-3 py-2 text-base font-medium text-red-600 hover:bg-red-50 rounded-md">
+                            <i class="fas fa-sign-out-alt mr-2"></i> Sign Out
+                        </button>
+                    </form>
+                {% else %}
+                    <a href="{% url 'login' %}" class="block px-3 py-2 text-base font-medium text-gray-700 hover:bg-primary-50 hover:text-primary-700 rounded-md">
+                        <i class="fas fa-sign-in-alt mr-2"></i> Sign In
+                    </a>
+                    <a href="{% url 'signup' %}" class="block px-3 py-2 text-base font-medium text-gray-700 hover:bg-primary-50 hover:text-primary-700 rounded-md">
+                        <i class="fas fa-user-plus mr-2"></i> Sign Up
+                    </a>
+                {% endif %}
             </div>
         </div>
     </div>
 
     <!-- Main Content -->
     <div class="flex h-[calc(100vh-64px)] relative">
-        <!-- Sidebar Toggle Button (Mobile) -->
-        <button id="showSidebar" class="md:hidden fixed top-20 left-4 z-20 p-3 bg-primary-600 text-white rounded-full shadow-lg hover:bg-primary-700">
-            <i class="fas fa-list"></i>
+        
+        <!-- Sidebar Toggle Button (Desktop) - Shows when sidebar is hidden -->
+        <button id="showSidebarDesktop" class="sidebar-toggle-desktop" aria-label="Toggle property list" style="display: none;">
+            <i class="fas fa-chevron-right"></i>
         </button>
 
         <!-- Sidebar Backdrop (Mobile) -->
@@ -853,13 +1011,31 @@
                             <i class="fas fa-search text-gray-400"></i>
                         </div>
                         <input id="mobileSearch" name="mobileSearch" class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 focus:border-transparent sm:text-sm" placeholder="Search locations..." type="search">
+                        <!-- Suggestions for mobile search -->
+                        <div id="mobileSearchSuggestions" class="suggestions-container mt-1 bg-white rounded-md shadow-lg max-h-48 overflow-y-auto hidden"></div>
                     </div>
-                    <div class="mt-2 flex overflow-x-auto space-x-2 pb-2">
-                        <button class="px-3 py-1 text-xs border rounded-full bg-primary-100 text-primary-800 border-primary-300">Houses</button>
-                        <button class="px-3 py-1 text-xs border rounded-full bg-white text-gray-700 border-gray-300">Apartments</button>
-                        <button class="px-3 py-1 text-xs border rounded-full bg-white text-gray-700 border-gray-300">Condos</button>
-                        <button class="px-3 py-1 text-xs border rounded-full bg-white text-gray-700 border-gray-300">Price</button>
-                        <button class="px-3 py-1 text-xs border rounded-full bg-white text-gray-700 border-gray-300">Beds</button>
+                    <div class="mt-2 flex items-center space-x-2">
+                        <button id="mobileFilterToggle" class="flex-1 px-4 py-2 bg-primary-600 text-white rounded-md text-sm font-medium hover:bg-primary-700 flex items-center justify-center">
+                            <i class="fas fa-filter mr-2"></i> Filters
+                            <span id="mobileFilterCount" class="ml-2 bg-white text-primary-600 rounded-full px-2 py-0.5 text-xs hidden">0</span>
+                        </button>
+                        <button id="mobileClearFilters" class="px-3 py-2 border border-gray-300 text-gray-700 rounded-md text-sm hover:bg-gray-50 hidden">
+                            Clear
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Desktop Filters -->
+                <div class="hidden md:block mt-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-sm font-semibold text-gray-700">Filters</h3>
+                        <button id="desktopFilterToggle" class="text-primary-600 hover:text-primary-800 text-sm flex items-center">
+                            <span class="mr-1">Show Filters</span>
+                            <i class="fas fa-chevron-down" id="desktopFilterToggleIcon"></i>
+                        </button>
+                    </div>
+                    <div id="desktopFiltersPanel" class="space-y-4 hidden">
+                        <!-- Filter content will be loaded here -->
                     </div>
                 </div>
             </div>
@@ -980,7 +1156,7 @@
                             <div class="ml-4">
                                 <div class="flex justify-between">
                                     <h3 class="text-lg font-bold text-gray-900">UGX {{ property.price|floatformat:0|intcomma }}</h3>
-                                    <button class="heart-icon text-gray-400 hover:text-red-500">
+                                    <button class="heart-icon text-gray-400 hover:text-red-500" data-property-id="{{ property.id }}" data-is-saved="false">
                                         <i class="far fa-heart"></i>
                                     </button>
                                 </div>
@@ -1044,12 +1220,14 @@
                         </div>
                         <input id="leftOverlaySearch" name="leftOverlaySearch" class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 focus:border-transparent sm:text-sm" placeholder="Search locations..." type="search">
                     </div>
-                    <div class="mt-2 flex overflow-x-auto space-x-2 pb-2">
-                        <button class="px-3 py-1 text-xs border rounded-full bg-primary-100 text-primary-800 border-primary-300">Houses</button>
-                        <button class="px-3 py-1 text-xs border rounded-full bg-white text-gray-700 border-gray-300">Apartments</button>
-                        <button class="px-3 py-1 text-xs border rounded-full bg-white text-gray-700 border-gray-300">Condos</button>
-                        <button class="px-3 py-1 text-xs border rounded-full bg-white text-gray-700 border-gray-300">Price</button>
-                        <button class="px-3 py-1 text-xs border rounded-full bg-white text-gray-700 border-gray-300">Beds</button>
+                    <div class="mt-2 flex items-center space-x-2">
+                        <button id="leftOverlayFilterToggle" class="flex-1 px-4 py-2 bg-primary-600 text-white rounded-md text-sm font-medium hover:bg-primary-700 flex items-center justify-center">
+                            <i class="fas fa-filter mr-2"></i> Filters
+                            <span id="leftOverlayFilterCount" class="ml-2 bg-white text-primary-600 rounded-full px-2 py-0.5 text-xs hidden">0</span>
+                        </button>
+                        <button id="leftOverlayClearFilters" class="px-3 py-2 border border-gray-300 text-gray-700 rounded-md text-sm hover:bg-gray-50 hidden">
+                            Clear
+                        </button>
                     </div>
                 </div>
             </div>
@@ -1131,6 +1309,15 @@
             <button id="satelliteView">Satellite</button>
         </div>
 
+        <!-- Directions Panel Toggle Button (shown when panel is closed) -->
+        <button id="directionsPanelToggle" 
+                class="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-primary-600 hover:bg-primary-700 text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center space-x-2 transition-all duration-300 hover:scale-105"
+                title="Show Directions"
+                style="display: none;">
+            <i class="fas fa-directions"></i>
+            <span>Show Directions</span>
+        </button>
+
         <!-- Directions Panel -->
         <div id="directionsPanel"
             class=" hidden fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-white rounded-lg shadow-xl z-50 max-w-md w-full overflow-hidden transition-all duration-300 overflow-hidden"
@@ -1188,68 +1375,28 @@
             <div id="resizeHandle" class="h-2 cursor-row-resize bg-gray-300 w-full"></div>
         </div>
 
-        <!-- Mobile Bottom Sheet for Property List -->
-        <div id="propertyListSheet" class="bottom-sheet">
-            <div class="bottom-sheet-header" id="propertyListSheetHandle">
-                <div class="bottom-sheet-handle"></div>
-                <button class="bottom-sheet-close" id="closePropertyListSheet">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="bottom-sheet-content">
-                <div class="p-4 border-b">
-                    <h2 class="text-xl font-bold text-gray-900">
-                        Available Properties
-                    </h2>
+        <!-- Mobile Filter Modal -->
+        <div id="mobileFilterModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+            <div class="absolute bottom-0 left-0 right-0 bg-white rounded-t-xl max-h-[90vh] overflow-y-auto">
+                <div class="sticky top-0 bg-white border-b p-4 flex justify-between items-center z-10">
+                    <h3 class="text-lg font-bold text-gray-900">Filters</h3>
+                    <div class="flex items-center space-x-2">
+                        <button id="mobileClearFiltersBtn" class="text-primary-600 text-sm font-medium hidden">Clear All</button>
+                        <button id="closeMobileFilterModal" class="text-gray-500 hover:text-gray-700">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
                 </div>
-                
-                <!-- List View -->
-                <div id="mobilePropertyList" class="divide-y divide-gray-200">
-                    {% for property in properties %}
-                    <div class="property-card p-4 cursor-pointer hover:bg-gray-50" data-property-id="{{ property.id }}">
-                        <div class="flex">
-                            <div class="flex-shrink-0 w-24 h-20">
-                                <img class="w-full h-full object-cover rounded" src="{{ property.image_url }}" alt="{{ property.title }}">
-                            </div>
-                            <div class="ml-4">
-                                <div class="flex justify-between">
-                                    <h3 class="text-lg font-bold text-gray-900">UGX {{ property.price|floatformat:0|intcomma }}</h3>
-                                    <button class="heart-icon text-gray-400 hover:text-red-500">
-                                        <i class="far fa-heart"></i>
-                                    </button>
-                                </div>
-                                <h4 class="text-md font-medium text-gray-800 mt-1">{{ property.title }}</h4>
-                                <p class="text-sm text-gray-600 mt-1"><i class="fas fa-map-marker-alt text-primary-500 mr-1"></i> {{ property.address }}</p>
-                                <div class="mt-2 flex text-sm text-gray-500">
-                                    <span class="flex items-center mr-3">
-                                        <i class="fas fa-bed text-primary-500 mr-1"></i> {{ property.bedrooms }}
-                                    </span>
-                                    <span class="flex items-center mr-3">
-                                        <i class="fas fa-bath text-primary-500 mr-1"></i> {{ property.bathrooms }}
-                                    </span>
-                                    <span class="flex items-center">
-                                        <i class="fas fa-ruler-combined text-primary-500 mr-1"></i> {{ property.area }} sqft
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    {% empty %}
-                    <div class="p-8 text-center">
-                        <i class="fas fa-home text-gray-300 text-4xl mb-4"></i>
-                        <h3 class="text-lg font-medium text-gray-900">No properties found</h3>
-                        <p class="mt-1 text-sm text-gray-500">Try adjusting your search or filter to find what you're looking for.</p>
-                    </div>
-                    {% endfor %}
-                    <!-- Loading indicator for infinite scroll -->
-                    <div id="mobileLoadingIndicator" class="hidden p-4 text-center">
-                        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-                        <p class="mt-2 text-sm text-gray-500">Loading more properties...</p>
-                    </div>
-                    <!-- End of list message -->
-                    <div id="mobileEndOfList" class="hidden p-4 text-center text-sm text-gray-500">
-                        <p>No more properties to load</p>
-                    </div>
+                <div id="mobileFilterContent" class="p-4">
+                    <!-- Filter content will be loaded here -->
+                </div>
+                <div class="sticky bottom-0 bg-white border-t p-4 flex space-x-2">
+                    <button id="mobileApplyFilters" class="flex-1 bg-primary-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-primary-700">
+                        Apply Filters
+                    </button>
+                    <button id="mobileResetFilters" class="px-4 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50">
+                        Reset
+                    </button>
                 </div>
             </div>
         </div>
@@ -1270,9 +1417,9 @@
         <!-- Overlay for bottom sheets -->
         <div id="bottomSheetOverlay" class="bottom-sheet-overlay"></div>
 
-        <!-- Mobile Property List Toggle -->
-        <button id="showPropertyList" class="md:hidden absolute bottom-4 left-4 z-10 p-3 bg-primary-600 text-white rounded-full shadow-lg">
-            <i class="fas fa-list"></i>
+        <!-- Mobile Property Details Toggle -->
+        <button id="showPropertyDetails" class="md:hidden fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50 p-3 bg-primary-600 text-white rounded-full shadow-lg" style="display: none;">
+            <i class="fas fa-info-circle"></i>
         </button>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -1280,31 +1427,40 @@
         // Bottom Sheet functionality
         document.addEventListener('DOMContentLoaded', function() {
             // Elements
-            const propertyListSheet = document.getElementById('propertyListSheet');
             const propertyDetailsSheet = document.getElementById('propertyDetailsSheet');
             const bottomSheetOverlay = document.getElementById('bottomSheetOverlay');
-            const showPropertyListBtn = document.getElementById('showPropertyList');
-            const closePropertyListSheetBtn = document.getElementById('closePropertyListSheet');
             const closePropertyDetailsSheetBtn = document.getElementById('closePropertyDetailsSheet');
-            
-            // Property list sheet handle
-            const propertyListSheetHandle = document.getElementById('propertyListSheetHandle');
             
             // Property details sheet handle
             const propertyDetailsSheetHandle = document.getElementById('propertyDetailsSheetHandle');
             
-            // Show property list sheet
-            if (showPropertyListBtn) {
-                showPropertyListBtn.addEventListener('click', function() {
-                    openBottomSheet(propertyListSheet);
-                });
+            // Property details sheet toggle functionality
+            const showPropertyDetailsBtn = document.getElementById('showPropertyDetails');
+            
+            function togglePropertyDetailsSheet() {
+                if (!propertyDetailsSheet) return;
+                
+                // Check if there's content in the sheet
+                const content = propertyDetailsSheet.querySelector('#propertyDetailsContent');
+                if (!content || content.innerHTML.trim() === '') {
+                    // No property selected, don't open
+                    return;
+                }
+                
+                if (propertyDetailsSheet.classList.contains('open')) {
+                    closeBottomSheet(propertyDetailsSheet);
+                } else {
+                    openBottomSheet(propertyDetailsSheet);
+                    // Hide toggle button when opened (user can use close button or drag down)
+                    if (showPropertyDetailsBtn) {
+                        showPropertyDetailsBtn.style.display = 'none';
+                    }
+                }
             }
             
-            // Close property list sheet
-            if (closePropertyListSheetBtn) {
-                closePropertyListSheetBtn.addEventListener('click', function() {
-                    closeBottomSheet(propertyListSheet);
-                });
+            // Show property details sheet toggle button
+            if (showPropertyDetailsBtn) {
+                showPropertyDetailsBtn.addEventListener('click', togglePropertyDetailsSheet);
             }
             
             // Close property details sheet
@@ -1314,10 +1470,12 @@
                 });
             }
             
-            // Overlay click closes both sheets
+            // Make toggle function globally accessible
+            window.togglePropertyDetailsSheet = togglePropertyDetailsSheet;
+            
+            // Overlay click closes sheet
             if (bottomSheetOverlay) {
                 bottomSheetOverlay.addEventListener('click', function() {
-                    closeBottomSheet(propertyListSheet);
                     closeBottomSheet(propertyDetailsSheet);
                 });
             }
@@ -1332,9 +1490,7 @@
                 sheet.classList.add('open');
                 
                 // Add touch/mouse event listeners for dragging
-                if (sheet === propertyListSheet && propertyListSheetHandle) {
-                    setupDragHandlers(propertyListSheetHandle, sheet);
-                } else if (sheet === propertyDetailsSheet && propertyDetailsSheetHandle) {
+                if (sheet === propertyDetailsSheet && propertyDetailsSheetHandle) {
                     setupDragHandlers(propertyDetailsSheetHandle, sheet);
                 }
             }
@@ -1349,12 +1505,23 @@
                 sheet.classList.remove('open');
                 sheet.classList.remove('fullscreen');
                 
-                // If all sheets are closed, remove overlay
-                if (propertyListSheet && propertyDetailsSheet) {
-                    if (!propertyListSheet.classList.contains('open') && !propertyDetailsSheet.classList.contains('open')) {
-                        if (bottomSheetOverlay) {
-                            bottomSheetOverlay.classList.remove('visible');
-                        }
+                // Show toggle button when property details sheet is closed (so user can reopen it)
+                if (sheet === propertyDetailsSheet) {
+                    const showPropertyDetailsBtn = document.getElementById('showPropertyDetails');
+                    const content = propertyDetailsSheet.querySelector('#propertyDetailsContent');
+                    if (showPropertyDetailsBtn && content && content.innerHTML.trim() !== '') {
+                        // Only show toggle if there's content (property was selected)
+                        showPropertyDetailsBtn.style.display = 'flex';
+                    } else if (showPropertyDetailsBtn) {
+                        // Hide toggle if no content
+                        showPropertyDetailsBtn.style.display = 'none';
+                    }
+                }
+                
+                // If sheet is closed, remove overlay
+                if (propertyDetailsSheet && !propertyDetailsSheet.classList.contains('open')) {
+                    if (bottomSheetOverlay) {
+                        bottomSheetOverlay.classList.remove('visible');
                     }
                 }
             }
@@ -1613,7 +1780,36 @@
                     closeMobileNavFunc();
                 }
             });
+            
+            // Handle "Properties List" button in mobile nav
+            const mobileNavShowProperties = document.getElementById('mobileNavShowProperties');
+            if (mobileNavShowProperties) {
+                mobileNavShowProperties.addEventListener('click', function() {
+                    // Close mobile nav menu
+                    closeMobileNavFunc();
+                    // Open properties sidebar
+                    setTimeout(() => {
+                        if (window.openSidebar) {
+                            window.openSidebar();
+                        } else {
+                            const sidebar = document.getElementById('sidebar');
+                            if (sidebar) {
+                                sidebar.classList.remove('hidden');
+                                if (window.innerWidth < 768) {
+                                    sidebar.classList.add('open');
+                                    const sidebarBackdrop = document.getElementById('sidebarBackdrop');
+                                    if (sidebarBackdrop) {
+                                        sidebarBackdrop.classList.add('visible');
+                                    }
+                                    document.body.classList.add('sidebar-open');
+                                }
+                            }
+                        }
+                    }, 300); // Small delay to allow menu to close first
+                });
+            }
         });
+
         // Map Initialization and Configuration
         const initializeMap = () => {
             mapboxgl.accessToken = 'pk.eyJ1IjoiYWpyYWxsYW4iLCJhIjoiY21hd3N5bWJjMGY4YzJqc2V6aG55MHU4byJ9.LHLL7YKtl_V-1xkGVyFhcw';
@@ -1628,7 +1824,6 @@
             map.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
             
             // Set up geocoder with search suggestions
-            const searchInput = document.getElementById('search');
             const geocoder = new MapboxGeocoder({
                 accessToken: mapboxgl.accessToken,
                 mapboxgl: mapboxgl,
@@ -1661,63 +1856,174 @@
                 }
             });
 
-            // Create suggestions container
-            const suggestionsContainer = document.createElement('div');
-            suggestionsContainer.className = 'suggestions-container absolute w-full bg-white mt-1 rounded-md shadow-lg z-50 max-h-48 overflow-y-auto hidden';
-            searchInput.parentNode.appendChild(suggestionsContainer);
-
             // Add geocoder to map but hide default UI
             geocoder.addTo(map);
             document.querySelector('.mapboxgl-ctrl-geocoder').style.display = 'none';
 
-            // Handle search input
-            searchInput.addEventListener('input', (e) => {
-                const query = e.target.value;
-                if (query && query.length >= 2) {
-                    geocoder.query(query);
-                    suggestionsContainer.classList.remove('hidden');
-                } else {
-                    suggestionsContainer.classList.add('hidden');
-                }
-            });
+            // Track active search input
+            let activeSearchInput = null;
+            const searchInputs = new Map();
 
-            // Handle geocoder results
-            geocoder.on('results', (e) => {
-                suggestionsContainer.innerHTML = '';
+            // Handle geocoder results - update the active search input's suggestions
+            const handleGeocoderResults = (e) => {
+                if (!activeSearchInput) {
+                    return;
+                }
                 
-                e.features.forEach(feature => {
-                    const div = document.createElement('div');
-                    div.className = 'p-2 hover:bg-gray-100 cursor-pointer flex items-center';
-                    div.innerHTML = `
-                        <i class="fas fa-map-marker-alt text-primary-500 mr-2"></i>
-                        <span>${feature.place_name}</span>
-                    `;
-                    
-                    div.addEventListener('click', () => {
-                        searchInput.value = feature.place_name;
-                        map.flyTo({
-                            center: feature.center,
-                            zoom: 14,
-                            essential: true,
-                            speed: 1.5,  // Slightly faster animation
-                            curve: 1.2,  // Smoother curve
-                            easing(t) {
-                                return t * (2 - t);  // Ease-out easing function
+                const activeData = searchInputs.get(activeSearchInput);
+                if (!activeData) {
+                    return;
+                }
+                
+                activeData.suggestionsContainer.innerHTML = '';
+                
+                if (e.features && e.features.length > 0) {
+                    e.features.forEach(feature => {
+                        const div = document.createElement('div');
+                        div.className = 'p-2 hover:bg-gray-100 cursor-pointer flex items-center';
+                        div.innerHTML = `
+                            <i class="fas fa-map-marker-alt text-primary-500 mr-2"></i>
+                            <span>${feature.place_name}</span>
+                        `;
+                        
+                        div.addEventListener('click', () => {
+                            activeSearchInput.value = feature.place_name;
+                            
+                            // Extract location data from Mapbox feature
+                            let city = null;
+                            let state = null;
+                            
+                            if (feature.context) {
+                                // Mapbox context array contains location hierarchy
+                                feature.context.forEach(ctx => {
+                                    if (ctx.id && ctx.id.startsWith('place')) {
+                                        city = ctx.text;
+                                    } else if (ctx.id && ctx.id.startsWith('region')) {
+                                        state = ctx.text;
+                                    }
+                                });
+                            }
+                            
+                            // If no city from context, try to extract from place_name
+                            if (!city && feature.place_name) {
+                                // Handle custom suggestions like "Houses for sale in Gulu"
+                                const inMatch = feature.place_name.match(/in\s+([^,]+)/i);
+                                if (inMatch) {
+                                    city = inMatch[1].trim();
+                                } else {
+                                    // Try splitting by comma
+                                    const parts = feature.place_name.split(',');
+                                    if (parts.length > 0) {
+                                        city = parts[0].trim();
+                                    }
+                                }
+                            }
+                            
+                            // Update city filter if available
+                            if (city) {
+                                const cityFilter = document.getElementById('filterCity');
+                                if (cityFilter) {
+                                    cityFilter.value = city;
+                                }
+                            }
+                            
+                            // Fly to location
+                            map.flyTo({
+                                center: feature.center,
+                                zoom: 14,
+                                essential: true,
+                                speed: 1.5,  // Slightly faster animation
+                                curve: 1.2,  // Smoother curve
+                                easing(t) {
+                                    return t * (2 - t);  // Ease-out easing function
+                                }
+                            });
+                            
+                            activeData.suggestionsContainer.classList.add('hidden');
+                            
+                            // Reload properties with updated filters
+                            if (window.loadMoreProperties) {
+                                window.loadMoreProperties(true);
                             }
                         });
-                        suggestionsContainer.classList.add('hidden');
+                        
+                        activeData.suggestionsContainer.appendChild(div);
                     });
-                    
-                    suggestionsContainer.appendChild(div);
-                });
-            });
+                    // Show suggestions container
+                    activeData.suggestionsContainer.classList.remove('hidden');
+                } else {
+                    // Hide if no results
+                    activeData.suggestionsContainer.classList.add('hidden');
+                }
+            };
 
-            // Close suggestions when clicking outside
-            document.addEventListener('click', (e) => {
-                if (!searchInput.contains(e.target) && !suggestionsContainer.contains(e.target)) {
-                    suggestionsContainer.classList.add('hidden');
+            // Listen to both 'results' and 'result' events
+            geocoder.on('results', handleGeocoderResults);
+            geocoder.on('result', (e) => {
+                // Handle single result as well
+                if (e.result) {
+                    handleGeocoderResults({ features: [e.result] });
                 }
             });
+
+            // Handle geocoder errors
+            geocoder.on('error', (e) => {
+                console.error('Geocoder error:', e);
+            });
+
+            // Function to setup search input with geocoder
+            const setupSearchInput = (searchInput, suggestionsContainer) => {
+                if (!searchInput) return;
+
+                // Store reference
+                searchInputs.set(searchInput, { suggestionsContainer });
+
+                // Handle search input
+                searchInput.addEventListener('input', (e) => {
+                    const query = e.target.value.trim();
+                    activeSearchInput = searchInput; // Track which input is active
+                    if (query && query.length >= 2) {
+                        // Show container while loading
+                        suggestionsContainer.classList.remove('hidden');
+                        // Query geocoder - this includes custom localGeocoder suggestions
+                        geocoder.query(query);
+                    } else {
+                        suggestionsContainer.classList.add('hidden');
+                        suggestionsContainer.innerHTML = '';
+                    }
+                });
+
+                // Track focus to know which input is active
+                searchInput.addEventListener('focus', () => {
+                    activeSearchInput = searchInput;
+                });
+
+                // Close suggestions when clicking outside
+                const clickHandler = (e) => {
+                    if (!searchInput.contains(e.target) && !suggestionsContainer.contains(e.target)) {
+                        suggestionsContainer.classList.add('hidden');
+                    }
+                };
+                document.addEventListener('click', clickHandler);
+            };
+
+            // Setup navbar search (desktop)
+            const searchInput = document.getElementById('search');
+            if (searchInput) {
+                const suggestionsContainer = document.createElement('div');
+                suggestionsContainer.className = 'suggestions-container absolute w-full bg-white mt-1 rounded-md shadow-lg z-50 max-h-48 overflow-y-auto hidden';
+                searchInput.parentNode.appendChild(suggestionsContainer);
+                setupSearchInput(searchInput, suggestionsContainer);
+            }
+
+            // Setup left overlay search (mobile/tablet property list)
+            const leftOverlaySearchInput = document.getElementById('leftOverlaySearch');
+            if (leftOverlaySearchInput) {
+                const leftOverlaySuggestions = document.createElement('div');
+                leftOverlaySuggestions.className = 'suggestions-container absolute w-full bg-white mt-1 rounded-md shadow-lg z-50 max-h-48 overflow-y-auto hidden';
+                leftOverlaySearchInput.parentNode.appendChild(leftOverlaySuggestions);
+                setupSearchInput(leftOverlaySearchInput, leftOverlaySuggestions);
+            }
 
             const directions = new MapboxDirections({
                 accessToken: mapboxgl.accessToken,
@@ -1743,7 +2049,8 @@
                 propertyMarkers: [],
                 directionsPanel: document.getElementById('directionsPanel'),
                 directionsContent: document.getElementById('directions'),
-                currentMediaSlider: null
+                currentMediaSlider: null,
+                directionsCalculated: false // Track if directions have been calculated
             };
         };
 
@@ -2230,22 +2537,29 @@
             const initPropertyMarkers = () => {
                 state.propertyMarkers = properties.map(property => {
                     const el = createBeautifulMarker();
+                    // Format numbers with commas for popup
+                    const formatNumber = (num) => {
+                        if (num === null || num === undefined || num === '') return '0';
+                        const numValue = typeof num === 'string' ? parseFloat(num) : num;
+                        return isNaN(numValue) ? '0' : numValue.toLocaleString('en-US');
+                    };
+                    
                     const popupContent = document.createElement('div');
                     popupContent.className = 'w-74';
                     popupContent.innerHTML = `
                         <img src="${property.image_url}" alt="${property.title}" class="w-full h-32 object-cover rounded-t-lg">
                         <div class="p-3">
-                            <h4 class="font-bold text-gray-900">${property.price_currency} ${property.price.toLocaleString()}</h4>
+                            <h4 class="font-bold text-gray-900">${property.price_currency || 'UGX'} ${formatNumber(property.price)}</h4>
                             <h5 class="text-sm font-medium text-gray-800">${property.title}</h5>
                             <div class="mt-1 flex text-xs text-gray-500">
                                 <span class="flex items-center mr-2">
-                                    <i class="fas fa-bed text-primary-500 mr-1"></i> ${property.bedrooms}
+                                    <i class="fas fa-bed text-primary-500 mr-1"></i> ${formatNumber(property.bedrooms)}
                                 </span>
                                 <span class="flex items-center mr-2">
-                                    <i class="fas fa-bath text-primary-500 mr-1"></i> ${property.bathrooms}
+                                    <i class="fas fa-bath text-primary-500 mr-1"></i> ${formatNumber(property.bathrooms)}
                                 </span>
                                 <span class="flex items-center">
-                                    <i class="fas fa-ruler-combined text-primary-500 mr-1"></i> ${property.area} ${property.area_unit || 'sqft'}
+                                    <i class="fas fa-ruler-combined text-primary-500 mr-1"></i> ${formatNumber(property.area)} ${property.area_unit || 'sqft'}
                                 </span>
                             </div>
                             <div class="mt-2 flex space-x-2">
@@ -2319,23 +2633,40 @@
                 
                 if (!propertyDetailsDiv) return;
                 
-                propertyDetailsDiv.className = 'p-4 overflow-y-auto h-full';
+                // Format numbers with commas
+                const formatNumber = (num) => {
+                    if (num === null || num === undefined || num === '') return '0';
+                    const numValue = typeof num === 'string' ? parseFloat(num) : num;
+                    return isNaN(numValue) ? '0' : numValue.toLocaleString('en-US');
+                };
+                
+                const formattedPrice = formatNumber(property.price);
+                const formattedBedrooms = formatNumber(property.bedrooms);
+                const formattedBathrooms = formatNumber(property.bathrooms);
+                const formattedArea = formatNumber(property.area);
+                
+                // For mobile, keep the bottom-sheet-content class for proper scrolling
+                if (isMobile) {
+                    propertyDetailsDiv.className = 'bottom-sheet-content';
+                } else {
+                    propertyDetailsDiv.className = 'p-4 overflow-y-auto h-full';
+                }
                 
                 // Clear previous content
                 propertyDetailsDiv.innerHTML = `
-                    <div class="bg-white rounded-lg shadow-md overflow-hidden h-full flex flex-col">
+                    <div class="bg-white rounded-lg shadow-md ${isMobile ? '' : 'h-full flex flex-col'}">
                         <div id="media-slider-placeholder"></div>
                         
                         <div class="p-6 flex-1 flex flex-col">
                             <div class="flex justify-between items-start">
                                 <div>
-                                    <h2 class="text-2xl font-bold text-gray-900">${property.price_currency} ${property.price.toLocaleString()}</h2>
+                                    <h2 class="text-2xl font-bold text-gray-900">${property.price_currency || 'UGX'} ${formattedPrice}</h2>
                                     <p class="text-sm text-gray-500 flex items-center">
                                         <i class="fas ${property.is_price_negotiable === 'Yes' ? 'fa-handshake' : 'fa-lock'} mr-1"></i>
                                         ${property.is_price_negotiable === 'Yes' ? 'Price negotiable' : 'Fixed price'}
                                     </p>
                                 </div>
-                                <button class="heart-icon p-2 bg-white rounded-full shadow-md text-gray-400 hover:text-red-500 transition-colors duration-300">
+                                <button class="heart-icon p-2 bg-white rounded-full shadow-md text-gray-400 hover:text-red-500 transition-colors duration-300" data-property-id="${property.id}" data-is-saved="false">
                                     <i class="far fa-heart"></i>
                                 </button>
                             </div>
@@ -2351,19 +2682,19 @@
                                     <div class="text-xs text-gray-500 flex items-center justify-center">
                                         <i class="fas fa-bed text-primary-500 mr-1"></i> Beds
                                     </div>
-                                    <div class="font-semibold text-sm text-primary-600">${property.bedrooms}</div>
+                                    <div class="font-semibold text-sm text-primary-600">${formattedBedrooms}</div>
                                 </div>
                                 <div class="p-2 hover:bg-gray-100 rounded transition-colors duration-200">
                                     <div class="text-xs text-gray-500 flex items-center justify-center">
                                         <i class="fas fa-bath text-primary-500 mr-1"></i> Baths
                                     </div>
-                                    <div class="font-semibold text-sm text-primary-600">${property.bathrooms}</div>
+                                    <div class="font-semibold text-sm text-primary-600">${formattedBathrooms}</div>
                                 </div>
                                 <div class="p-2 hover:bg-gray-100 rounded transition-colors duration-200">
                                     <div class="text-xs text-gray-500 flex items-center justify-center">
                                         <i class="fas fa-ruler-combined text-primary-500 mr-1"></i> Area
                                     </div>
-                                    <div class="font-semibold text-sm text-primary-600">${property.area} ${property.area_unit || 'sqft'}</div>
+                                    <div class="font-semibold text-sm text-primary-600">${formattedArea} ${property.area_unit || 'sqft'}</div>
                                 </div>
                                 <div class="p-2 hover:bg-gray-100 rounded transition-colors duration-200">
                                     <div class="text-xs text-gray-500 flex items-center justify-center">
@@ -2530,11 +2861,18 @@
                 if (isMobile) {
                     const propertyDetailsSheet = document.getElementById('propertyDetailsSheet');
                     const bottomSheetOverlay = document.getElementById('bottomSheetOverlay');
+                    const showPropertyDetailsBtn = document.getElementById('showPropertyDetails');
+                    
                     if (propertyDetailsSheet) {
+                        // Open the sheet fully
                         propertyDetailsSheet.classList.add('open');
                         document.body.classList.add('bottom-sheet-open');
                         if (bottomSheetOverlay) {
                             bottomSheetOverlay.classList.add('visible');
+                        }
+                        // Hide toggle button when sheet is open (user can use close button)
+                        if (showPropertyDetailsBtn) {
+                            showPropertyDetailsBtn.style.display = 'none';
                         }
                     }
                     propertyDetailsDiv.scrollTo({
@@ -2584,19 +2922,151 @@
                 });
 
                 // Favorite button handler
-                propertyDetailsDiv.querySelector('.heart-icon').addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    this.classList.toggle('text-red-500');
-                    const heart = this.querySelector('i');
-                    heart.classList.toggle('far');
-                    heart.classList.toggle('fas');
+                const heartIconBtn = propertyDetailsDiv.querySelector('.heart-icon');
+                if (heartIconBtn) {
+                    const propertyId = heartIconBtn.getAttribute('data-property-id');
                     
-                    // Add animation
-                    this.classList.add('animate-pulse');
-                    setTimeout(() => {
-                        this.classList.remove('animate-pulse');
-                    }, 300);
-                });
+                    // Check if property is saved on load
+                    if (propertyId && {% if user.is_authenticated %}true{% else %}false{% endif %}) {
+                        fetch(`/accounts/saved-properties/${propertyId}/check/`, {
+                            method: 'GET',
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                            },
+                            credentials: 'same-origin'
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.is_saved) {
+                                heartIconBtn.classList.add('text-red-500', 'active');
+                                heartIconBtn.setAttribute('data-is-saved', 'true');
+                                const heart = heartIconBtn.querySelector('i');
+                                heart.classList.remove('far');
+                                heart.classList.add('fas');
+                            }
+                        })
+                        .catch(error => console.error('Error checking saved status:', error));
+                    }
+                    
+                    heartIconBtn.addEventListener('click', async function(e) {
+                        e.stopPropagation();
+                        
+                        {% if not user.is_authenticated %}
+                        Swal.fire({
+                            title: 'Login Required',
+                            text: 'Please login to save properties',
+                            icon: 'info',
+                            confirmButtonText: 'Login',
+                            showCancelButton: true
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                window.location.href = '{% url "login" %}';
+                            }
+                        });
+                        return;
+                        {% endif %}
+                        
+                        const isCurrentlySaved = this.getAttribute('data-is-saved') === 'true';
+                        const heart = this.querySelector('i');
+                        
+                        // Optimistic UI update
+                        if (isCurrentlySaved) {
+                            this.classList.remove('text-red-500', 'active');
+                            this.setAttribute('data-is-saved', 'false');
+                            heart.classList.remove('fas');
+                            heart.classList.add('far');
+                        } else {
+                            this.classList.add('text-red-500', 'active');
+                            this.setAttribute('data-is-saved', 'true');
+                            heart.classList.remove('far');
+                            heart.classList.add('fas');
+                        }
+                        
+                        // Add animation
+                        this.classList.add('animate-pulse');
+                        setTimeout(() => {
+                            this.classList.remove('animate-pulse');
+                        }, 300);
+                        
+                        try {
+                            const response = await fetch(`/accounts/saved-properties/${propertyId}/toggle/`, {
+                                method: 'POST',
+                                headers: {
+                                    'X-Requested-With': 'XMLHttpRequest',
+                                    'X-CSRFToken': getCookie('csrftoken'),
+                                    'Content-Type': 'application/json',
+                                },
+                                credentials: 'same-origin'
+                            });
+                            
+                            const data = await response.json();
+                            
+                            if (data.success) {
+                                // Update favorite count if displayed
+                                const favoriteCountEl = propertyDetailsDiv.querySelector('[data-favorite-count]');
+                                if (favoriteCountEl) {
+                                    favoriteCountEl.textContent = data.favorite_count || 0;
+                                }
+                                
+                                // Show toast notification
+                                const Toast = Swal.mixin({
+                                    toast: true,
+                                    position: 'top-end',
+                                    showConfirmButton: false,
+                                    timer: 2000,
+                                    timerProgressBar: true
+                                });
+                                
+                                Toast.fire({
+                                    icon: data.is_saved ? 'success' : 'info',
+                                    title: data.message
+                                });
+                            } else {
+                                // Revert optimistic update on error
+                                if (isCurrentlySaved) {
+                                    this.classList.add('text-red-500', 'active');
+                                    this.setAttribute('data-is-saved', 'true');
+                                    heart.classList.remove('far');
+                                    heart.classList.add('fas');
+                                } else {
+                                    this.classList.remove('text-red-500', 'active');
+                                    this.setAttribute('data-is-saved', 'false');
+                                    heart.classList.remove('fas');
+                                    heart.classList.add('far');
+                                }
+                                
+                                Swal.fire({
+                                    title: 'Error',
+                                    text: data.error || 'Failed to save property',
+                                    icon: 'error',
+                                    confirmButtonText: 'OK'
+                                });
+                            }
+                        } catch (error) {
+                            console.error('Error toggling save:', error);
+                            
+                            // Revert optimistic update on error
+                            if (isCurrentlySaved) {
+                                this.classList.add('text-red-500', 'active');
+                                this.setAttribute('data-is-saved', 'true');
+                                heart.classList.remove('far');
+                                heart.classList.add('fas');
+                            } else {
+                                this.classList.remove('text-red-500', 'active');
+                                this.setAttribute('data-is-saved', 'false');
+                                heart.classList.remove('fas');
+                                heart.classList.add('far');
+                            }
+                            
+                            Swal.fire({
+                                title: 'Error',
+                                text: 'An error occurred. Please try again.',
+                                icon: 'error',
+                                confirmButtonText: 'OK'
+                            });
+                        }
+                    });
+                }
             };
 
             const handlePropertyClick = (propertyId, event) => {
@@ -2652,6 +3122,12 @@
 
         // Directions Management
         const setupDirections = (map, directions, state) => {
+            // Track if directions have been calculated
+            let directionsCalculated = false;
+            
+            // Make directions accessible globally for toggle button check
+            window.directionsInstance = directions;
+            
             // Listen for the 'route' event from MapboxDirections
             directions.on('route', (e) => {
                 if (!e.route || e.route.length === 0) {
@@ -2659,8 +3135,17 @@
                     return;
                 }
 
+                // Mark that directions have been calculated
+                directionsCalculated = true;
+                state.directionsCalculated = true;
+
                 const route = e.route[0];
                 state.directionsPanel.classList.remove('hidden');
+                state.directionsPanel.style.display = 'block';
+                const toggleBtn = document.getElementById('directionsPanelToggle');
+                if (toggleBtn) {
+                    toggleBtn.style.display = 'none';
+                }
                 
                 // Format the distance and duration
                 const distance = (route.distance / 1000).toFixed(1);
@@ -2748,6 +3233,11 @@
                     
                     // Show directions panel
                     state.directionsPanel.classList.remove('hidden');
+                    state.directionsPanel.style.display = 'block';
+                    const toggleBtn = document.getElementById('directionsPanelToggle');
+                    if (toggleBtn) {
+                        toggleBtn.style.display = 'none';
+                    }
                     document.querySelector('.mapboxgl-ctrl-directions').style.display = 'block';
                     
                     // Center the map on the route
@@ -2780,9 +3270,43 @@
 
             document.getElementById('closeDirections').addEventListener('click', () => {
                 state.directionsPanel.classList.add('hidden');
+                state.directionsPanel.style.display = 'none';
+                
+                // Only show toggle button if directions were calculated (route exists)
+                const hasRoute = directions.getOrigin() && directions.getDestination();
+                const toggleBtn = document.getElementById('directionsPanelToggle');
+                if (toggleBtn && hasRoute && state.directionsCalculated) {
+                    toggleBtn.style.display = 'flex';
+                } else if (toggleBtn) {
+                    toggleBtn.style.display = 'none';
+                }
+                
                 document.querySelector('.mapboxgl-ctrl-directions').style.display = 'none';
-                directions.removeRoutes();
+                // Don't remove routes - keep them so toggle button can restore
+                // directions.removeRoutes();
             });
+            
+            // Toggle button handler - only active if directions were calculated
+            const toggleBtn = document.getElementById('directionsPanelToggle');
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', () => {
+                    // Only show panel if directions exist and were calculated
+                    if (window.directionsInstance) {
+                        const hasRoute = window.directionsInstance.getOrigin() && 
+                                         window.directionsInstance.getDestination();
+                        if (hasRoute && state.directionsCalculated) {
+                            state.directionsPanel.classList.remove('hidden');
+                            state.directionsPanel.style.display = 'block';
+                            toggleBtn.style.display = 'none';
+                            // Restore directions display
+                            document.querySelector('.mapboxgl-ctrl-directions').style.display = 'block';
+                            
+                            // Re-trigger route event to update panel content if needed
+                            // The route should still be active, just need to show the panel
+                        }
+                    }
+                });
+            }
 
             // Start navigation button handler
             document.getElementById('startNavigation').addEventListener('click', () => {
@@ -2821,6 +3345,22 @@
             return { showRoute };
         };
 
+        // Utility function to get CSRF token
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
         // UI Event Handlers
         const setupUIHandlers = (map, state, handlers) => {
             // Store handler globally for infinite scroll integration
@@ -2855,6 +3395,12 @@
                         sidebarBackdrop.classList.remove('visible');
                     }
                     document.body.classList.remove('sidebar-open');
+                    
+                    // Show desktop toggle button when sidebar is closed on desktop
+                    const showSidebarDesktop = document.getElementById('showSidebarDesktop');
+                    if (showSidebarDesktop && window.innerWidth >= 768) {
+                        showSidebarDesktop.style.display = 'flex';
+                    }
                 }
             }
 
@@ -2868,8 +3414,17 @@
                         }
                         document.body.classList.add('sidebar-open');
                     }
+                    
+                    // Hide desktop toggle button when sidebar is open
+                    const showSidebarDesktop = document.getElementById('showSidebarDesktop');
+                    if (showSidebarDesktop) {
+                        showSidebarDesktop.style.display = 'none';
+                    }
                 }
             }
+            
+            // Make openSidebar globally accessible
+            window.openSidebar = openSidebar;
 
             function toggleSidebar() {
                 if (sidebar) {
@@ -2887,6 +3442,12 @@
 
             if (showSidebarBtn) {
                 showSidebarBtn.addEventListener('click', openSidebar);
+            }
+            
+            // Desktop sidebar toggle button
+            const showSidebarDesktopBtn = document.getElementById('showSidebarDesktop');
+            if (showSidebarDesktopBtn) {
+                showSidebarDesktopBtn.addEventListener('click', openSidebar);
             }
 
             // Close sidebar when clicking backdrop
@@ -2906,9 +3467,20 @@
             window.addEventListener('resize', function() {
                 clearTimeout(resizeTimeout);
                 resizeTimeout = setTimeout(function() {
-                    // On desktop, ensure sidebar is visible (not hidden)
+                    // On desktop, handle sidebar visibility
                     if (window.innerWidth >= 768 && sidebar) {
-                        sidebar.classList.remove('hidden', 'open');
+                        // If sidebar was hidden, show toggle button; if visible, hide toggle button
+                        const showSidebarDesktop = document.getElementById('showSidebarDesktop');
+                        if (sidebar.classList.contains('hidden')) {
+                            if (showSidebarDesktop) {
+                                showSidebarDesktop.style.display = 'flex';
+                            }
+                        } else {
+                            if (showSidebarDesktop) {
+                                showSidebarDesktop.style.display = 'none';
+                            }
+                        }
+                        sidebar.classList.remove('open');
                         if (sidebarBackdrop) {
                             sidebarBackdrop.classList.remove('visible');
                         }
@@ -2917,6 +3489,11 @@
                         // On mobile, ensure sidebar starts closed
                         if (sidebar && !sidebar.classList.contains('open')) {
                             sidebar.classList.add('hidden');
+                        }
+                        // Hide desktop toggle button on mobile
+                        const showSidebarDesktop = document.getElementById('showSidebarDesktop');
+                        if (showSidebarDesktop) {
+                            showSidebarDesktop.style.display = 'none';
                         }
                     }
                 }, 250);
@@ -2928,6 +3505,11 @@
                     // On desktop, show sidebar by default (remove hidden class)
                     if (window.innerWidth >= 768) {
                         sidebar.classList.remove('hidden', 'open');
+                        // Hide desktop toggle button initially since sidebar is visible
+                        const showSidebarDesktop = document.getElementById('showSidebarDesktop');
+                        if (showSidebarDesktop) {
+                            showSidebarDesktop.style.display = 'none';
+                        }
                     } else {
                         // On mobile, hide sidebar by default
                         sidebar.classList.add('hidden');
@@ -2938,16 +3520,168 @@
 
             // Mobile navigation menu toggle (already handled above in separate block)
 
-            // Favorite heart icons
-            document.querySelectorAll('.heart-icon').forEach(icon => {
-                icon.addEventListener('click', function(e) {
+            // Favorite heart icons - generic handler for all heart icons
+            function setupHeartIconHandler(icon) {
+                const propertyId = icon.getAttribute('data-property-id');
+                if (!propertyId) return;
+                
+                // Check if property is saved on load (only for authenticated users)
+                {% if user.is_authenticated %}
+                fetch(`/accounts/saved-properties/${propertyId}/check/`, {
+                    method: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    credentials: 'same-origin'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.is_saved) {
+                        icon.classList.add('text-red-500', 'active');
+                        icon.setAttribute('data-is-saved', 'true');
+                        const heart = icon.querySelector('i');
+                        if (heart) {
+                            heart.classList.remove('far');
+                            heart.classList.add('fas');
+                        }
+                    }
+                })
+                .catch(error => console.error('Error checking saved status:', error));
+                {% endif %}
+                
+                icon.addEventListener('click', async function(e) {
                     e.stopPropagation();
-                    this.classList.toggle('active');
+                    
+                    {% if not user.is_authenticated %}
+                    Swal.fire({
+                        title: 'Login Required',
+                        text: 'Please login to save properties',
+                        icon: 'info',
+                        confirmButtonText: 'Login',
+                        showCancelButton: true
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            window.location.href = '{% url "login" %}';
+                        }
+                    });
+                    return;
+                    {% endif %}
+                    
+                    const isCurrentlySaved = this.getAttribute('data-is-saved') === 'true';
                     const heart = this.querySelector('i');
-                    heart.classList.toggle('far');
-                    heart.classList.toggle('fas');
+                    
+                    // Optimistic UI update
+                    if (isCurrentlySaved) {
+                        this.classList.remove('text-red-500', 'active');
+                        this.setAttribute('data-is-saved', 'false');
+                        if (heart) {
+                            heart.classList.remove('fas');
+                            heart.classList.add('far');
+                        }
+                    } else {
+                        this.classList.add('text-red-500', 'active');
+                        this.setAttribute('data-is-saved', 'true');
+                        if (heart) {
+                            heart.classList.remove('far');
+                            heart.classList.add('fas');
+                        }
+                    }
+                    
+                    // Add animation
+                    this.classList.add('animate-pulse');
+                    setTimeout(() => {
+                        this.classList.remove('animate-pulse');
+                    }, 300);
+                    
+                    try {
+                        const response = await fetch(`/accounts/saved-properties/${propertyId}/toggle/`, {
+                            method: 'POST',
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'X-CSRFToken': getCookie('csrftoken'),
+                                'Content-Type': 'application/json',
+                            },
+                            credentials: 'same-origin'
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (data.success) {
+                            // Show toast notification
+                            const Toast = Swal.mixin({
+                                toast: true,
+                                position: 'top-end',
+                                showConfirmButton: false,
+                                timer: 2000,
+                                timerProgressBar: true
+                            });
+                            
+                            Toast.fire({
+                                icon: data.is_saved ? 'success' : 'info',
+                                title: data.message
+                            });
+                        } else {
+                            // Revert optimistic update on error
+                            if (isCurrentlySaved) {
+                                this.classList.add('text-red-500', 'active');
+                                this.setAttribute('data-is-saved', 'true');
+                                if (heart) {
+                                    heart.classList.remove('far');
+                                    heart.classList.add('fas');
+                                }
+                            } else {
+                                this.classList.remove('text-red-500', 'active');
+                                this.setAttribute('data-is-saved', 'false');
+                                if (heart) {
+                                    heart.classList.remove('fas');
+                                    heart.classList.add('far');
+                                }
+                            }
+                            
+                            Swal.fire({
+                                title: 'Error',
+                                text: data.error || 'Failed to save property',
+                                icon: 'error',
+                                confirmButtonText: 'OK'
+                            });
+                        }
+                    } catch (error) {
+                        console.error('Error toggling save:', error);
+                        
+                        // Revert optimistic update on error
+                        if (isCurrentlySaved) {
+                            this.classList.add('text-red-500', 'active');
+                            this.setAttribute('data-is-saved', 'true');
+                            if (heart) {
+                                heart.classList.remove('far');
+                                heart.classList.add('fas');
+                            }
+                        } else {
+                            this.classList.remove('text-red-500', 'active');
+                            this.setAttribute('data-is-saved', 'false');
+                            if (heart) {
+                                heart.classList.remove('fas');
+                                heart.classList.add('far');
+                            }
+                        }
+                        
+                        Swal.fire({
+                            title: 'Error',
+                            text: 'An error occurred. Please try again.',
+                            icon: 'error',
+                            confirmButtonText: 'OK'
+                        });
+                    }
                 });
+            }
+            
+            // Setup handlers for all existing heart icons
+            document.querySelectorAll('.heart-icon').forEach(icon => {
+                setupHeartIconHandler(icon);
             });
+            
+            // Make setupHeartIconHandler globally available
+            window.setupHeartIconHandler = setupHeartIconHandler;
 
             // View toggle buttons
             const streetViewBtn = document.getElementById('streetView');
@@ -2980,7 +3714,7 @@
             const { showRoute } = setupDirections(map, directions, state);
 
             // Pass showRoute to the markers setup
-            const { initPropertyMarkers, handlePropertyClick } = setupPropertyMarkers(
+            const { initPropertyMarkers, handlePropertyClick: propertyClickHandler } = setupPropertyMarkers(
                 map,
                 state,
                 properties,
@@ -3014,8 +3748,493 @@
             });
 
             // Setup UI event handlers
-            setupUIHandlers(map, state, { handlePropertyClick });
+            setupUIHandlers(map, state, { handlePropertyClick: propertyClickHandler });
         };
+
+        // ===== Filter Management System =====
+        (function() {
+            let filterOptions = null;
+            let currentFilters = {};
+            let filterOptionsLoaded = false;
+
+            // Load filter options from API
+            async function loadFilterOptions() {
+                if (filterOptionsLoaded) return filterOptions;
+                
+                try {
+                    const response = await fetch('/api/filter-options/');
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        filterOptions = data;
+                        filterOptionsLoaded = true;
+                        buildFilterUI();
+                        return filterOptions;
+                    }
+                } catch (error) {
+                    console.error('Error loading filter options:', error);
+                }
+                return null;
+            }
+
+            // Build filter UI
+            function buildFilterUI() {
+                if (!filterOptions) return;
+
+                const desktopPanel = document.getElementById('desktopFiltersPanel');
+                const mobilePanel = document.getElementById('mobileFilterContent');
+                
+                if (desktopPanel) {
+                    desktopPanel.innerHTML = buildFilterHTML();
+                }
+                if (mobilePanel) {
+                    mobilePanel.innerHTML = buildFilterHTML(true);
+                }
+            }
+
+            // Build filter HTML
+            function buildFilterHTML(isMobile = false) {
+                if (!filterOptions) return '';
+
+                const containerClass = isMobile ? 'space-y-6' : 'space-y-4';
+                
+                return `
+                    <div class="${containerClass}">
+                        <!-- Property Type -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Property Type</label>
+                            <select id="filterPropertyType" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-primary-500 focus:border-primary-500">
+                                <option value="">All Types</option>
+                                ${filterOptions.property_types.map(pt => `
+                                    <option value="${pt.id}">${pt.name}</option>
+                                `).join('')}
+                            </select>
+                        </div>
+
+                        <!-- Category -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Listing Category</label>
+                            <select id="filterCategory" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-primary-500 focus:border-primary-500">
+                                <option value="">All Categories</option>
+                                ${filterOptions.categories.map(cat => `
+                                    <option value="${cat}">${cat.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</option>
+                                `).join('')}
+                            </select>
+                        </div>
+
+                        <!-- Price Range -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Price Range</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <input type="number" id="filterMinPrice" placeholder="Min" 
+                                    min="${filterOptions.ranges.price.min}" max="${filterOptions.ranges.price.max}"
+                                    class="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-primary-500 focus:border-primary-500">
+                                <input type="number" id="filterMaxPrice" placeholder="Max"
+                                    min="${filterOptions.ranges.price.min}" max="${filterOptions.ranges.price.max}"
+                                    class="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-primary-500 focus:border-primary-500">
+                            </div>
+                        </div>
+
+                        <!-- Currency -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Currency</label>
+                            <select id="filterCurrency" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-primary-500 focus:border-primary-500">
+                                <option value="">All Currencies</option>
+                                ${filterOptions.currencies.map(curr => `
+                                    <option value="${curr}">${curr}</option>
+                                `).join('')}
+                            </select>
+                        </div>
+
+                        <!-- Bedrooms -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Bedrooms</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <input type="number" id="filterMinBedrooms" placeholder="Min" 
+                                    min="${filterOptions.ranges.bedrooms.min}" max="${filterOptions.ranges.bedrooms.max}"
+                                    class="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-primary-500 focus:border-primary-500">
+                                <input type="number" id="filterMaxBedrooms" placeholder="Max"
+                                    min="${filterOptions.ranges.bedrooms.min}" max="${filterOptions.ranges.bedrooms.max}"
+                                    class="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-primary-500 focus:border-primary-500">
+                            </div>
+                        </div>
+
+                        <!-- Bathrooms -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Bathrooms</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <input type="number" id="filterMinBathrooms" placeholder="Min" step="0.5"
+                                    min="${filterOptions.ranges.bathrooms.min}" max="${filterOptions.ranges.bathrooms.max}"
+                                    class="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-primary-500 focus:border-primary-500">
+                                <input type="number" id="filterMaxBathrooms" placeholder="Max" step="0.5"
+                                    min="${filterOptions.ranges.bathrooms.min}" max="${filterOptions.ranges.bathrooms.max}"
+                                    class="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-primary-500 focus:border-primary-500">
+                            </div>
+                        </div>
+
+                        <!-- Square Feet -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Square Feet</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <input type="number" id="filterMinSqft" placeholder="Min"
+                                    min="${filterOptions.ranges.square_feet.min}" max="${filterOptions.ranges.square_feet.max}"
+                                    class="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-primary-500 focus:border-primary-500">
+                                <input type="number" id="filterMaxSqft" placeholder="Max"
+                                    min="${filterOptions.ranges.square_feet.min}" max="${filterOptions.ranges.square_feet.max}"
+                                    class="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-primary-500 focus:border-primary-500">
+                            </div>
+                        </div>
+
+                        <!-- Furnishing Status -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Furnishing</label>
+                            <select id="filterFurnishing" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-primary-500 focus:border-primary-500">
+                                <option value="">Any</option>
+                                ${filterOptions.furnishing_statuses.map(fs => `
+                                    <option value="${fs}">${fs.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</option>
+                                `).join('')}
+                            </select>
+                        </div>
+
+                        <!-- Availability -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Availability</label>
+                            <select id="filterAvailability" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-primary-500 focus:border-primary-500">
+                                <option value="">All</option>
+                                ${filterOptions.availability_statuses.map(as => `
+                                    <option value="${as}">${as.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</option>
+                                `).join('')}
+                            </select>
+                        </div>
+
+                        <!-- Location -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">City</label>
+                            <select id="filterCity" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-primary-500 focus:border-primary-500">
+                                <option value="">All Cities</option>
+                                ${filterOptions.locations.cities.map(city => `
+                                    <option value="${city}">${city}</option>
+                                `).join('')}
+                            </select>
+                        </div>
+
+                        <!-- Features -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Features</label>
+                            <div class="space-y-2">
+                                <label class="flex items-center">
+                                    <input type="checkbox" id="filterInternet" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500">
+                                    <span class="ml-2 text-sm text-gray-700">Internet Included</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="checkbox" id="filterPriceNegotiable" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500">
+                                    <span class="ml-2 text-sm text-gray-700">Price Negotiable</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="checkbox" id="filterFeatured" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500">
+                                    <span class="ml-2 text-sm text-gray-700">Featured Only</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Parking Spaces -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Minimum Parking Spaces</label>
+                            <input type="number" id="filterParking" min="0" placeholder="Any"
+                                class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-primary-500 focus:border-primary-500">
+                        </div>
+
+                        <!-- Amenities (Collapsible) -->
+                        <div>
+                            <button type="button" class="flex items-center justify-between w-full text-sm font-medium text-gray-700 mb-2" onclick="this.nextElementSibling.classList.toggle('hidden')">
+                                <span>Amenities</span>
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                            <div class="hidden space-y-2 max-h-48 overflow-y-auto">
+                                ${Object.entries(filterOptions.amenities_by_category).map(([category, amenities]) => `
+                                    <div class="mb-3">
+                                        <div class="text-xs font-semibold text-gray-500 mb-1">${category}</div>
+                                        ${amenities.map(amenity => `
+                                            <label class="flex items-center py-1">
+                                                <input type="checkbox" value="${amenity.id}" class="filter-amenity rounded border-gray-300 text-primary-600 focus:ring-primary-500">
+                                                <span class="ml-2 text-sm text-gray-700">${amenity.name}</span>
+                                            </label>
+                                        `).join('')}
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Get current filter values
+            function getCurrentFilters() {
+                const filters = {};
+                
+                const propertyType = document.getElementById('filterPropertyType')?.value;
+                if (propertyType) filters.property_type = propertyType;
+                
+                const category = document.getElementById('filterCategory')?.value;
+                if (category) filters.category = category;
+                
+                const minPrice = document.getElementById('filterMinPrice')?.value;
+                if (minPrice) filters.min_price = minPrice;
+                
+                const maxPrice = document.getElementById('filterMaxPrice')?.value;
+                if (maxPrice) filters.max_price = maxPrice;
+                
+                const currency = document.getElementById('filterCurrency')?.value;
+                if (currency) filters.currency = currency;
+                
+                const minBedrooms = document.getElementById('filterMinBedrooms')?.value;
+                if (minBedrooms) filters.min_bedrooms = minBedrooms;
+                
+                const maxBedrooms = document.getElementById('filterMaxBedrooms')?.value;
+                if (maxBedrooms) filters.max_bedrooms = maxBedrooms;
+                
+                const minBathrooms = document.getElementById('filterMinBathrooms')?.value;
+                if (minBathrooms) filters.min_bathrooms = minBathrooms;
+                
+                const maxBathrooms = document.getElementById('filterMaxBathrooms')?.value;
+                if (maxBathrooms) filters.max_bathrooms = maxBathrooms;
+                
+                const minSqft = document.getElementById('filterMinSqft')?.value;
+                if (minSqft) filters.min_sqft = minSqft;
+                
+                const maxSqft = document.getElementById('filterMaxSqft')?.value;
+                if (maxSqft) filters.max_sqft = maxSqft;
+                
+                const furnishing = document.getElementById('filterFurnishing')?.value;
+                if (furnishing) filters.furnishing = furnishing;
+                
+                const availability = document.getElementById('filterAvailability')?.value;
+                if (availability) filters.availability = availability;
+                
+                const city = document.getElementById('filterCity')?.value;
+                if (city) filters.city = city;
+                
+                const parking = document.getElementById('filterParking')?.value;
+                if (parking) filters.parking_spaces = parking;
+                
+                if (document.getElementById('filterInternet')?.checked) {
+                    filters.internet_included = 'true';
+                }
+                
+                if (document.getElementById('filterPriceNegotiable')?.checked) {
+                    filters.price_negotiable = 'true';
+                }
+                
+                if (document.getElementById('filterFeatured')?.checked) {
+                    filters.featured = 'true';
+                }
+                
+                // Get selected amenities
+                const amenityCheckboxes = document.querySelectorAll('.filter-amenity:checked');
+                if (amenityCheckboxes.length > 0) {
+                    filters.amenities = Array.from(amenityCheckboxes).map(cb => cb.value);
+                }
+                
+                return filters;
+            }
+
+            // Apply filters
+            function applyFilters() {
+                currentFilters = getCurrentFilters();
+                updateFilterCount();
+                
+                // Reset pagination
+                if (window.currentPage !== undefined) {
+                    window.currentPage = 1;
+                }
+                
+                // Reload properties with filters
+                if (window.loadMoreProperties) {
+                    window.loadMoreProperties(true);
+                }
+                
+                // Close mobile filter modal
+                const mobileModal = document.getElementById('mobileFilterModal');
+                if (mobileModal) {
+                    mobileModal.classList.add('hidden');
+                }
+            }
+
+            // Reset filters
+            function resetFilters() {
+                currentFilters = {};
+                
+                // Clear all filter inputs
+                document.querySelectorAll('#desktopFiltersPanel input, #desktopFiltersPanel select, #mobileFilterContent input, #mobileFilterContent select').forEach(el => {
+                    if (el.type === 'checkbox') {
+                        el.checked = false;
+                    } else {
+                        el.value = '';
+                    }
+                });
+                
+                updateFilterCount();
+                applyFilters();
+            }
+
+            // Update filter count badge
+            function updateFilterCount() {
+                const count = Object.keys(currentFilters).length;
+                
+                // Mobile filter count
+                const badge = document.getElementById('mobileFilterCount');
+                if (badge) {
+                    if (count > 0) {
+                        badge.textContent = count;
+                        badge.classList.remove('hidden');
+                    } else {
+                        badge.classList.add('hidden');
+                    }
+                }
+                
+                // Left overlay filter count
+                const leftOverlayBadge = document.getElementById('leftOverlayFilterCount');
+                if (leftOverlayBadge) {
+                    if (count > 0) {
+                        leftOverlayBadge.textContent = count;
+                        leftOverlayBadge.classList.remove('hidden');
+                    } else {
+                        leftOverlayBadge.classList.add('hidden');
+                    }
+                }
+                
+                // Mobile clear button
+                const clearBtn = document.getElementById('mobileClearFilters');
+                if (clearBtn) {
+                    if (count > 0) {
+                        clearBtn.classList.remove('hidden');
+                    } else {
+                        clearBtn.classList.add('hidden');
+                    }
+                }
+                
+                // Left overlay clear button
+                const leftOverlayClear = document.getElementById('leftOverlayClearFilters');
+                if (leftOverlayClear) {
+                    if (count > 0) {
+                        leftOverlayClear.classList.remove('hidden');
+                    } else {
+                        leftOverlayClear.classList.add('hidden');
+                    }
+                }
+                
+                // Mobile modal clear button
+                const mobileClearBtn = document.getElementById('mobileClearFiltersBtn');
+                if (mobileClearBtn) {
+                    if (count > 0) {
+                        mobileClearBtn.classList.remove('hidden');
+                    } else {
+                        mobileClearBtn.classList.add('hidden');
+                    }
+                }
+            }
+
+            // Initialize filter system
+            function initFilters() {
+                // Load filter options
+                loadFilterOptions();
+                
+                // Desktop filter toggle
+                const desktopToggle = document.getElementById('desktopFilterToggle');
+                const desktopPanel = document.getElementById('desktopFiltersPanel');
+                if (desktopToggle && desktopPanel) {
+                    desktopToggle.addEventListener('click', () => {
+                        const isHidden = desktopPanel.classList.contains('hidden');
+                        desktopPanel.classList.toggle('hidden');
+                        const icon = document.getElementById('desktopFilterToggleIcon');
+                        const toggleText = desktopToggle.querySelector('span');
+                        if (icon) {
+                            if (isHidden) {
+                                // Opening - change to chevron-up
+                                icon.classList.remove('fa-chevron-down');
+                                icon.classList.add('fa-chevron-up');
+                                if (toggleText) toggleText.textContent = 'Hide Filters';
+                            } else {
+                                // Closing - change to chevron-down
+                                icon.classList.remove('fa-chevron-up');
+                                icon.classList.add('fa-chevron-down');
+                                if (toggleText) toggleText.textContent = 'Show Filters';
+                            }
+                        }
+                    });
+                }
+                
+                // Mobile filter toggle
+                const mobileToggle = document.getElementById('mobileFilterToggle');
+                const mobileModal = document.getElementById('mobileFilterModal');
+                const closeMobileModal = document.getElementById('closeMobileFilterModal');
+                
+                if (mobileToggle && mobileModal) {
+                    mobileToggle.addEventListener('click', () => {
+                        mobileModal.classList.remove('hidden');
+                        loadFilterOptions(); // Ensure options are loaded
+                    });
+                }
+                
+                if (closeMobileModal && mobileModal) {
+                    closeMobileModal.addEventListener('click', () => {
+                        mobileModal.classList.add('hidden');
+                    });
+                }
+                
+                // Apply filters button
+                const applyBtn = document.getElementById('mobileApplyFilters');
+                if (applyBtn) {
+                    applyBtn.addEventListener('click', applyFilters);
+                }
+                
+                // Reset filters button
+                const resetBtn = document.getElementById('mobileResetFilters');
+                if (resetBtn) {
+                    resetBtn.addEventListener('click', resetFilters);
+                }
+                
+                // Clear filters button
+                const clearBtn = document.getElementById('mobileClearFilters');
+                if (clearBtn) {
+                    clearBtn.addEventListener('click', resetFilters);
+                }
+                
+                const mobileClearBtn = document.getElementById('mobileClearFiltersBtn');
+                if (mobileClearBtn) {
+                    mobileClearBtn.addEventListener('click', resetFilters);
+                }
+                
+                // Left overlay filter toggle
+                const leftOverlayToggle = document.getElementById('leftOverlayFilterToggle');
+                if (leftOverlayToggle) {
+                    leftOverlayToggle.addEventListener('click', () => {
+                        const mobileModal = document.getElementById('mobileFilterModal');
+                        if (mobileModal) {
+                            mobileModal.classList.remove('hidden');
+                            loadFilterOptions();
+                        }
+                    });
+                }
+                
+                // Auto-apply filters on desktop (optional - can be changed to manual apply)
+                if (desktopPanel) {
+                    desktopPanel.addEventListener('change', () => {
+                        // Debounce filter application
+                        clearTimeout(window.filterTimeout);
+                        window.filterTimeout = setTimeout(applyFilters, 500);
+                    });
+                }
+            }
+
+            // Make functions globally accessible
+            window.getCurrentFilters = getCurrentFilters;
+            window.applyFilters = applyFilters;
+            window.resetFilters = resetFilters;
+            
+            // Initialize on DOM ready
+            document.addEventListener('DOMContentLoaded', initFilters);
+        })();
 
         // Start the application
         document.addEventListener('DOMContentLoaded', initApp);
@@ -3026,6 +4245,13 @@
         const collapseBtn = document.getElementById("collapseDirections");
         const closeBtn = document.getElementById("closeDirections");
         const resizeHandle = document.getElementById("resizeHandle");
+        const toggleBtn = document.getElementById("directionsPanelToggle");
+        
+        // Initialize: Hide toggle button by default
+        // It will only show after directions are calculated and panel is closed
+        if (toggleBtn) {
+            toggleBtn.style.display = 'none';
+        }
 
         // COLLAPSE toggle
         collapseBtn.addEventListener("click", (e) => {
@@ -3036,18 +4262,79 @@
             icon.classList.toggle("fa-chevron-down", !isCollapsed);
             icon.classList.toggle("fa-chevron-up", isCollapsed);
         });
-
+        
+        // Function to show panel
+        function showDirectionsPanel() {
+            panel.style.display = "block";
+            panel.classList.remove('hidden');
+            // Reset to centered position on mobile
+            if (window.innerWidth <= 767) {
+                panel.style.left = '50%';
+                panel.style.transform = 'translateX(-50%)';
+                panel.style.right = 'auto';
+                panel.style.bottom = '1rem';
+                panel.style.top = 'auto';
+            }
+            if (toggleBtn) {
+                toggleBtn.style.display = 'none';
+            }
+        }
+        
+        // Function to hide panel
+        function hideDirectionsPanel() {
+            panel.style.display = "none";
+            panel.classList.add('hidden');
+            // Only show toggle button if directions were calculated
+            if (toggleBtn && window.directionsInstance) {
+                const hasRoute = window.directionsInstance.getOrigin() && 
+                                 window.directionsInstance.getDestination();
+                if (hasRoute) {
+                    toggleBtn.style.display = 'flex';
+                } else {
+                    toggleBtn.style.display = 'none';
+                }
+            } else if (toggleBtn) {
+                toggleBtn.style.display = 'none';
+            }
+        }
+        
         // CLOSE panel
         closeBtn.addEventListener("click", () => {
-            panel.style.display = "none";
+            hideDirectionsPanel();
         });
+        
+        // TOGGLE button click handler
+        if (toggleBtn) {
+            toggleBtn.addEventListener("click", () => {
+                showDirectionsPanel();
+            });
+        }
 
-        // DRAGGABLE header
+        // DRAGGABLE header (disabled on mobile)
         let offsetX,
         offsetY,
         dragging = false;
 
+        // Function to check if on mobile
+        const isMobile = () => window.innerWidth <= 767;
+
+        // Function to reset panel to centered position on mobile
+        const resetPanelPosition = () => {
+            if (isMobile() && panel) {
+                panel.style.left = '50%';
+                panel.style.transform = 'translateX(-50%)';
+                panel.style.right = 'auto';
+                panel.style.bottom = '1rem';
+                panel.style.top = 'auto';
+            }
+        };
+
         header.addEventListener("mousedown", (e) => {
+            // Disable dragging on mobile
+            if (isMobile()) {
+                e.preventDefault();
+                return;
+            }
             dragging = true;
             offsetX = e.clientX - panel.offsetLeft;
             offsetY = e.clientY - panel.offsetTop;
@@ -3056,14 +4343,14 @@
         });
 
         document.addEventListener("mousemove", (e) => {
-            if (!dragging) return;
+            if (!dragging || isMobile()) return;
                 panel.style.left = `${e.clientX - offsetX}px`;
                 panel.style.top = `${e.clientY - offsetY}px`;
                 panel.style.bottom = "auto";
             });
 
             document.addEventListener("mouseup", () => {
-            if (dragging) {
+            if (dragging && !isMobile()) {
                 dragging = false;
                 header.classList.add("grab");
                 header.classList.remove("grabbing");
@@ -3077,14 +4364,25 @@
             }
         });
 
-        // Restore saved position
+        // Restore saved position (only on desktop)
         window.addEventListener("DOMContentLoaded", () => {
-            const saved = localStorage.getItem("panelPosition");
-            if (saved) {
-                const { left, top } = JSON.parse(saved);
-                panel.style.left = left;
-                panel.style.top = top;
-                panel.style.bottom = "auto";
+            if (isMobile()) {
+                resetPanelPosition();
+            } else {
+                const saved = localStorage.getItem("panelPosition");
+                if (saved) {
+                    const { left, top } = JSON.parse(saved);
+                    panel.style.left = left;
+                    panel.style.top = top;
+                    panel.style.bottom = "auto";
+                }
+            }
+        });
+
+        // Reset position on window resize to mobile
+        window.addEventListener("resize", () => {
+            if (isMobile()) {
+                resetPanelPosition();
             }
         });
 
@@ -3127,7 +4425,7 @@
                 
                 const isMobile = window.innerWidth < 768;
                 return isMobile 
-                    ? document.getElementById('mobilePropertyList')
+                    ? document.getElementById('leftOverlayPropertyList') // Use left overlay for mobile
                     : document.getElementById('desktopPropertyList');
             }
 
@@ -3142,7 +4440,7 @@
                 
                 const isMobile = window.innerWidth < 768;
                 return isMobile
-                    ? document.getElementById('mobileLoadingIndicator')
+                    ? document.getElementById('leftOverlayLoadingIndicator') // Use left overlay for mobile
                     : document.getElementById('desktopLoadingIndicator');
             }
 
@@ -3157,7 +4455,7 @@
                 
                 const isMobile = window.innerWidth < 768;
                 return isMobile
-                    ? document.getElementById('mobileEndOfList')
+                    ? document.getElementById('leftOverlayEndOfList') // Use left overlay for mobile
                     : document.getElementById('desktopEndOfList');
             }
 
@@ -3172,8 +4470,8 @@
                 
                 const isMobile = window.innerWidth < 768;
                 if (isMobile) {
-                    const bottomSheet = document.getElementById('propertyListSheet');
-                    return bottomSheet ? bottomSheet.querySelector('.bottom-sheet-content') : null;
+                    // Use left overlay for mobile
+                    return leftOverlay || document.getElementById('sidebar');
                 } else {
                     return document.getElementById('sidebar');
                 }
@@ -3181,19 +4479,29 @@
 
             // Create property card HTML
             function createPropertyCard(property) {
+                // Format numbers with commas
+                const formatNumber = (num) => {
+                    if (num === null || num === undefined || num === '') return '0';
+                    const numValue = typeof num === 'string' ? parseFloat(num) : num;
+                    return isNaN(numValue) ? '0' : numValue.toLocaleString('en-US');
+                };
+                
                 const price = parseFloat(property.price) || 0;
-                const formattedPrice = price.toLocaleString('en-US');
+                const formattedPrice = formatNumber(price);
+                const formattedBedrooms = formatNumber(property.bedrooms);
+                const formattedBathrooms = formatNumber(property.bathrooms);
+                const formattedArea = formatNumber(property.area);
                 
                 return `
                     <div class="property-card p-4 cursor-pointer hover:bg-gray-50" data-property-id="${property.id}">
                         <div class="flex">
                             <div class="flex-shrink-0 ${window.innerWidth < 768 ? 'w-24 h-20' : 'w-32 h-24'}">
-                                <img class="w-full h-full object-cover rounded" src="${property.image_url || ''}" alt="${property.title || ''}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'100\\' height=\\'100\\'%3E%3Crect fill=\\'%23ddd\\' width=\\'100\\' height=\\'100\\'/%3E%3Ctext x=\\'50%25\\' y=\\'50%25\\' text-anchor=\\'middle\\' dy=\\'.3em\\' fill=\\'%23999\\'%3ENo Image%3C/text%3E%3C/svg%3E'">
+                                <img class="w-full h-full object-cover rounded" src="${property.image_url || ''}" alt="${property.title || ''}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'100\\' height=\\'100\\'%3E%3Crect fill=\\'%23ddd\\' width=\\'100\\' height=\\'100\\'/%3E%3Ctext x=\\'50%25\\' y=\\'50%25\\' text-anchor=\\'middle\\' dy=\\'.3em\\' fill=\\%23999\\'%3ENo Image%3C/text%3E%3C/svg%3E'">
                             </div>
                             <div class="ml-4">
                                 <div class="flex justify-between">
                                     <h3 class="text-lg font-bold text-gray-900">${property.price_currency || 'UGX'} ${formattedPrice}</h3>
-                                    <button class="heart-icon text-gray-400 hover:text-red-500">
+                                    <button class="heart-icon text-gray-400 hover:text-red-500" data-property-id="${property.id}" data-is-saved="false">
                                         <i class="far fa-heart"></i>
                                     </button>
                                 </div>
@@ -3201,13 +4509,13 @@
                                 <p class="text-sm text-gray-600 mt-1"><i class="fas fa-map-marker-alt text-primary-500 mr-1"></i> ${property.address || ''}</p>
                                 <div class="mt-2 flex text-sm text-gray-500">
                                     <span class="flex items-center mr-3">
-                                        <i class="fas fa-bed text-primary-500 mr-1"></i> ${property.bedrooms || '0'}
+                                        <i class="fas fa-bed text-primary-500 mr-1"></i> ${formattedBedrooms}
                                     </span>
                                     <span class="flex items-center mr-3">
-                                        <i class="fas fa-bath text-primary-500 mr-1"></i> ${property.bathrooms || '0'}
+                                        <i class="fas fa-bath text-primary-500 mr-1"></i> ${formattedBathrooms}
                                     </span>
                                     <span class="flex items-center">
-                                        <i class="fas fa-ruler-combined text-primary-500 mr-1"></i> ${property.area || '0'} sqft
+                                        <i class="fas fa-ruler-combined text-primary-500 mr-1"></i> ${formattedArea} sqft
                                     </span>
                                 </div>
                             </div>
@@ -3217,8 +4525,20 @@
             }
 
             // Load more properties from API
-            async function loadMoreProperties() {
-                if (isLoading || !hasMore) return;
+            async function loadMoreProperties(reset = false) {
+                if (isLoading) return;
+                
+                if (reset) {
+                    currentPage = 0;
+                    hasMore = true;
+                    // Clear existing properties
+                    const container = getPropertyListContainer();
+                    if (container) {
+                        container.innerHTML = '';
+                    }
+                }
+                
+                if (!hasMore) return;
 
                 isLoading = true;
                 const loadingIndicator = getLoadingIndicator();
@@ -3229,7 +4549,23 @@
                 }
 
                 try {
-                    const response = await fetch(`/api/properties/?page=${currentPage + 1}&per_page=${perPage}`);
+                    // Build query string with filters
+                    const filters = window.getCurrentFilters ? window.getCurrentFilters() : {};
+                    const queryParams = new URLSearchParams({
+                        page: (currentPage + 1).toString(),
+                        per_page: perPage.toString(),
+                        ...filters
+                    });
+                    
+                    // Handle amenities array
+                    if (filters.amenities && Array.isArray(filters.amenities)) {
+                        filters.amenities.forEach(amenityId => {
+                            queryParams.append('amenities', amenityId);
+                        });
+                        delete filters.amenities;
+                    }
+                    
+                    const response = await fetch(`/api/properties/?${queryParams.toString()}`);
                     const data = await response.json();
 
                     if (data.success && data.properties.length > 0) {
@@ -3321,18 +4657,10 @@
                         }
                     });
 
-                    // Add heart icon click handler
+                    // Add heart icon click handler using the global setup function
                     const heartIcon = card.querySelector('.heart-icon');
-                    if (heartIcon) {
-                        heartIcon.addEventListener('click', function(e) {
-                            e.stopPropagation();
-                            this.classList.toggle('text-red-500');
-                            const heart = this.querySelector('i');
-                            if (heart) {
-                                heart.classList.toggle('far');
-                                heart.classList.toggle('fas');
-                            }
-                        });
+                    if (heartIcon && window.setupHeartIconHandler) {
+                        window.setupHeartIconHandler(heartIcon);
                     }
                 });
             }

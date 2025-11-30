@@ -47,4 +47,10 @@ urlpatterns = [
     path('verify-otp/', utils.verify_otp, name='verify_otp'),
 
     path('report_user/<id>/<link_id>', views.report_user, name='report_user'),
+    
+    # Saved Properties URLs
+    path('saved-properties/', views.saved_properties_list, name='saved_properties_list'),
+    path('saved-properties/<int:property_id>/toggle/', views.toggle_save_property, name='toggle_save_property'),
+    path('saved-properties/<int:property_id>/check/', views.check_property_saved, name='check_property_saved'),
+    path('saved-properties/<int:property_id>/remove/', views.remove_saved_property, name='remove_saved_property'),
 ]
