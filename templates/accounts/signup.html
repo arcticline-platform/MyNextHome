@@ -1,7 +1,9 @@
 {% extends "base.html" %}
 
 {% block title %}Create Account {% endblock %}
-
+{% block navigation %}
+{# Override navigation block to hide the navbar on profile page #}
+{% endblock %}
 {% block content %}
 <div x-data="appState()" class="w-full max-w-md">
     <!-- Logo and Header -->
