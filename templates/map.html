@@ -1598,6 +1598,7 @@
         };
     </script>
     <script src="{% static 'js/contactModal.js' %}"></script>
+    <script src="{% static 'js/shareProperty.js' %}"></script>
     
     <script>
         // SweetAlert2 theme configuration is now in static/js/sweetalert2-theme.js
@@ -3016,7 +3017,7 @@
                                 <button class="contact-agent-btn w-full bg-white border border-primary-600 text-primary-600 hover:bg-primary-50 py-3 px-4 rounded-md font-medium transition-colors duration-300 flex items-center justify-center" data-property-id="${property.id}">
                                     <i class="fas fa-comments mr-2"></i> Message ${property.has_agent ? 'Agent' : 'Owner'}
                                 </button>
-                                <button class="w-full bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 py-3 px-4 rounded-md font-medium transition-colors duration-300 flex items-center justify-center">
+                                <button class="share-property-btn w-full bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 py-3 px-4 rounded-md font-medium transition-colors duration-300 flex items-center justify-center" data-property-id="${property.id}">
                                     <i class="fas fa-share-alt mr-2"></i> Share Property
                                 </button>
                             </div>
@@ -3254,6 +3255,33 @@
                             });
                         }
                     });
+                }
+
+                // Share button handler - uses reusable shareProperty.js
+                const shareBtn = propertyDetailsDiv.querySelector('.share-property-btn');
+                if (shareBtn) {
+                    // Set property data attributes for the share function
+                    shareBtn.setAttribute('data-property-title', property.title || '');
+                    shareBtn.setAttribute('data-property-price', formattedPrice);
+                    shareBtn.setAttribute('data-property-currency', property.price_currency || 'UGX');
+                    
+                    // Initialize the share button (will use window.properties if available)
+                    if (window.initSharePropertyButton) {
+                        window.initSharePropertyButton(shareBtn);
+                    } else {
+                        // Fallback: initialize manually if script hasn't loaded yet
+                        shareBtn.addEventListener('click', async function(e) {
+                            e.stopPropagation();
+                            const propertyId = this.getAttribute('data-property-id');
+                            if (propertyId && window.shareProperty) {
+                                await window.shareProperty(propertyId, {
+                                    title: property.title,
+                                    price: formattedPrice,
+                                    currency: property.price_currency || 'UGX'
+                                });
+                            }
+                        });
+                    }
                 }
             };
 
