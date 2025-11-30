@@ -1,7 +1,9 @@
 {% extends "base.html" %}
 {% load humanize %}
 {% block title %}Confirm Account Deletion{% endblock %}
-
+{% block navigation %}
+{# Override navigation block to hide the navbar on profile page #}
+{% endblock %}
 {% block extra_css %}
 <style>
     .input-field {

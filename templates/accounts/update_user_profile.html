@@ -1,7 +1,9 @@
 {% extends "wifimanager/base.html" %}
 
 {% block title %}Update your User Profile{% endblock %}
-
+{% block navigation %}
+{# Override navigation block to hide the navbar on profile page #}
+{% endblock %}
 {% block content %}
 <div class="w-full max-w-2xl bg-white rounded-xl shadow-lg overflow-hidden animate-fade-in">
     <div class="bg-gradient-to-r from-blue-600 to-blue-800 py-6 px-8">
