@@ -46,7 +46,7 @@ SECRET_KEY = env("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env("DEBUG")
 
-ALLOWED_HOSTS = ['127.0.0.1', 'daraza.net', 'www.daraza.net']
+ALLOWED_HOSTS = ['127.0.0.1', 'daraza.net', 'www.daraza.net', 'mynexthome.daraza.net', 'www.mynexthome.daraza.net']
 CSRF_TRUSTED_ORIGINS = ['https://*.daraza.net','https://*.127.0.0.1']
 # Setup support for proxy headers
 USE_X_FORWARDED_HOST = True
