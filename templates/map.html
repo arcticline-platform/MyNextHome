@@ -159,6 +159,65 @@
             50% { transform: translateY(-50%) scale(1.1); }
         }
 
+        /* Navigation Marker Styles */
+        .navigation-marker {
+            filter: drop-shadow(0 0 15px rgba(37, 99, 235, 0.8));
+            position: relative;
+            width: 48px;
+            height: 48px;
+            z-index: 1000;
+        }
+
+        .navigation-marker i {
+            position: relative;
+            z-index: 2;
+            filter: drop-shadow(0 0 10px rgba(37, 99, 235, 0.9));
+            animation: navigationPulse 1.5s ease-in-out infinite;
+        }
+
+        .navigation-marker .animate-ping {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            animation: navigationPing 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+        }
+
+        @keyframes navigationPulse {
+            0%, 100% { transform: rotate(45deg) scale(1); }
+            50% { transform: rotate(45deg) scale(1.15); }
+        }
+
+        @keyframes navigationPing {
+            0% {
+                transform: translate(-50%, -50%) scale(0.8);
+                opacity: 0.3;
+            }
+            70%, 100% {
+                transform: translate(-50%, -50%) scale(1.6);
+                opacity: 0;
+            }
+        }
+
+        /* Navigation Overlay Styles */
+        #navigationOverlay {
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translate(-50%, -20px);
+                opacity: 0;
+            }
+            to {
+                transform: translate(-50%, 0);
+                opacity: 1;
+            }
+        }
+
         /* ===== Popup Styles ===== */
         .mapboxgl-popup-content {
             padding: 0 !important;
@@ -347,6 +406,54 @@
 
         #directionsPanelHeader.grabbing {
             cursor: grabbing;
+        }
+
+        /* Ensure directions panel uses proper flexbox layout */
+        #directionsPanel {
+            display: flex !important;
+            flex-direction: column !important;
+            height: auto;
+            max-height: 70vh;
+        }
+        
+        /* Hide panel when it has the hidden class */
+        #directionsPanel.hidden {
+            display: none !important;
+        }
+
+        #directionsPanelHeader {
+            flex-shrink: 0;
+        }
+
+        #directionsPanelContent {
+            flex: 1 1 0%;
+            min-height: 0;
+            max-height: 100%;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        #directionsPanelContent.collapsed {
+            flex: 0 0 0%;
+            max-height: 0;
+            overflow: hidden;
+        }
+
+        #resizeHandle {
+            flex-shrink: 0;
+        }
+
+        /* Ensure footer is always visible */
+        #directionsPanelFooter {
+            flex-shrink: 0 !important;
+            flex-grow: 0 !important;
+            position: relative;
+            z-index: 1;
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            height: auto !important;
+            min-height: fit-content !important;
         }
 
         .directions-step {
@@ -1419,11 +1526,11 @@
 
         <!-- Directions Panel -->
         <div id="directionsPanel"
-            class=" hidden fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-white rounded-lg shadow-xl z-50 max-w-md w-full overflow-hidden transition-all duration-300 overflow-hidden"
-            style="max-height: 70vh">
+            class=" hidden fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-white rounded-lg shadow-xl z-50 max-w-md w-full overflow-hidden transition-all duration-300 flex flex-col"
+            style="max-height: 70vh; display: none !important;">
             <!-- Header (Draggable & Collapsible) -->
             <div id="directionsPanelHeader"
-                class="p-2 bg-gray-100 border-b flex justify-between items-center cursor-move grab">
+                class="p-2 bg-gray-100 border-b flex justify-between items-center cursor-move grab flex-shrink-0">
                 <h3 class="font-medium text-lg">Directions</h3>
                 <div class="flex items-center space-x-2">
                     <button id="collapseDirections" class="text-gray-500 hover:text-gray-700">
@@ -1436,7 +1543,7 @@
             </div>
 
             <!-- Content -->
-            <div id="directionsPanelContent" class="transition-all duration-300 overflow-y-auto">
+            <div id="directionsPanelContent" class="transition-all duration-300 overflow-y-auto flex-1 min-h-0">
                 <!-- Directions -->
                 <div id="directions" class="p-4">
                     <!-- Route Summary -->
@@ -1459,19 +1566,59 @@
                         </div>
                     </div>
                 </div>
+            </div>
+            <!-- Resize Handle -->
+            <div id="resizeHandle" class="h-2 cursor-row-resize bg-gray-300 w-full flex-shrink-0"></div>
+            <!-- Footer -->
+            <div id="directionsPanelFooter" class="p-4 border-t bg-gray-50 flex-shrink-0">
+                <button id="startNavigation"
+                    class="w-full bg-primary-600 text-white py-2 px-4 rounded-lg hover:bg-primary-700 flex items-center justify-center">
+                    <i class="fas fa-location-arrow mr-2"></i>
+                    <span id="navigationButtonText">Start Navigation</span>
+                </button>
+            </div>
+        </div>
 
-                <!-- Footer -->
-                <div class="p-4 border-t bg-gray-50">
-                    <button id="startNavigation"
-                        class="w-full bg-primary-600 text-white py-2 px-4 rounded-lg hover:bg-primary-700 flex items-center justify-center">
-                        <i class="fas fa-location-arrow mr-2"></i>
-                        Start Navigation
-                    </button>
+        <!-- Navigation Overlay (shown during active navigation) -->
+        <div id="navigationOverlay" class="hidden fixed top-4 left-1/2 transform -translate-x-1/2 bg-white rounded-lg shadow-xl z-50 p-4 min-w-[280px]">
+            <div class="flex items-center justify-between mb-3">
+                <h3 class="font-bold text-lg text-gray-900">
+                    <i class="fas fa-route text-primary-600 mr-2"></i>
+                    Navigating
+                </h3>
+                <button id="stopNavigation" class="text-red-600 hover:text-red-700">
+                    <i class="fas fa-stop-circle text-xl"></i>
+                </button>
+            </div>
+            
+            <!-- Current Location Info -->
+            <div class="mb-3 p-3 bg-primary-50 rounded-lg">
+                <div class="flex items-center mb-2">
+                    <i class="fas fa-map-marker-alt text-primary-600 mr-2"></i>
+                    <span class="text-sm font-medium text-gray-700">Your Location</span>
+                </div>
+                <div id="currentLocationInfo" class="text-xs text-gray-600">
+                    Updating...
                 </div>
             </div>
-
-            <!-- Resize Handle -->
-            <div id="resizeHandle" class="h-2 cursor-row-resize bg-gray-300 w-full"></div>
+            
+            <!-- Time to Destination -->
+            <div class="p-3 bg-green-50 rounded-lg border border-green-200">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="text-xs text-gray-600 mb-1">Time to Destination</div>
+                        <div id="timeToDestination" class="text-2xl font-bold text-green-700">
+                            --:--
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-xs text-gray-600 mb-1">Distance Remaining</div>
+                        <div id="distanceRemaining" class="text-lg font-semibold text-green-700">
+                            -- km
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Mobile Filter Modal -->
@@ -2068,7 +2215,7 @@
                             
                             // Extract location data from Mapbox feature
                             let city = null;
-                            let state = null;
+                            let region = null;
                             
                             if (feature.context) {
                                 // Mapbox context array contains location hierarchy
@@ -2076,7 +2223,7 @@
                                     if (ctx.id && ctx.id.startsWith('place')) {
                                         city = ctx.text;
                                     } else if (ctx.id && ctx.id.startsWith('region')) {
-                                        state = ctx.text;
+                                        region = ctx.text;
                                     }
                                 });
                             }
@@ -2227,7 +2374,13 @@
                 directionsPanel: document.getElementById('directionsPanel'),
                 directionsContent: document.getElementById('directions'),
                 currentMediaSlider: null,
-                directionsCalculated: false // Track if directions have been calculated
+                directionsCalculated: false, // Track if directions have been calculated
+                // Navigation tracking state
+                isNavigating: false,
+                navigationWatchId: null,
+                navigationMarker: null,
+                destination: null,
+                lastRouteUpdate: null
             };
         };
 
@@ -2469,7 +2622,7 @@
         };
 
         // Property Markers Management
-        const setupPropertyMarkers = (map, state, properties, directionsHandlers) => {
+        const setupPropertyMarkers = (map, state, properties,directionsHandlers) => {
             const createBeautifulMarker = (color = 'primary') => {
                 const el = document.createElement('div');
                 el.className = 'marker';
@@ -3336,229 +3489,15 @@
             return { initPropertyMarkers, handlePropertyClick };
         };
 
-        // Directions Management
+        // Directions Management - now handled by static/js/directionsPanel.js
         const setupDirections = (map, directions, state) => {
-            // Track if directions have been calculated
-            let directionsCalculated = false;
-            
-            // Make directions accessible globally for toggle button check
-            window.directionsInstance = directions;
-            
-            // Listen for the 'route' event from MapboxDirections
-            directions.on('route', (e) => {
-                if (!e.route || e.route.length === 0) {
-                    console.warn('No route found.');
-                    return;
-                }
-
-                // Mark that directions have been calculated
-                directionsCalculated = true;
-                state.directionsCalculated = true;
-
-                const route = e.route[0];
-                state.directionsPanel.classList.remove('hidden');
-                state.directionsPanel.style.display = 'block';
-                const toggleBtn = document.getElementById('directionsPanelToggle');
-                if (toggleBtn) {
-                    toggleBtn.style.display = 'none';
-                }
-                
-                // Format the distance and duration
-                const distance = (route.distance / 1000).toFixed(1);
-                const duration = Math.floor(route.duration / 60);
-                
-                // Update the directions panel content
-                state.directionsContent.innerHTML = `
-                    <div class="mb-3 p-3 bg-gray-50 rounded-lg">
-                        <div class="flex justify-between">
-                            <span class="font-medium">Distance:</span>
-                            <span>${distance} km</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="font-medium">Duration:</span>
-                            <span>${duration} min</span>
-                        </div>
-                    </div>
-                    <div class="space-y-2 max-h-64 overflow-y-auto">
-                        ${route.legs[0].steps.map((step, i) => `
-                            <div class="flex items-start p-2 hover:bg-gray-50 rounded">
-                                <div class="flex-shrink-0 mt-1 mr-3 w-6 h-6 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center text-xs font-bold">
-                                    ${i+1}
-                                </div>
-                                <div class="flex-1">
-                                    <div class="text-sm">${step.maneuver.instruction}</div>
-                                    ${step.distance > 0 ? `<div class="text-xs text-gray-500 mt-1">${(step.distance / 1000).toFixed(1)} km</div>` : ''}
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                `;
-            });
-
-            // Error handling for directions
-            directions.on('error', (e) => {
-                console.error('Directions error:', e.error);
-                Swal.fire({
-                    title: 'Routing Error',
-                    text: 'Could not calculate route. Please try again later.',
-                    icon: 'error',
-                    confirmButtonText: 'OK'
-                });
-            });
-
-            const showRoute = async (start, end) => {
-                const loadingSwal = Swal.fire({
-                    title: 'Calculating Route',
-                    html: 'Please wait while we calculate the best route...',
-                    allowOutsideClick: false,
-                    didOpen: () => {
-                        Swal.showLoading();
-                    }
-                });
-
-                try {
-                    // Clear any existing routes first
-                    directions.removeRoutes();
-                    
-                    // Set origin and destination
-                    directions.setOrigin(start);
-                    directions.setDestination(end);
-                    
-                    // Wait for the route to be calculated
-                    await new Promise((resolve, reject) => {
-                        const checkRoute = () => {
-                            if (directions.getOrigin() && directions.getDestination()) {
-                                resolve();
-                            } else {
-                                setTimeout(checkRoute, 100);
-                            }
-                        };
-                        
-                        // Add timeout for route calculation
-                        const timeout = setTimeout(() => {
-                            reject(new Error('Route calculation timed out'));
-                        }, 10000); // 10 seconds timeout
-                        
-                        directions.on('route', () => {
-                            clearTimeout(timeout);
-                            resolve();
-                        });
-                        
-                        checkRoute();
-                    });
-                    
-                    // Show directions panel
-                    state.directionsPanel.classList.remove('hidden');
-                    state.directionsPanel.style.display = 'block';
-                    const toggleBtn = document.getElementById('directionsPanelToggle');
-                    if (toggleBtn) {
-                        toggleBtn.style.display = 'none';
-                    }
-                    document.querySelector('.mapboxgl-ctrl-directions').style.display = 'block';
-                    
-                    // Center the map on the route
-                    const bounds = new mapboxgl.LngLatBounds()
-                        .extend(start)
-                        .extend(end);
-                        
-                    // map.fitBounds(bounds, {
-                    //     padding: 100,
-                    //     maxZoom: 15
-                    // });
-                    map.fitBounds(bounds, {
-                        padding: {top: 100, bottom: 100, left: 100, right: 100},
-                        maxZoom: 15,
-                        speed: 1.2
-                    });
-                    
-                    await loadingSwal.close();
-                } catch (error) {
-                    await loadingSwal.close();
-                    console.error('Error showing route:', error);
-                    Swal.fire({
-                        title: 'Routing Error',
-                        text: error.message || 'Failed to calculate route. Please try again.',
-                        icon: 'error',
-                        confirmButtonText: 'OK'
-                    });
-                }
-            };
-
-            document.getElementById('closeDirections').addEventListener('click', () => {
-                state.directionsPanel.classList.add('hidden');
-                state.directionsPanel.style.display = 'none';
-                
-                // Only show toggle button if directions were calculated (route exists)
-                const hasRoute = directions.getOrigin() && directions.getDestination();
-                const toggleBtn = document.getElementById('directionsPanelToggle');
-                if (toggleBtn && hasRoute && state.directionsCalculated) {
-                    toggleBtn.style.display = 'flex';
-                } else if (toggleBtn) {
-                    toggleBtn.style.display = 'none';
-                }
-                
-                document.querySelector('.mapboxgl-ctrl-directions').style.display = 'none';
-                // Don't remove routes - keep them so toggle button can restore
-                // directions.removeRoutes();
-            });
-            
-            // Toggle button handler - only active if directions were calculated
-            const toggleBtn = document.getElementById('directionsPanelToggle');
-            if (toggleBtn) {
-                toggleBtn.addEventListener('click', () => {
-                    // Only show panel if directions exist and were calculated
-                    if (window.directionsInstance) {
-                        const hasRoute = window.directionsInstance.getOrigin() && 
-                                         window.directionsInstance.getDestination();
-                        if (hasRoute && state.directionsCalculated) {
-                            state.directionsPanel.classList.remove('hidden');
-                            state.directionsPanel.style.display = 'block';
-                            toggleBtn.style.display = 'none';
-                            // Restore directions display
-                            document.querySelector('.mapboxgl-ctrl-directions').style.display = 'block';
-                            
-                            // Re-trigger route event to update panel content if needed
-                            // The route should still be active, just need to show the panel
-                        }
-                    }
-                });
+            // Use the DirectionsPanel module
+            if (window.DirectionsPanel && window.DirectionsPanel.setupDirections) {
+                return window.DirectionsPanel.setupDirections(map, directions, state);
+            } else {
+                console.error('DirectionsPanel module not loaded');
+                return { showRoute: () => {} };
             }
-
-            // Start navigation button handler
-            document.getElementById('startNavigation').addEventListener('click', () => {
-                if (!directions.getOrigin() || !directions.getDestination()) {
-                    Swal.fire({
-                        title: 'Route Required',
-                        text: 'Please calculate a route first',
-                        icon: 'info',
-                        confirmButtonText: 'OK'
-                    });
-                    return;
-                }
-                
-                // Here you would typically integrate with a navigation SDK
-                // For this example, we'll just zoom to the route
-                const origin = directions.getOrigin().geometry.coordinates;
-                const destination = directions.getDestination().geometry.coordinates;
-                
-                const bounds = new mapboxgl.LngLatBounds()
-                    .extend(origin)
-                    .extend(destination);
-                
-                map.fitBounds(bounds, {
-                    padding: 50,
-                    maxZoom: 15
-                });
-                
-                Swal.fire({
-                    title: 'Navigation Started',
-                    text: 'In a real app, this would launch turn-by-turn navigation.',
-                    icon: 'success',
-                    confirmButtonText: 'OK'
-                });
-            });
-
-            return { showRoute };
         };
 
         // Utility function to get CSRF token
@@ -3933,14 +3872,15 @@
             window.properties = properties;
 
             // Setup property markers and handlers
-            const { showRoute } = setupDirections(map, directions, state);
+            const directionsHandlers = setupDirections(map, directions, state);
+            const { showRoute } = directionsHandlers;
 
-            // Pass showRoute to the markers setup
+            // Pass directionsHandlers to the markers setup (reuse the same instance to avoid duplicate listeners)
             const { initPropertyMarkers, handlePropertyClick: propertyClickHandler } = setupPropertyMarkers(
                 map,
                 state,
                 properties,
-                setupDirections(map, directions, state) // Pass the entire object
+                directionsHandlers // Pass the same instance, not a new one
             );
             // Initialize when map loads
             map.on('load', () => {
@@ -4518,173 +4458,6 @@
         // Start the application
         document.addEventListener('DOMContentLoaded', initApp);
 
-        const panel = document.getElementById("directionsPanel");
-        const header = document.getElementById("directionsPanelHeader");
-        const content = document.getElementById("directionsPanelContent");
-        const collapseBtn = document.getElementById("collapseDirections");
-        const closeBtn = document.getElementById("closeDirections");
-        const resizeHandle = document.getElementById("resizeHandle");
-        const toggleBtn = document.getElementById("directionsPanelToggle");
-        
-        // Initialize: Hide toggle button by default
-        // It will only show after directions are calculated and panel is closed
-        if (toggleBtn) {
-            toggleBtn.style.display = 'none';
-        }
-
-        // COLLAPSE toggle
-        collapseBtn.addEventListener("click", (e) => {
-            e.stopPropagation();
-            const icon = collapseBtn.querySelector("i");
-            const isCollapsed = content.style.display === "none";
-            content.style.display = isCollapsed ? "block" : "none";
-            icon.classList.toggle("fa-chevron-down", !isCollapsed);
-            icon.classList.toggle("fa-chevron-up", isCollapsed);
-        });
-        
-        // Function to show panel
-        function showDirectionsPanel() {
-            panel.style.display = "block";
-            panel.classList.remove('hidden');
-            // Reset to centered position on mobile
-            if (window.innerWidth <= 767) {
-                panel.style.left = '50%';
-                panel.style.transform = 'translateX(-50%)';
-                panel.style.right = 'auto';
-                panel.style.bottom = '1rem';
-                panel.style.top = 'auto';
-            }
-            if (toggleBtn) {
-                toggleBtn.style.display = 'none';
-            }
-        }
-        
-        // Function to hide panel
-        function hideDirectionsPanel() {
-            panel.style.display = "none";
-            panel.classList.add('hidden');
-            // Only show toggle button if directions were calculated
-            if (toggleBtn && window.directionsInstance) {
-                const hasRoute = window.directionsInstance.getOrigin() && 
-                                 window.directionsInstance.getDestination();
-                if (hasRoute) {
-                    toggleBtn.style.display = 'flex';
-                } else {
-                    toggleBtn.style.display = 'none';
-                }
-            } else if (toggleBtn) {
-                toggleBtn.style.display = 'none';
-            }
-        }
-        
-        // CLOSE panel
-        closeBtn.addEventListener("click", () => {
-            hideDirectionsPanel();
-        });
-        
-        // TOGGLE button click handler
-        if (toggleBtn) {
-            toggleBtn.addEventListener("click", () => {
-                showDirectionsPanel();
-            });
-        }
-
-        // DRAGGABLE header (disabled on mobile)
-        let offsetX,
-        offsetY,
-        dragging = false;
-
-        // Function to check if on mobile
-        const isMobile = () => window.innerWidth <= 767;
-
-        // Function to reset panel to centered position on mobile
-        const resetPanelPosition = () => {
-            if (isMobile() && panel) {
-                panel.style.left = '50%';
-                panel.style.transform = 'translateX(-50%)';
-                panel.style.right = 'auto';
-                panel.style.bottom = '1rem';
-                panel.style.top = 'auto';
-            }
-        };
-
-        header.addEventListener("mousedown", (e) => {
-            // Disable dragging on mobile
-            if (isMobile()) {
-                e.preventDefault();
-                return;
-            }
-            dragging = true;
-            offsetX = e.clientX - panel.offsetLeft;
-            offsetY = e.clientY - panel.offsetTop;
-            header.classList.remove("grab");
-            header.classList.add("grabbing");
-        });
-
-        document.addEventListener("mousemove", (e) => {
-            if (!dragging || isMobile()) return;
-                panel.style.left = `${e.clientX - offsetX}px`;
-                panel.style.top = `${e.clientY - offsetY}px`;
-                panel.style.bottom = "auto";
-            });
-
-            document.addEventListener("mouseup", () => {
-            if (dragging && !isMobile()) {
-                dragging = false;
-                header.classList.add("grab");
-                header.classList.remove("grabbing");
-                localStorage.setItem(
-                "panelPosition",
-                JSON.stringify({
-                    left: panel.style.left,
-                    top: panel.style.top,
-                })
-                );
-            }
-        });
-
-        // Restore saved position (only on desktop)
-        window.addEventListener("DOMContentLoaded", () => {
-            if (isMobile()) {
-                resetPanelPosition();
-            } else {
-                const saved = localStorage.getItem("panelPosition");
-                if (saved) {
-                    const { left, top } = JSON.parse(saved);
-                    panel.style.left = left;
-                    panel.style.top = top;
-                    panel.style.bottom = "auto";
-                }
-            }
-        });
-
-        // Reset position on window resize to mobile
-        window.addEventListener("resize", () => {
-            if (isMobile()) {
-                resetPanelPosition();
-            }
-        });
-
-        // RESIZABLE bottom
-        resizeHandle.addEventListener("mousedown", function (e) {
-            e.preventDefault();
-            const startY = e.clientY;
-            const startHeight = panel.offsetHeight;
-
-            const resize = (e) => {
-                const newHeight = startHeight + (e.clientY - startY);
-                panel.style.height = newHeight + "px";
-            };
-
-            const stop = () => {
-                window.removeEventListener("mousemove", resize);
-                window.removeEventListener("mouseup", stop);
-            };
-
-            window.addEventListener("mousemove", resize);
-            window.addEventListener("mouseup", stop);
-        });
-
         // ===== Infinite Scroll for Property Listings =====
         (function() {
             let currentPage = 1;
@@ -4987,21 +4760,25 @@
 
                 // Re-initialize scroll when left overlay opens/closes
                 const leftOverlayPanelForObserver = document.getElementById('leftOverlayPanel');
-                if (leftOverlayPanelForObserver && leftOverlayPanelForObserver instanceof Node) {
-                    const observer = new MutationObserver(function(mutations) {
-                        mutations.forEach(function(mutation) {
-                            if (mutation.attributeName === 'class') {
-                                // Remove old scroll listener
-                                const oldContainer = getScrollContainer();
-                                if (oldContainer) {
-                                    oldContainer.removeEventListener('scroll', checkScroll);
+                if (leftOverlayPanelForObserver && leftOverlayPanelForObserver.nodeType === Node.ELEMENT_NODE) {
+                    try {
+                        const observer = new MutationObserver(function(mutations) {
+                            mutations.forEach(function(mutation) {
+                                if (mutation.attributeName === 'class') {
+                                    // Remove old scroll listener
+                                    const oldContainer = getScrollContainer();
+                                    if (oldContainer) {
+                                        oldContainer.removeEventListener('scroll', checkScroll);
+                                    }
+                                    // Re-initialize after a short delay
+                                    setTimeout(initInfiniteScroll, 100);
                                 }
-                                // Re-initialize after a short delay
-                                setTimeout(initInfiniteScroll, 100);
-                            }
+                            });
                         });
-                    });
-                    observer.observe(leftOverlayPanelForObserver, { attributes: true });
+                        observer.observe(leftOverlayPanelForObserver, { attributes: true });
+                    } catch (error) {
+                        console.warn('Failed to setup MutationObserver for left overlay panel:', error);
+                    }
                 }
             });
 
@@ -5015,5 +4792,7 @@
 
         // Contact modal functionality is now in static/js/contactModal.js
     </script>
+    <!-- Directions Panel JavaScript - Load before initApp runs -->
+    <script src="{% static 'js/directionsPanel.js' %}"></script>
 </body>
 </html>
