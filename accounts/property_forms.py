@@ -57,10 +57,18 @@ class PropertyForm(forms.ModelForm):
             'title', 'description', 'property_type', 'category',
             # Pricing information
             'price', 'price_currency', 'price_per_sqft', 'is_price_negotiable',
+            'hourly_rate', 'nightly_rate', 'monthly_rate', 'yearly_rate',
+            'tax_rate', 'hoa_fee', 'cleaning_fee', 'security_deposit',
+            
+            # Details
             'bedrooms', 'bathrooms', 'square_feet', 'lot_size',
             'year_built', 'floors', 'furnishing_status', 'available_from', 'last_refurbished',
             'amenities', 'neighborhood_features',
             'parking_spaces', 'internet_included', 'furnish_status',
+            
+            # Commercial & Hospitality
+            'shop_size', 'warehouse_capacity', 'office_spaces', 'garage_slots', 'has_storefront',
+            'maximum_occupancy', 'minimum_stay_nights', 'check_in_time', 'check_out_time',
         ]
         widgets = {
             'description': forms.Textarea(attrs={'rows': 5}),

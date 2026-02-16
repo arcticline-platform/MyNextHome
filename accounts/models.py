@@ -391,10 +391,95 @@ class TimeStampedModel(models.Model):
 
 
 class PropertyType(models.Model):
-    """Type of property (House, Apartment, Land, etc.)"""
+    """Type of property (House, Apartment, Land, Hotel, Shop, etc.)"""
+    
+    # Predefined property type choices with icons
+    PROPERTY_TYPE_CHOICES = [
+        # Residential
+        ('house', 'House'),
+        ('apartment', 'Apartment'),
+        ('condo', 'Condominium'),
+        ('townhouse', 'Townhouse'),
+        ('villa', 'Villa'),
+        ('studio', 'Studio'),
+        ('duplex', 'Duplex'),
+        ('penthouse', 'Penthouse'),
+        ('land', 'Land/Plot'),
+        
+        # Hospitality
+        ('hotel_room', 'Hotel Room'),
+        ('airbnb', 'Airbnb/Vacation Rental'),
+        ('hostel', 'Hostel'),
+        ('guest_house', 'Guest House'),
+        
+        # Commercial
+        ('shop', 'Shop/Retail Space'),
+        ('office', 'Office Space'),
+        ('warehouse', 'Warehouse'),
+        ('garage', 'Garage/Parking'),
+        ('restaurant', 'Restaurant'),
+        ('mall_space', 'Mall Space'),
+        ('showroom', 'Showroom'),
+        ('factory', 'Factory'),
+        ('storage', 'Storage Unit'),
+        
+        # Mixed/Other
+        ('commercial_building', 'Commercial Building'),
+        ('mixed_use', 'Mixed Use'),
+        ('other', 'Other'),
+    ]
+    
+    # Icon mapping for property types (Font Awesome classes)
+    ICON_CHOICES = {
+        'house': 'fa-home',
+        'apartment': 'fa-building',
+        'condo': 'fa-building-columns',
+        'townhouse': 'fa-house-chimney',
+        'villa': 'fa-house-flag',
+        'studio': 'fa-door-open',
+        'duplex': 'fa-house-laptop',
+        'penthouse': 'fa-crown',
+        'land': 'fa-mountain-sun',
+        'hotel_room': 'fa-hotel',
+        'airbnb': 'fa-house-user',
+        'hostel': 'fa-bed',
+        'guest_house': 'fa-house-circle-check',
+        'shop': 'fa-shop',
+        'office': 'fa-briefcase',
+        'warehouse': 'fa-warehouse',
+        'garage': 'fa-car',
+        'restaurant': 'fa-utensils',
+        'mall_space': 'fa-store',
+        'showroom': 'fa-spray-can-sparkles',
+        'factory': 'fa-industry',
+        'storage': 'fa-box-archive',
+        'commercial_building': 'fa-building-shield',
+        'mixed_use': 'fa-city',
+        'other': 'fa-question-circle',
+    }
+    
+    PRICING_MODEL_CHOICES = [
+        ('fixed', 'Fixed Price'),
+        ('per_night', 'Per Night'),
+        ('per_hour', 'Per Hour'),
+        ('per_month', 'Per Month'),
+        ('per_year', 'Per Year'),
+        ('per_sqft', 'Per Square Foot'),
+    ]
+    
     name = models.CharField(max_length=50, unique=True)
-    icon = models.CharField(max_length=50, blank=True, null=True)  # For font-awesome or similar icons
+    slug = models.SlugField(max_length=50, unique=True, blank=True, null=True)
+    icon = models.CharField(max_length=50, blank=True, null=True, help_text='Font Awesome icon class (e.g., fa-home)')
     description = models.TextField(blank=True)
+    is_commercial = models.BooleanField(default=False, help_text='Is this a commercial property type?')
+    is_residential = models.BooleanField(default=True, help_text='Is this a residential property type?')
+    is_hospitality = models.BooleanField(default=False, help_text='Is this a hospitality property type?')
+    default_pricing_model = models.CharField(
+        max_length=20, 
+        choices=PRICING_MODEL_CHOICES, 
+        default='fixed',
+        help_text='Default pricing model for this property type'
+    )
 
     class Meta:
         verbose_name = "Property Type"
@@ -403,6 +488,22 @@ class PropertyType(models.Model):
 
     def __str__(self):
         return self.name
+    
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+        # Auto-set icon if name matches predefined types
+        if not self.icon:
+            for key, label in self.PROPERTY_TYPE_CHOICES:
+                if self.name.lower() == label.lower():
+                    self.icon = self.ICON_CHOICES.get(key, 'fa-home')
+                    break
+        super().save(*args, **kwargs)
+    
+    def get_icon_class(self):
+        """Returns the Font Awesome icon class"""
+        return self.icon or 'fa-home'
+
 
 
 class AmenityCategory(models.Model):
@@ -420,10 +521,108 @@ class AmenityCategory(models.Model):
 
 class Amenity(models.Model):
     """Feature or facility available in/around the property"""
+    
+    # Predefined common amenities
+    AMENITY_CHOICES = [
+        # Residential Interior
+        ('wifi', 'WiFi/Internet'),
+        ('ac', 'Air Conditioning'),
+        ('heating', 'Heating'),
+        ('furnished', 'Furnished'),
+        ('kitchen', 'Full Kitchen'),
+        ('dishwasher', 'Dishwasher'),
+        ('washer_dryer', 'Washer & Dryer'),
+        ('fireplace', 'Fireplace'),
+        ('hardwood_floors', 'Hardwood Floors'),
+        
+        # Residential Exterior
+        ('pool', 'Swimming Pool'),
+        ('gym', 'Gym/Fitness Center'),
+        ('parking', 'Parking Space'),
+        ('garage', 'Private Garage'),
+        ('garden', 'Garden/Yard'),
+        ('balcony', 'Balcony/Terrace'),
+        ('elevator', 'Elevator'),
+        ('security', 'Security System'),
+        ('gated', 'Gated Community'),
+        ('playground', 'Playground'),
+        
+        # Commercial Specific
+        ('loading_dock', 'Loading Dock'),
+        ('office_space', 'Office Space'),
+        ('display_windows', 'Display Windows'),
+        ('storage_room', 'Storage Room'),
+        ('climate_control', 'Climate Control'),
+        ('high_ceiling', 'High Ceilings'),
+        ('conference_room', 'Conference Room'),
+        ('reception', 'Reception Area'),
+        ('kitchenette', 'Kitchenette'),
+        
+        # Hospitality Specific
+        ('room_service', 'Room Service'),
+        ('concierge', 'Concierge'),
+        ('spa', 'Spa'),
+        ('restaurant', 'Restaurant'),
+        ('breakfast', 'Breakfast Included'),
+        ('laundry_service', 'Laundry Service'),
+        
+        # General
+        ('pet_friendly', 'Pet Friendly'),
+        ('wheelchair_accessible', 'Wheelchair Accessible'),
+        ('solar_panels', 'Solar Panels'),
+        ('backup_generator', 'Backup Generator'),
+    ]
+    
+    # Icon mapping for amenities
+    ICON_CHOICES = {
+        'wifi': 'fa-wifi',
+        'ac': 'fa-snowflake',
+        'heating': 'fa-temperature-high',
+        'furnished': 'fa-couch',
+        'kitchen': 'fa-kitchen-set',
+        'dishwasher': 'fa-sink',
+        'washer_dryer': 'fa-jug-detergent',
+        'fireplace': 'fa-fire',
+        'hardwood_floors': 'fa-layer-group',
+        'pool': 'fa-swimming-pool',
+        'gym': 'fa-dumbbell',
+        'parking': 'fa-square-parking',
+        'garage': 'fa-warehouse',
+        'garden': 'fa-tree',
+        'balcony': 'fa-house-chimney-window',
+        'elevator': 'fa-elevator',
+        'security': 'fa-shield-halved',
+        'gated': 'fa-lock',
+        'playground': 'fa-child',
+        'loading_dock': 'fa-truck-ramp-box',
+        'office_space': 'fa-building-user',
+        'display_windows': 'fa-window-restore',
+        'storage_room': 'fa-boxes-stacked',
+        'climate_control': 'fa-temperature-half',
+        'high_ceiling': 'fa-up-long',
+        'conference_room': 'fa-people-roof',
+        'reception': 'fa-bell-concierge',
+        'kitchenette': 'fa-mug-hot',
+        'room_service': 'fa-bell',
+        'concierge': 'fa-user-tie',
+        'spa': 'fa-spa',
+        'restaurant': 'fa-utensils',
+        'breakfast': 'fa-bread-slice',
+        'laundry_service': 'fa-shirt',
+        'pet_friendly': 'fa-paw',
+        'wheelchair_accessible': 'fa-wheelchair',
+        'solar_panels': 'fa-solar-panel',
+        'backup_generator': 'fa-plug',
+    }
+    
     name = models.CharField(max_length=50, unique=True)
     category = models.ForeignKey(AmenityCategory, on_delete=models.SET_NULL, null=True, blank=True)
-    icon = models.CharField(max_length=50, blank=True, null=True)
-    is_featured = models.BooleanField(default=False)
+    icon = models.CharField(max_length=50, blank=True, null=True, help_text='Font Awesome icon class')
+    is_featured = models.BooleanField(default=False, help_text='Show as featured amenity')
+    is_premium = models.BooleanField(default=False, help_text='Premium/Luxury amenity')
+    applies_to_residential = models.BooleanField(default=True, help_text='Available for residential properties')
+    applies_to_commercial = models.BooleanField(default=False, help_text='Available for commercial properties')
+    applies_to_hospitality = models.BooleanField(default=False, help_text='Available for hospitality properties')
 
     class Meta:
         verbose_name = "Amenity"
@@ -432,6 +631,20 @@ class Amenity(models.Model):
 
     def __str__(self):
         return self.name
+    
+    def save(self, *args, **kwargs):
+        # Auto-set icon if name matches predefined amenities
+        if not self.icon:
+            for key, label in self.AMENITY_CHOICES:
+                if self.name.lower() == label.lower():
+                    self.icon = self.ICON_CHOICES.get(key, 'fa-check-circle')
+                    break
+        super().save(*args, **kwargs)
+    
+    def get_icon_class(self):
+        """Returns the Font Awesome icon class"""
+        return self.icon or 'fa-check-circle'
+
 
 
 class NeighborhoodFeatureCategory(models.Model):
@@ -449,10 +662,95 @@ class NeighborhoodFeatureCategory(models.Model):
 
 class NeighborhoodFeature(models.Model):
     """Important locations or services near the property"""
+    
+    # Predefined common features
+    FEATURE_CHOICES = [
+        # Education
+        ('school', 'School'),
+        ('college', 'College/University'),
+        ('library', 'Library'),
+        
+        # Healthcare
+        ('hospital', 'Hospital'),
+        ('clinic', 'Clinic'),
+        ('pharmacy', 'Pharmacy'),
+        
+        # Shopping
+        ('mall', 'Shopping Mall'),
+        ('supermarket', 'Supermarket'),
+        ('market', 'Local Market'),
+        
+        # Transportation
+        ('bus_stop', 'Bus Stop'),
+        ('train_station', 'Train Station'),
+        ('airport', 'Airport'),
+        ('taxi_stand', 'Taxi Stand'),
+        
+        # Recreation
+        ('park', 'Park'),
+        ('gym', 'Gym'),
+        ('cinema', 'Cinema'),
+        ('restaurant', 'Restaurants'),
+        ('cafe', 'Cafes'),
+        
+        # Worship
+        ('mosque', 'Mosque'),
+        ('church', 'Church'),
+        ('temple', 'Temple'),
+        
+        # Services
+        ('bank', 'Bank/ATM'),
+        ('post_office', 'Post Office'),
+        ('police_station', 'Police Station'),
+        ('fire_station', 'Fire Station'),
+        
+        # Other
+        ('beach', 'Beach'),
+        ('gas_station', 'Gas Station'),
+    ]
+    
+    # Icon mapping for features
+    ICON_CHOICES = {
+        'school': 'fa-school',
+        'college': 'fa-graduation-cap',
+        'library': 'fa-book',
+        'hospital': 'fa-hospital',
+        'clinic': 'fa-clinic-medical',
+        'pharmacy': 'fa-prescription-bottle-medical',
+        'mall': 'fa-shopping-bag',
+        'supermarket': 'fa-cart-shopping',
+        'market': 'fa-store',
+        'bus_stop': 'fa-bus',
+        'train_station': 'fa-train',
+        'airport': 'fa-plane',
+        'taxi_stand': 'fa-taxi',
+        'park': 'fa-tree',
+        'gym': 'fa-dumbbell',
+        'cinema': 'fa-film',
+        'restaurant': 'fa-utensils',
+        'cafe': 'fa-mug-saucer',
+        'mosque': 'fa-mosque',
+        'church': 'fa-church',
+        'temple': 'fa-place-of-worship',
+        'bank': 'fa-building-columns',
+        'post_office': 'fa-envelope',
+        'police_station': 'fa-shield-halved',
+        'fire_station': 'fa-fire-extinguisher',
+        'beach': 'fa-umbrella-beach',
+        'gas_station': 'fa-gas-pump',
+    }
+    
     name = models.CharField(max_length=100)
     category = models.ForeignKey(NeighborhoodFeatureCategory, on_delete=models.SET_NULL, null=True, blank=True)
-    icon = models.CharField(max_length=50, blank=True, null=True)
-    is_essential = models.BooleanField(default=False)
+    icon = models.CharField(max_length=50, blank=True, null=True, help_text='Font Awesome icon class')
+    is_essential = models.BooleanField(default=False, help_text='Essential service/feature')
+    distance_km = models.DecimalField(
+        max_digits=5, 
+        decimal_places=2, 
+        blank=True, 
+        null=True,
+        help_text='Distance from property in kilometers'
+    )
 
     class Meta:
         verbose_name = "Neighborhood Feature"
@@ -462,6 +760,28 @@ class NeighborhoodFeature(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.category.name if self.category else 'Uncategorized'})"
+    
+    def save(self, *args, **kwargs):
+        # Auto-set icon if name matches predefined features
+        if not self.icon:
+            for key, label in self.FEATURE_CHOICES:
+                if self.name.lower() == label.lower():
+                    self.icon = self.ICON_CHOICES.get(key, 'fa-location-dot')
+                    break
+        super().save(*args, **kwargs)
+    
+    def get_icon_class(self):
+        """Returns the Font Awesome icon class"""
+        return self.icon or 'fa-location-dot'
+    
+    def get_distance_display(self):
+        """Returns formatted distance"""
+        if self.distance_km:
+            if self.distance_km < 1:
+                return f"{int(self.distance_km * 1000)}m"
+            return f"{self.distance_km}km"
+        return "N/A"
+
 
 
 class Address(TimeStampedModel):
@@ -689,7 +1009,10 @@ class Property(TimeStampedModel):
         ('rent', 'For Rent'),
         ('lease', 'For Lease'),
         ('short_term', 'Short Term Rental'),
-        ('long_term', 'Long Term Rental')
+        ('long_term', 'Long Term Rental'),
+        ('hourly', 'Hourly Rental'),
+        ('nightly', 'Nightly Rental'),
+        ('monthly', 'Monthly Rental'),
     )
 
     FURNISHING_STATUS = (
@@ -707,7 +1030,7 @@ class Property(TimeStampedModel):
     address = models.OneToOneField(Address, on_delete=models.CASCADE, related_name='property')
     
     # Pricing information
-    price = models.DecimalField(max_digits=12, decimal_places=2, validators=[MinValueValidator(0)])
+    price = models.DecimalField(max_digits=12, decimal_places=2, validators=[MinValueValidator(0)], null=True, blank=True)
     CURRENCY_CHOICES = [
         ('UGX', 'Ugandan Shilling'),
         ('KES', 'Kenyan Shilling'),
@@ -737,14 +1060,116 @@ class Property(TimeStampedModel):
     # Monthly/annual HOA (Homeowners Association) fee for the property, if applicable
     hoa_fee = models.DecimalField(max_digits=8, decimal_places=2, blank=True, null=True)
     
+    # Flexible pricing for different property types
+    hourly_rate = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2, 
+        blank=True, 
+        null=True,
+        validators=[MinValueValidator(0)],
+        help_text='Hourly rental rate (for parking, meeting rooms, etc.)'
+    )
+    nightly_rate = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2, 
+        blank=True, 
+        null=True,
+        validators=[MinValueValidator(0)],
+        help_text='Nightly rate (for hotels, Airbnb, etc.)'
+    )
+    monthly_rate = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2, 
+        blank=True, 
+        null=True,
+        validators=[MinValueValidator(0)],
+        help_text='Monthly rental rate'
+    )
+    yearly_rate = models.DecimalField(
+        max_digits=12, 
+        decimal_places=2, 
+        blank=True, 
+        null=True,
+        validators=[MinValueValidator(0)],
+        help_text='Yearly rental/lease rate'
+    )
+    
     # Property details
-    bedrooms = models.PositiveIntegerField(validators=[MinValueValidator(0)])
-    bathrooms = models.DecimalField(max_digits=3, decimal_places=1, validators=[MinValueValidator(0)])
-    square_feet = models.PositiveIntegerField(validators=[MinValueValidator(0)])
+    bedrooms = models.PositiveIntegerField(validators=[MinValueValidator(0)], blank=True, null=True, help_text='Number of bedrooms (0 for studio)')
+    bathrooms = models.DecimalField(max_digits=3, decimal_places=1, validators=[MinValueValidator(0)], blank=True, null=True)
+    square_feet = models.PositiveIntegerField(validators=[MinValueValidator(0)], blank=True, null=True)
     lot_size = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     year_built = models.PositiveIntegerField(blank=True, null=True)
-    floors = models.PositiveIntegerField(default=1)
+    floors = models.PositiveIntegerField(default=1, blank=True, null=True)
     furnishing_status = models.CharField(max_length=20, choices=FURNISHING_STATUS, blank=True, null=True)
+    
+    # Commercial property specific fields
+    shop_size = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2, 
+        blank=True, 
+        null=True,
+        help_text='Shop/retail space size in sq ft'
+    )
+    warehouse_capacity = models.DecimalField(
+        max_digits=12, 
+        decimal_places=2, 
+        blank=True, 
+        null=True,
+        help_text='Warehouse storage capacity in cubic feet or tons'
+    )
+    office_spaces = models.PositiveIntegerField(
+        blank=True, 
+        null=True,
+        help_text='Number of individual office spaces/rooms'
+    )
+    garage_slots = models.PositiveIntegerField(
+        blank=True, 
+        null=True,
+        help_text='Number of parking/garage slots'
+    )
+    has_storefront = models.BooleanField(
+        default=False,
+        help_text='Has street-facing storefront (for shops)'
+    )
+    
+    # Hospitality property specific fields
+    maximum_occupancy = models.PositiveIntegerField(
+        blank=True, 
+        null=True,
+        help_text='Maximum number of guests (for hotels/Airbnb)'
+    )
+    minimum_stay_nights = models.PositiveIntegerField(
+        blank=True, 
+        null=True,
+        help_text='Minimum stay requirement in nights'
+    )
+    check_in_time = models.TimeField(
+        blank=True, 
+        null=True,
+        help_text='Standard check-in time'
+    )
+    check_out_time = models.TimeField(
+        blank=True, 
+        null=True,
+        help_text='Standard check-out time'
+    )
+    cleaning_fee = models.DecimalField(
+        max_digits=8, 
+        decimal_places=2, 
+        blank=True, 
+        null=True,
+        validators=[MinValueValidator(0)],
+        help_text='One-time cleaning fee'
+    )
+    security_deposit = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2, 
+        blank=True, 
+        null=True,
+        validators=[MinValueValidator(0)],
+        help_text='Refundable security deposit'
+    )
     
     # Features
     amenities = models.ManyToManyField(Amenity, blank=True, related_name='properties')

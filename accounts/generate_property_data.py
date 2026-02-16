@@ -37,16 +37,22 @@ UGANDAN_CITIES = [
 ]
 
 PROPERTY_TYPES = [
-    ('House', 'home', 'A standalone residential building'),
-    ('Apartment', 'building', 'A unit within a multi-unit residential building'),
-    ('Commercial Property', 'store', 'Property used for business purposes'),
-    ('Land', 'tree', 'Undeveloped property for construction or investment'),
-    ('Farm', 'tractor', 'Agricultural property'),
-    ('Rental Unit', 'key', 'Property available for rent'),
-    ('Hostel', 'bed', 'Budget accommodation with shared facilities'),
-    ('Bungalow', 'home', 'Single-story detached house'),
-    ('Villa', 'home', 'A large, luxurious house, often with extensive grounds'),
-    ('Warehouse', 'warehouse', 'Storage or industrial space'),
+    # (Name, Icon, Description, is_residential, is_commercial, is_hospitality, default_pricing_model)
+    ('House', 'home', 'A standalone residential building', True, False, False, 'fixed'),
+    ('Apartment', 'building', 'A unit within a multi-unit residential building', True, False, False, 'fixed'),
+    ('Commercial Property', 'store', 'Property used for business purposes', False, True, False, 'fixed'),
+    ('Land', 'tree', 'Undeveloped property for construction or investment', False, False, False, 'fixed'),
+    ('Farm', 'tractor', 'Agricultural property', False, True, False, 'fixed'),
+    ('Rental Unit', 'key', 'Property available for rent', True, False, False, 'per_month'),
+    ('Hostel', 'bed', 'Budget accommodation with shared facilities', False, False, True, 'per_night'),
+    ('Bungalow', 'home', 'Single-story detached house', True, False, False, 'fixed'),
+    ('Villa', 'home', 'A large, luxurious house, often with extensive grounds', True, False, False, 'fixed'),
+    ('Warehouse', 'warehouse', 'Storage or industrial space', False, True, False, 'per_sqft'),
+    ('Office', 'briefcase', 'Office space for business', False, True, False, 'per_sqft'),
+    ('Shop', 'shopping-bag', 'Retail shop space', False, True, False, 'fixed'),
+    ('Hotel Room', 'hotel', 'Hotel accommodation', False, False, True, 'per_night'),
+    ('Coworking Space', 'laptop', 'Shared office workspace', False, True, False, 'per_hour'),
+    ('Event Hall', 'glass-cheers', 'Venue for events and parties', False, True, True, 'per_hour'),
 ]
 
 AMENITY_CATEGORIES = [
@@ -171,12 +177,16 @@ def create_property_types():
     from accounts.models import PropertyType
     
     print("Creating property types...")
-    for name, icon, description in PROPERTY_TYPES:
-        PropertyType.objects.get_or_create(
+    for name, icon, description, is_res, is_com, is_hos, pricing in PROPERTY_TYPES:
+        PropertyType.objects.update_or_create(
             name=name,
             defaults={
                 'icon': icon,
                 'description': description,
+                'is_residential': is_res,
+                'is_commercial': is_com,
+                'is_hospitality': is_hos,
+                'default_pricing_model': pricing
             }
         )
 
@@ -237,66 +247,74 @@ def create_users(count=20):
     
     print(f"Creating {count} users...")
     
-    # First create an admin user
-    admin = User.objects.create_superuser(
-        username='admin',
-        email='admin@example.com',
-        password='admin123',
-        first_name='Admin',
-        last_name='User',
-        is_realtor=True,
-        referral_code=uuid.uuid4()
-    )
-    UserProfile.objects.create(
-        user=admin,
-        username='admin',
-        unique_id='000000001',
-        first_name='Admin',
-        last_name='User',
-        email='admin@example.com',
-        email_confirmed=True,
-        phone=PhoneNumber.from_string('+256700000001'),
-        gender='M',
-        city='Kampala',
-        is_verified=True,
-        is_active=True
-    )
+    # First create an admin user if not exists
+    if not User.objects.filter(username='admin').exists():
+        admin = User.objects.create_superuser(
+            username='admin',
+            email='admin@example.com',
+            password='admin123',
+            first_name='Admin',
+            last_name='User',
+            is_realtor=True,
+            referral_code=uuid.uuid4()
+        )
+        UserProfile.objects.create(
+            user=admin,
+            username='admin',
+            unique_id='000000001',
+            first_name='Admin',
+            last_name='User',
+            email='admin@example.com',
+            email_confirmed=True,
+            phone=PhoneNumber.from_string('+256700000001'),
+            gender='M',
+            city='Kampala',
+            is_verified=True,
+            is_active=True
+        )
     
     # Create regular users
     for i in range(count):
         first_name = fake.first_name()
         last_name = fake.last_name()
-        username = f"{first_name.lower()}{last_name.lower()}"
+        username = f"{first_name.lower()}{last_name.lower()}{random.randint(1000, 9999)}"
         email = f"{username}@example.com"
         phone = f"+2567{random.randint(10000000, 99999999)}"
         
-        user = User.objects.create_user(
-            username=username,
-            email=email,
-            password='testpass123',
-            first_name=first_name,
-            last_name=last_name,
-            is_realtor=random.random() < 0.3,
-            referral_code=uuid.uuid4()
-        )
-        
-        UserProfile.objects.create(
-            user=user,
-            username=username,
-            unique_id=f"{random.randint(100000000, 999999999)}",
-            first_name=first_name,
-            last_name=last_name,
-            email=email,
-            email_confirmed=random.random() < 0.8,
-            phone=PhoneNumber.from_string(phone),
-            gender=random.choice(['M', 'F']),
-            date_of_birth=fake.date_of_birth(minimum_age=18, maximum_age=70),
-            city=random.choice([city[0] for city in UGANDAN_CITIES]),
-            bio=fake.text(max_nb_chars=200),
-            interests=random.choice(['Sports', 'Travel', 'Real Estate', 'Technology', 'Business']),
-            is_verified=random.random() < 0.7,
-            is_active=True
-        )
+        if User.objects.filter(username=username).exists():
+            continue
+
+        try:
+            user = User.objects.create_user(
+                username=username,
+                email=email,
+                password='testpass123',
+                first_name=first_name,
+                last_name=last_name,
+                is_realtor=random.random() < 0.3,
+                referral_code=uuid.uuid4()
+            )
+            
+            UserProfile.objects.create(
+                user=user,
+                username=username,
+                unique_id=f"{random.randint(100000000, 999999999)}",
+                first_name=first_name,
+                last_name=last_name,
+                email=email,
+                email_confirmed=random.random() < 0.8,
+                phone=PhoneNumber.from_string(phone),
+                gender=random.choice(['M', 'F']),
+                date_of_birth=fake.date_of_birth(minimum_age=18, maximum_age=70),
+                city=random.choice([city[0] for city in UGANDAN_CITIES]),
+                bio=fake.text(max_nb_chars=200),
+                interests=random.choice(['Sports', 'Travel', 'Real Estate', 'Technology', 'Business']),
+                is_verified=random.random() < 0.7,
+                is_active=True
+            )
+        except Exception as e:
+            print(f"Skipping duplicate or error for {username}: {e}")
+            continue
 
 def create_addresses(count=1000):
     from accounts.models import Address
@@ -341,11 +359,19 @@ def create_properties(count=1000):
     
     print(f"Creating {count} properties...")
     users = list(User.objects.filter(is_realtor=True))
+    if not users:
+        users = list(User.objects.all())
+        
     property_types = list(PropertyType.objects.all())
     addresses = list(Address.objects.all())
     amenities = list(Amenity.objects.all())
     neighborhood_features = list(NeighborhoodFeature.objects.all())
     
+    if not addresses:
+        print("No addresses found, creating some...")
+        create_addresses(count=count)
+        addresses = list(Address.objects.all())
+
     for i in range(count):
         try:
             owner = random.choice(users)
@@ -353,80 +379,106 @@ def create_properties(count=1000):
             property_type = random.choice(property_types)
             address = addresses[i] if i < len(addresses) else random.choice(addresses)
             
-            # Ugandan-style property titles
-            title_options = [
-                f"{property_type.name} for {'Rent' if random.random() < 0.5 else 'Sale'} in {address.city}",
-                f"Beautiful {property_type.name} in {address.neighborhood or address.city}",
-                f"Affordable {property_type.name.lower()} in {address.city}",
-                f"Luxury {property_type.name.lower()} with great amenities"
-            ]
-            title = random.choice(title_options)
-            slug = slugify(title)
+            # Use property type default specific logic
+            pricing_model = property_type.default_pricing_model
+            is_res = property_type.is_residential
+            is_com = property_type.is_commercial
+            is_hos = property_type.is_hospitality
             
-            # Generate realistic Ugandan property details
-            bedrooms = random.randint(1, 6)
-            bathrooms = Decimal(str(round(random.uniform(1, bedrooms + 1), 1)))
-            square_feet = random.randint(300, 5000)
+            # Base data
+            prop_data = {
+                'owner': owner,
+                'agent': agent,
+                'property_type': property_type,
+                'address': address,
+                'description': fake.text(max_nb_chars=500),
+                'price_currency': 'UGX',
+                'is_price_negotiable': random.random() < 0.7,
+                'status': random.choice(LISTING_STATUS),
+                'is_featured': random.random() < 0.1,
+                'view_count': random.randint(0, 500),
+                'favorite_count': random.randint(0, 50),
+                'is_published': random.random() < 0.8,
+                'listed_by': owner,
+                'rating': Decimal(str(round(random.uniform(3, 5), 2))),
+                'parking_spaces': random.randint(0, 5),
+                'internet_included': random.random() < 0.7,
+                'year_built': random.randint(1990, 2025),
+                'floors': random.randint(1, 4),
+                'furnishing_status': random.choice(FURNISHING_STATUS),
+                'availability_status': random.choice(AVAILABILITY_STATUS),
+            }
+
+            # Generate Title
+            city_name = address.city
+            prop_data['title'] = f"{random.choice(['Modern', 'Spacious', 'Prime', 'Luxury', 'Cozy'])} {property_type.name} in {city_name}"
+            # Ensure unique slug
+            base_slug = slugify(prop_data['title'])
+            prop_data['slug'] = f"{base_slug}-{uuid.uuid4().hex[:8]}"
+
+            # Pricing Logic
+            base_value = random.randint(50, 5000) * 1000 # Base numeric factor
             
-            # Price ranges in UGX (Ugandan Shillings)
-            if property_type.name == 'Land':
-                price = Decimal(str(round(random.uniform(5000000, 50000000), 2)))
-            elif property_type.name == 'Commercial Property':
-                price = Decimal(str(round(random.uniform(10000000, 200000000), 2)))
+            if pricing_model == 'fixed':
+                # Sale prices usually
+                prop_data['price'] = Decimal(base_value * 100) # e.g. 5M to 500M
+                prop_data['category'] = 'sale'
+            elif pricing_model == 'per_month':
+                # Rent
+                prop_data['monthly_rate'] = Decimal(base_value) # e.g. 50k to 5M
+                prop_data['category'] = 'rent'
+                # Optional: set price to monthly rate for fallback
+                prop_data['price'] = prop_data['monthly_rate']
+            elif pricing_model == 'per_night':
+                prop_data['nightly_rate'] = Decimal(base_value / 20) 
+                prop_data['category'] = 'nightly'
+                prop_data['price'] = prop_data['nightly_rate']
+            elif pricing_model == 'per_hour':
+                prop_data['hourly_rate'] = Decimal(base_value / 100)
+                prop_data['category'] = 'hourly'
+                prop_data['price'] = prop_data['hourly_rate']
+            elif pricing_model == 'per_sqft':
+                prop_data['price_per_sqft'] = Decimal(random.randint(10, 50) * 1000)
+                prop_data['category'] = 'lease'
+                prop_data['price'] = Decimal(0) 
             else:
-                price = Decimal(str(round(random.uniform(2000000, 15000000), 2)))
+                # Fallback
+                prop_data['price'] = Decimal(base_value * 10)
+                prop_data['category'] = 'sale'
+
+            # Type Specific Details
+            prop_data['square_feet'] = random.randint(300, 5000)
+
+            if is_res:
+                prop_data['bedrooms'] = random.randint(1, 6)
+                prop_data['bathrooms'] = Decimal(random.randint(1, 5))
+                prop_data['lot_size'] = Decimal(str(round(random.uniform(0.05, 1.0), 2)))
             
-            # Create the property
-            prop = Property.objects.create(
-                owner=owner,
-                agent=agent,
-                title=title,
-                slug=f"{slug}-{i}",
-                description=fake.text(max_nb_chars=500),
-                property_type=property_type,
-                address=address,
-                price=price,
-                price_currency='UGX',
-                price_per_sqft=price / square_feet,
-                is_price_negotiable=random.random() < 0.7,  # More negotiable in Uganda
-                tax_rate=Decimal(str(round(random.uniform(0.5, 1.5), 2))),  # Lower tax rates
-                hoa_fee=Decimal(str(round(random.uniform(50000, 200000), 2))) if random.random() < 0.2 else None,
-                bedrooms=bedrooms,
-                bathrooms=bathrooms,
-                square_feet=square_feet,
-                lot_size=Decimal(str(round(random.uniform(0.05, 2.0), 2))) if random.random() < 0.7 else None,
-                year_built=random.randint(1980, 2023),
-                floors=random.randint(1, 3),
-                furnishing_status=random.choice(FURNISHING_STATUS),
-                status=random.choice(LISTING_STATUS),
-                category=random.choice(LISTING_CATEGORY),
-                is_featured=random.random() < 0.1,
-                available_from=fake.date_between(start_date='-30d', end_date='+180d') if random.random() < 0.7 else None,
-                last_refurbished=fake.date_between(start_date='-10y', end_date='today') if random.random() < 0.4 else None,
-                view_count=random.randint(0, 1000),
-                favorite_count=random.randint(0, 100),
-                is_published=random.random() < 0.8,
-                listed_by=owner,
-                rating=Decimal(str(round(random.uniform(1, 5), 2))),
-                parking_spaces=random.randint(0, 3),
-                internet_included=random.random() < 0.6,
-                furnish_status=random.choice(FURNISHING_STATUS),
-                availability_status=random.choice(AVAILABILITY_STATUS),
-            )
+            if is_com:
+                prop_data['shop_size'] = prop_data['square_feet'] if 'Shop' in property_type.name else 0
+                prop_data['office_spaces'] = random.randint(1, 10) if 'Office' in property_type.name else 0
+                prop_data['warehouse_capacity'] = random.randint(1000, 20000) if 'Warehouse' in property_type.name else 0
+                prop_data['has_storefront'] = random.random() < 0.5
+                prop_data['garage_slots'] = random.randint(0, 10)
+
+            if is_hos:
+                prop_data['maximum_occupancy'] = random.randint(1, 4)
+                prop_data['minimum_stay_nights'] = 1
+                prop_data['check_in_time'] = "12:00"
+                prop_data['check_out_time'] = "10:00"
+
+            # Create Property
+            prop = Property.objects.create(**prop_data)
+
+            # Assign Amenities
+            prop.amenities.set(random.sample(amenities, k=random.randint(2, 6)))
+            prop.neighborhood_features.set(random.sample(neighborhood_features, k=random.randint(2, 5)))
             
-            # Add amenities (3-8 per property)
-            prop_amenities = random.sample(amenities, random.randint(3, 8))
-            prop.amenities.set(prop_amenities)
-            
-            # Add neighborhood features (2-6 per property)
-            prop_features = random.sample(neighborhood_features, random.randint(2, 6))
-            prop.neighborhood_features.set(prop_features)
-            
-            if (i + 1) % 100 == 0:
+            if (i + 1) % 50 == 0:
                 print(f"Created {i + 1} properties")
                 
         except Exception as e:
-            print(f"Error creating property: {e}")
+            print(f"Error creating property index {i}: {e}")
             continue
 
 def create_property_images():
