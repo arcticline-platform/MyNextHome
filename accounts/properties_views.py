@@ -19,6 +19,8 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.decorators.http import require_http_methods
 from django.views.generic import CreateView, UpdateView, TemplateView
 from .property_forms import PropertyForm, AddressForm, PropertyImageForm
+import json
+from .models import PropertyType
 
 
 # @csrf_exempt
@@ -27,6 +29,19 @@ def add_property(request):
     template_name = 'accounts/add_property.html'
     # success_url = reverse_lazy('profile')
     context = {}
+    
+    # Get property types configuration for frontend
+    property_types = PropertyType.objects.all()
+    property_types_config = {}
+    for pt in property_types:
+        property_types_config[pt.id] = {
+            'is_commercial': pt.is_commercial,
+            'is_residential': pt.is_residential,
+            'is_hospitality': pt.is_hospitality,
+            'default_pricing_model': pt.default_pricing_model
+        }
+    context['property_types_config'] = json.dumps(property_types_config)
+    
     print(f"Request method: {request.method}")
     print("Data in request.POST:", request.POST)
     print("Files in request.FILES:", request.FILES)
@@ -212,6 +227,19 @@ class EditPropertyView(LoginRequiredMixin, UpdateView):
         context['image_form'] = PropertyImageForm()
         context['images'] = self.object.images.all().order_by('order')
         context['MAPBOX_ACCESS_TOKEN'] = os.getenv('MAPBOX_ACCESS_TOKEN', '')
+        
+        # Get property types configuration for frontend
+        property_types = PropertyType.objects.all()
+        property_types_config = {}
+        for pt in property_types:
+            property_types_config[pt.id] = {
+                'is_commercial': pt.is_commercial,
+                'is_residential': pt.is_residential,
+                'is_hospitality': pt.is_hospitality,
+                'default_pricing_model': pt.default_pricing_model
+            }
+        context['property_types_config'] = json.dumps(property_types_config)
+        
         return context
     
     def get_form_kwargs(self):

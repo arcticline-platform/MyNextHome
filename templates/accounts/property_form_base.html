@@ -493,23 +493,63 @@
                     </div>
                 </div>
 
-                <!-- New Price Fields -->
+                <!-- Dynamic Price Fields -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-                    <div class="form-group">
-                        <label for="id_price" class="form-label">Price*</label>
+                    <!-- Standard Price (Sale/Rent/Lease or Default) -->
+                    <div class="form-group" x-show="!formData.category || ['sale', 'rent', 'lease'].includes(formData.category)">
+                        <label for="id_price" class="form-label">Price <span x-show="formData.category === 'rent'">/ Month</span>*</label>
                         <div class="relative">
+                            <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" x-text="currentCurrencySymbol"></span>
                             <input type="number" 
                                    id="id_price" 
                                    name="price" 
                                    min="0"
                                    x-model="formData.price"
                                    @blur="validateField('price')"
-                                   :class="{'is-invalid': errors.price}"
                                    class="form-control pl-8" 
-                                   required>
-                            <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
+                                   :class="{'is-invalid': errors.price}"
+                                   >
                         </div>
                         <p x-show="errors.price" class="error-message" x-text="errors.price"></p>
+                    </div>
+
+                    <!-- Hourly Rate -->
+                    <div class="form-group" x-show="formData.category === 'hourly'">
+                        <label for="id_hourly_rate" class="form-label">Hourly Rate*</label>
+                        <div class="relative">
+                            <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" x-text="currentCurrencySymbol"></span>
+                            <input type="number" id="id_hourly_rate" name="hourly_rate" 
+                                   x-model="formData.hourly_rate" 
+                                   class="form-control pl-8"
+                                   :class="{'is-invalid': errors.hourly_rate}">
+                        </div>
+                        <p class="text-error" x-show="errors.hourly_rate" x-text="errors.hourly_rate"></p>
+                    </div>
+
+                     <!-- Nightly Rate -->
+                    <div class="form-group" x-show="formData.category === 'nightly'">
+                        <label for="id_nightly_rate" class="form-label">Nightly Rate*</label>
+                        <div class="relative">
+                            <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" x-text="currentCurrencySymbol"></span>
+                            <input type="number" id="id_nightly_rate" name="nightly_rate" 
+                                   x-model="formData.nightly_rate" 
+                                   class="form-control pl-8"
+                                   :class="{'is-invalid': errors.nightly_rate}">
+                        </div>
+                        <p class="text-error" x-show="errors.nightly_rate" x-text="errors.nightly_rate"></p>
+                    </div>
+
+                     <!-- Monthly Rate -->
+                    <div class="form-group" x-show="formData.category === 'monthly'">
+                        <label for="id_monthly_rate" class="form-label">Monthly Rate*</label>
+                        <div class="relative">
+                            <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" x-text="currentCurrencySymbol"></span>
+                            <input type="number" id="id_monthly_rate" name="monthly_rate" 
+                                   x-model="formData.monthly_rate" 
+                                   class="form-control pl-8"
+                                   :class="{'is-invalid': errors.monthly_rate}">
+                        </div>
+                        <p class="text-error" x-show="errors.monthly_rate" x-text="errors.monthly_rate"></p>
                     </div>
 
                     <div class="form-group">
@@ -534,13 +574,13 @@
                     <div class="form-group">
                         <label for="id_price_per_sqft" class="form-label">Price per sq ft</label>
                         <div class="relative">
+                            <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" x-text="currentCurrencySymbol"></span>
                             <input type="number" 
                                    id="id_price_per_sqft" 
                                    name="price_per_sqft" 
                                    min="0"
                                    x-model="formData.price_per_sqft"
                                    class="form-control pl-8">
-                            <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
                         </div>
                     </div>
 
@@ -571,25 +611,96 @@
                 <h2 class="text-xl font-semibold mb-6">Property Details</h2>
                 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="form-group">
-                        <label for="id_bedrooms" class="form-label">Bedrooms*</label>
-                        <input type="number" id="id_bedrooms" name="bedrooms" min="0" step="1"
-                               x-model="formData.bedrooms" 
-                               @blur="validateField('bedrooms')"
-                               :class="{'is-invalid': errors.bedrooms}"
-                               class="form-control" required>
-                        <p x-show="errors.bedrooms" class="error-message" x-text="errors.bedrooms"></p>
-                    </div>
                     
-                    <div class="form-group">
-                        <label for="id_bathrooms" class="form-label">Bathrooms*</label>
-                        <input type="number" id="id_bathrooms" name="bathrooms" min="0" step="1"
-                               x-model="formData.bathrooms" 
-                               @blur="validateField('bathrooms')"
-                               :class="{'is-invalid': errors.bathrooms}"
-                               class="form-control" required>
-                        <p x-show="errors.bathrooms" class="error-message" x-text="errors.bathrooms"></p>
-                    </div>
+                    <!-- Residential Details -->
+                    <template x-if="isResidential">
+                        <div class="contents">
+                            <div class="form-group">
+                                <label for="id_bedrooms" class="form-label">Bedrooms*</label>
+                                <input type="number" id="id_bedrooms" name="bedrooms" min="0" step="1"
+                                       x-model="formData.bedrooms" 
+                                       @blur="validateField('bedrooms')"
+                                       :class="{'is-invalid': errors.bedrooms}"
+                                       class="form-control"
+                                       :required="isResidential">
+                                <p x-show="errors.bedrooms" class="error-message" x-text="errors.bedrooms"></p>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="id_bathrooms" class="form-label">Bathrooms*</label>
+                                <input type="number" id="id_bathrooms" name="bathrooms" min="0" step="0.5"
+                                       x-model="formData.bathrooms" 
+                                       @blur="validateField('bathrooms')"
+                                       :class="{'is-invalid': errors.bathrooms}"
+                                       class="form-control"
+                                       :required="isResidential">
+                                <p x-show="errors.bathrooms" class="error-message" x-text="errors.bathrooms"></p>
+                            </div>
+                        </div>
+                    </template>
+                    
+                    <!-- Commercial Details -->
+                    <template x-if="isCommercial">
+                        <div class="contents">
+                            <div class="form-group">
+                                <label for="id_shop_size" class="form-label">Shop Size (sq ft)</label>
+                                <input type="number" id="id_shop_size" name="shop_size" 
+                                       x-model="formData.shop_size" 
+                                       class="form-control">
+                            </div>
+                             <div class="form-group">
+                                <label for="id_warehouse_capacity" class="form-label">Warehouse Capacity</label>
+                                <input type="number" id="id_warehouse_capacity" name="warehouse_capacity" 
+                                       x-model="formData.warehouse_capacity" 
+                                       class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label for="id_office_spaces" class="form-label">Office Spaces</label>
+                                <input type="number" id="id_office_spaces" name="office_spaces" 
+                                       x-model="formData.office_spaces" 
+                                       class="form-control">
+                            </div>
+                             <div class="form-group">
+                                <label for="id_garage_slots" class="form-label">Garage Slots</label>
+                                <input type="number" id="id_garage_slots" name="garage_slots" 
+                                       x-model="formData.garage_slots" 
+                                       class="form-control">
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Hospitality Details -->
+                    <template x-if="isHospitality">
+                         <div class="contents">
+                            <div class="form-group">
+                                <label for="id_maximum_occupancy" class="form-label">Max Occupancy*</label>
+                                <input type="number" id="id_maximum_occupancy" name="maximum_occupancy" 
+                                       x-model="formData.maximum_occupancy" 
+                                       class="form-control"
+                                       :class="{'is-invalid': errors.maximum_occupancy}"
+                                       :required="isHospitality">
+                                <p class="text-error" x-show="errors.maximum_occupancy" x-text="errors.maximum_occupancy"></p>
+                            </div>
+                            <div class="form-group">
+                                <label for="id_minimum_stay_nights" class="form-label">Min Stay (Nights)</label>
+                                <input type="number" id="id_minimum_stay_nights" name="minimum_stay_nights" 
+                                       x-model="formData.minimum_stay_nights" 
+                                       class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label for="id_check_in_time" class="form-label">Check-in Time</label>
+                                <input type="time" id="id_check_in_time" name="check_in_time" 
+                                       x-model="formData.check_in_time" 
+                                       class="form-control">
+                            </div>
+                             <div class="form-group">
+                                <label for="id_check_out_time" class="form-label">Check-out Time</label>
+                                <input type="time" id="id_check_out_time" name="check_out_time" 
+                                       x-model="formData.check_out_time" 
+                                       class="form-control">
+                            </div>
+                        </div>
+                    </template>
                     
                     <div class="form-group">
                         <label for="id_square_feet" class="form-label">Area (sq ft)*</label>
@@ -1014,13 +1125,60 @@ document.addEventListener('alpine:init', () => {
             SEARCH: 2
         }),
 
+        // Property Types Config
+        propertyTypesConfig: JSON.parse('{{ property_types_config|escapejs }}' || '{}'),
+        
+        // Currency Symbols
+        currencySymbols: {
+            'UGX': 'USh',
+            'KES': 'KSh',
+            'TZS': 'TSh',
+            'RWF': 'FRw',
+            'BIF': 'FBu',
+            'SSP': '£',
+            'USD': '$',
+            'EUR': '€',
+            'GBP': '£',
+            'CNY': '¥',
+            'ETB': 'Br',
+            'SOS': 'S',
+            'ERN': 'Nfk',
+            'DJF': 'Fdj',
+            'CDF': 'FC'
+        },
+
+        get currentPropertyTypeConfig() {
+            if (!this.formData.property_type) return null;
+            return this.propertyTypesConfig[this.formData.property_type];
+        },
+
+        get isCommercial() {
+            return this.currentPropertyTypeConfig?.is_commercial || false;
+        },
+
+        get isResidential() {
+            return this.currentPropertyTypeConfig?.is_residential || true; // Default to true
+        },
+
+        get isHospitality() {
+            return this.currentPropertyTypeConfig?.is_hospitality || false;
+        },
+        
+        get defaultPricingModel() {
+            return this.currentPropertyTypeConfig?.default_pricing_model || 'fixed';
+        },
+        
+        get currentCurrencySymbol() {
+            return this.currencySymbols[this.formData.price_currency] || this.formData.price_currency || '';
+        },
+
         // Form Data
         formData: {
             id: "{{ property_form.instance.pk|default:'' }}",
             // Basic Info
-            title: "{{ property_form.title.value|default:'' }}",
+            title: "{{ property_form.title.value|default:''|escapejs }}",
             property_type: "{{ property_form.property_type.value|default:'' }}",
-            description: "{{ property_form.description.value|default:'' }}",
+            description: "{{ property_form.description.value|default:''|escapejs }}",
             category: "{{ property_form.category.value|default:'' }}",
             // status: "{{ property_form.status.value|default:'' }}",
 
@@ -1034,40 +1192,65 @@ document.addEventListener('alpine:init', () => {
             bathrooms: parseFloat("{{ property_form.bathrooms.value|default:'0' }}") || 0,
             square_feet: parseInt("{{ property_form.square_feet.value|default:'0' }}") || 0,
             floors: parseInt("{{ property_form.floors.value|default:'1' }}") || 1,
-            year_built: "{{ property_form.year_built.value|default:'' }}",
-            lot_size: "{{ property_form.lot_size.value|default:'' }}",
+            year_built: "{{ property_form.year_built.value|default:''|escapejs }}",
+            lot_size: "{{ property_form.lot_size.value|default:''|escapejs }}",
             furnish_status: "{{ property_form.furnish_status.value|default:'' }}",
-            available_from: "{{ property_form.available_from.value|default:'' }}",
-            last_refurbished: "{{ property_form.last_refurbished.value|default:'' }}",
+            available_from: "{{ property_form.available_from.value|default:''|escapejs }}",
+            last_refurbished: "{{ property_form.last_refurbished.value|default:''|escapejs }}",
             parking_spaces: parseInt("{{ property_form.parking_spaces.value|default:'0' }}") || 0,
             internet_included: "{{ property_form.internet_included.value|yesno:'true,false' }}" === "true",
-            amenities: {{ property_form.amenities.value|default:"[]"|safe }},
+            // Flexible Pricing
+            hourly_rate: parseFloat("{{ property_form.hourly_rate.value|default:'0' }}") || 0,
+            nightly_rate: parseFloat("{{ property_form.nightly_rate.value|default:'0' }}") || 0,
+            monthly_rate: parseFloat("{{ property_form.monthly_rate.value|default:'0' }}") || 0,
+            yearly_rate: parseFloat("{{ property_form.yearly_rate.value|default:'0' }}") || 0,
+            
+            // Fees
+            cleaning_fee: parseFloat("{{ property_form.cleaning_fee.value|default:'0' }}") || 0,
+            security_deposit: parseFloat("{{ property_form.security_deposit.value|default:'0' }}") || 0,
+            hoa_fee: parseFloat("{{ property_form.hoa_fee.value|default:'0' }}") || 0,
+            tax_rate: parseFloat("{{ property_form.tax_rate.value|default:'0' }}") || 0,
+
+            amenities: [{% if property_form.amenities.value %}{% for item in property_form.amenities.value %}"{{ item|escapejs }}"{% if not forloop.last %}, {% endif %}{% endfor %}{% endif %}],
+
+            // Commercial Fields
+            shop_size: parseFloat("{{ property_form.shop_size.value|default:'0' }}") || 0,
+            warehouse_capacity: parseFloat("{{ property_form.warehouse_capacity.value|default:'0' }}") || 0,
+            office_spaces: parseInt("{{ property_form.office_spaces.value|default:'0' }}") || 0,
+            garage_slots: parseInt("{{ property_form.garage_slots.value|default:'0' }}") || 0,
+            has_storefront: "{{ property_form.has_storefront.value|yesno:'true,false' }}" === "true",
+
+            // Hospitality Fields
+            maximum_occupancy: parseInt("{{ property_form.maximum_occupancy.value|default:'0' }}") || 0,
+            minimum_stay_nights: parseInt("{{ property_form.minimum_stay_nights.value|default:'1' }}") || 1,
+            check_in_time: "{{ property_form.check_in_time.value|default:''|escapejs }}",
+            check_out_time: "{{ property_form.check_out_time.value|default:''|escapejs }}",
 
             // Location
-            street_address: "{{ address_form.street_address.value|default:'' }}",
-            apartment_suite: "{{ address_form.apartment_suite.value|default:'' }}",
-            city: "{{ address_form.city.value|default:'' }}",
-            state: "{{ address_form.state.value|default:'' }}",
-            zip_code: "{{ address_form.zip_code.value|default:'' }}",
-            country: "{{ address_form.country.value|default:'United States' }}",
-            neighborhood: "{{ address_form.neighborhood.value|default:'' }}",
-            nearby_landmarks: "{{ address_form.nearby_landmarks.value|default:'' }}",
+            street_address: "{{ address_form.street_address.value|default:''|escapejs }}",
+            apartment_suite: "{{ address_form.apartment_suite.value|default:''|escapejs }}",
+            city: "{{ address_form.city.value|default:''|escapejs }}",
+            state: "{{ address_form.state.value|default:''|escapejs }}",
+            zip_code: "{{ address_form.zip_code.value|default:''|escapejs }}",
+            country: "{{ address_form.country.value|default:'United States'|escapejs }}",
+            neighborhood: "{{ address_form.neighborhood.value|default:''|escapejs }}",
+            nearby_landmarks: "{{ address_form.nearby_landmarks.value|default:''|escapejs }}",
             latitude: parseFloat("{{ address_form.latitude.value|default:'' }}") || null,
             longitude: parseFloat("{{ address_form.longitude.value|default:'' }}") || null,
-            neighborhood_features: {{ property_form.neighborhood_features.value|default:"[]"|safe }},
+            neighborhood_features: [{% if property_form.neighborhood_features.value %}{% for item in property_form.neighborhood_features.value %}"{{ item|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %}{% endif %}],
 
             // Media
             images: [
             {% for image in images %}
             {
                 id: {{ image.id }},
-                url: "{{ image.image.url }}",
+                url: "{{ image.image.url|escapejs }}",
                 is_primary: {{ image.is_primary|yesno:"true,false" }},
-                caption: "{{ image.caption|default:'' }}"
+                caption: "{{ image.caption|default:''|escapejs }}"
             }{% if not forloop.last %},{% endif %}
             {% endfor %}
             ],
-            virtual_tour: "{{ property_form.virtual_tour.value|default:'' }}"
+            virtual_tour: "{{ property_form.virtual_tour.value|default:''|escapejs }}"
         },
 
         errors: {},
@@ -1104,6 +1287,17 @@ document.addEventListener('alpine:init', () => {
                     if (result.isConfirmed) {
                         try {
                             const draftData = JSON.parse(savedDraft);
+                            
+                            // Filter out temporary images from drafts as blob URLs are invalid after reload
+                            if (draftData.images) {
+                                const originalCount = draftData.images.length;
+                                draftData.images = draftData.images.filter(img => !img.is_temp && !img.url.startsWith('blob:'));
+                                
+                                if (draftData.images.length < originalCount) {
+                                    this.showToast('warning', 'Some unsaved images from your draft could not be restored and need to be re-uploaded.');
+                                }
+                            }
+                            
                             Object.assign(this.formData, draftData);
                             this.completedTabs = ['basic', 'details', 'location'];
                             this.showToast('success', 'Draft loaded successfully');
@@ -1268,7 +1462,7 @@ document.addEventListener('alpine:init', () => {
         // Update location from coordinates
         updateLocationFromCoords(lng, lat, source, accuracy = null) {
             this.formData.longitude = Number.parseFloat(lng).toFixed(5);
-            this.formData.latitude = Number.parseFloat(lat).toFixed(5);;
+            this.formData.latitude = Number.parseFloat(lat).toFixed(5);
             this.locationSource = source;
             this.locationAccuracy = accuracy;
 
@@ -1409,35 +1603,65 @@ document.addEventListener('alpine:init', () => {
                     this.errors.description = 'Description must be at least 50 characters';
                     isValid = false;
                 }
-                if (!this.formData.category) {
+                if ((!this.formData.category) && !this.isHospitality) {
+                    // Category is less important for hospitality if we use default pricing model
                     this.errors.category = 'Listing category is required';
                     isValid = false;
                 }
 
-                if (!this.formData.price || this.formData.price <= 0) {
-                    this.errors.price = 'Valid price is required';
-                    isValid = false;
-                }
                 if (!this.formData.price_currency) {
                     this.errors.price_currency = 'Currency is required';
                     isValid = false;
+                }
+                
+                // Validate based on pricing model
+                if (this.formData.category === 'hourly' && (!this.formData.hourly_rate || this.formData.hourly_rate <= 0)) {
+                   this.errors.hourly_rate = 'Hourly rate is required';
+                   isValid = false;
+                } else if (this.formData.category === 'nightly' && (!this.formData.nightly_rate || this.formData.nightly_rate <= 0)) {
+                   this.errors.nightly_rate = 'Nightly rate is required';
+                   isValid = false;
+                } else if (this.formData.category === 'monthly' && (!this.formData.monthly_rate || this.formData.monthly_rate <= 0)) {
+                   this.errors.monthly_rate = 'Monthly rate is required';
+                   isValid = false;
+                } else if ((!this.formData.category || ['sale', 'rent', 'lease'].includes(this.formData.category)) && (!this.formData.price || this.formData.price <= 0)) {
+                    // Standard price validation
+                    // Only require base price if not using flexible rates or if explicitly sale/rent/lease
+                    if (!this.isHospitality) {
+                        this.errors.price = 'Valid price is required';
+                        isValid = false;
+                    }
                 }
             }
             
             // Details validation
             else if (currentTab === 'details') {
-                if (!this.formData.bedrooms || this.formData.bedrooms < 0) {
-                    this.errors.bedrooms = 'Valid number of bedrooms is required';
-                    isValid = false;
+                if (this.isResidential) {
+                    if (!this.formData.bedrooms && this.formData.bedrooms !== 0) {
+                        // Allow 0 bedrooms (studio)
+                         // But if null/undefined/empty string, it's invalid
+                         if (this.formData.bedrooms === '' || this.formData.bedrooms === null) {
+                            this.errors.bedrooms = 'Number of bedrooms is required';
+                            isValid = false;
+                         }
+                    }
+                    if (!this.formData.bathrooms) {
+                        this.errors.bathrooms = 'Number of bathrooms is required';
+                        isValid = false;
+                    }
                 }
-                if (!this.formData.bathrooms || this.formData.bathrooms < 0) {
-                    this.errors.bathrooms = 'Valid number of bathrooms is required';
-                    isValid = false;
+                
+                if (this.isCommercial) {
+                    // Specific commercial validation if needed
                 }
-                if (!this.formData.square_feet || this.formData.square_feet <= 0) {
-                    this.errors.square_feet = 'Valid area is required';
-                    isValid = false;
+                
+                if (this.isHospitality) {
+                    if (!this.formData.maximum_occupancy || this.formData.maximum_occupancy <= 0) {
+                        this.errors.maximum_occupancy = 'Max occupancy is required';
+                        isValid = false;
+                    }
                 }
+
                 if (!this.formData.available_from) {
                     this.errors.available_from = 'Available from when is required';
                     isValid = false;
@@ -1581,7 +1805,7 @@ document.addEventListener('alpine:init', () => {
             formData.append('csrfmiddlewaretoken', csrfToken);
             
             // Upload endpoint
-            const uploadUrl = `/properties/${this.formData.id}/upload-images/`;
+            const uploadUrl = `/accounts/properties/${this.formData.id}/upload-images/`;
             
             // Create AJAX request
             const xhr = new XMLHttpRequest();
@@ -1608,8 +1832,8 @@ document.addEventListener('alpine:init', () => {
                             this.formData.images = [
                                 ...this.formData.images.filter(img => !img.is_temp), // Remove any temp images
                                 ...response.images.map(img => ({
-                                    id: img.id,
-                                    url: img.url,
+                                    id: img.image_id, // Server returns image_id
+                                    url: img.image_url, // Server returns image_url
                                     is_primary: false,
                                     caption: img.caption || ''
                                 }))
@@ -1637,7 +1861,7 @@ document.addEventListener('alpine:init', () => {
         // Set primary image
         setPrimaryImage(imageId) {
             // Handle temporary images for new properties
-            if (imageId.startsWith('temp-')) {
+            if (String(imageId).startsWith('temp-')) {
                 this.tempImageStore.forEach((img, index) => {
                     img.is_primary = (imageId === `temp-${index}`);
                 });
@@ -1652,7 +1876,7 @@ document.addEventListener('alpine:init', () => {
             }
             
             // Handle saved images for existing properties
-            fetch(`/properties/images/${imageId}/set-primary/`, {
+            fetch(`/accounts/properties/images/${imageId}/set-primary/`, {
                 method: 'POST',
                 headers: {
                     'X-CSRFToken': '{{ csrf_token }}',
@@ -1698,7 +1922,7 @@ document.addEventListener('alpine:init', () => {
         // Delete image
         deleteImage(imageId) {
             // Handle temporary images for new properties
-            if (imageId.startsWith('temp-')) {
+            if (String(imageId).startsWith('temp-')) {
                 const tempIndex = this.tempImageStore.findIndex(img => imageId === `temp-${img.id}`);
                 if (tempIndex !== -1) {
                     this.tempImageStore.splice(tempIndex, 1);
@@ -1720,13 +1944,40 @@ document.addEventListener('alpine:init', () => {
             }
             
             // Handle saved images for existing properties
-            fetch(`/properties/images/${imageId}/delete/`, {
+            // Handle case where image is not in tempStore logic (e.g. from Draft reload) but exists in formData
+            if (!String(imageId).startsWith('temp-') && !this.formData.id) {
+                 // It's a "saved" image in a "new" property draft? 
+                 // If ID is numeric, it implies it exists on server.
+                 // But if formData.id is empty, it's a new property.
+                 // This shouldn't happen unless draft logic restored numeric IDs for non-existent property?
+                 // Or, user is editing an existing property! formData.id exists.
+            }
+
+            // Check if it's a "temp" image that lost its prefix or we are in a broken state
+             const imageExistsInFormData = this.formData.images.some(img => img.id === imageId);
+             if (!imageExistsInFormData) {
+                 this.showToast('error', 'Image not found in list');
+                 return;
+             }
+
+            // If clean delete from server
+            fetch(`/accounts/properties/images/${imageId}/delete/`, {
                 method: 'DELETE',
                 headers: {
                     'X-CSRFToken': '{{ csrf_token }}',
                 },
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                     // Check if 404 - maybe it was already deleted or doesn't exist
+                     if (response.status === 404) {
+                         // Remove from UI anyway
+                         return { success: true }; 
+                     }
+                     throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.success) {
                     // Remove from local state
@@ -1744,8 +1995,14 @@ document.addEventListener('alpine:init', () => {
                 }
             })
             .catch(error => {
-                this.showToast('error', 'An error occurred while deleting image');
+                // Fallback: if server delete fails, check if we should just remove it from UI (e.g. draft issue)
                 console.error('Error:', error);
+                
+                // If it's a draft and we can't reach server, maybe just remove it from UI?
+                // User said "When draft is used, images cannot be deleted".
+                // We'll trust the user wants them gone.
+                this.formData.images = this.formData.images.filter(img => img.id !== imageId);
+                this.showToast('warning', 'Image removed from list (Server sync failed)');
             });
         },
         

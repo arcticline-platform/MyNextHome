@@ -21,9 +21,6 @@ from django.contrib.messages import constants as messages
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
-
-
 # Environ
 env = environ.Env(
     # set casting, default value
@@ -263,9 +260,9 @@ DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Email Backend
-# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 # SMTP
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 # ZOHO CONFIGURATION
 ROOT_EMAIL = 'noreply@daraza.net'
 EMAIL_HOST = 'smtp.zoho.com'
