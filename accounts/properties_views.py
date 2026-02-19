@@ -38,7 +38,11 @@ def add_property(request):
             'is_commercial': pt.is_commercial,
             'is_residential': pt.is_residential,
             'is_hospitality': pt.is_hospitality,
-            'default_pricing_model': pt.default_pricing_model
+            'default_pricing_model': pt.default_pricing_model,
+            'has_bedrooms': pt.has_bedrooms,
+            'has_bathrooms': pt.has_bathrooms,
+            'has_floors': pt.has_floors,
+            'has_furnishing': pt.has_furnishing,
         }
     context['property_types_config'] = json.dumps(property_types_config)
     
@@ -236,7 +240,11 @@ class EditPropertyView(LoginRequiredMixin, UpdateView):
                 'is_commercial': pt.is_commercial,
                 'is_residential': pt.is_residential,
                 'is_hospitality': pt.is_hospitality,
-                'default_pricing_model': pt.default_pricing_model
+                'default_pricing_model': pt.default_pricing_model,
+                'has_bedrooms': pt.has_bedrooms,
+                'has_bathrooms': pt.has_bathrooms,
+                'has_floors': pt.has_floors,
+                'has_furnishing': pt.has_furnishing,
             }
         context['property_types_config'] = json.dumps(property_types_config)
         

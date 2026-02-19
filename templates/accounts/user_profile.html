@@ -103,7 +103,7 @@
                     <div class="avatar-preview" style="background-image: url('{% if profile.photo %}{{ profile.photo.url }}{% else %}{% static 'img/user.png' %}{% endif %}');"></div>
                     <label class="btn-upload">
                         <i class="fas fa-camera"></i>
-                        <input type="file" class="hidden" accept=".jpg,.jpeg,.png,.webp,.gif" @change="previewAvatar">
+                        <input type="file" id="header_avatar_input" name="avatar" class="hidden" accept=".jpg,.jpeg,.png,.webp,.gif" @change="previewAvatar">
                     </label>
                 </div>
                 <div class="text-center md:text-left">
@@ -825,6 +825,14 @@
                     allowOutsideClick: false,
                     didOpen: () => {
                         Swal.showLoading();
+                        const headerAvatar = document.getElementById('header_avatar_input');
+                        if (headerAvatar && headerAvatar.files.length > 0 && !formData.has('avatar')) {
+                            formData.append('avatar', headerAvatar.files[0]);
+                        } else if (headerAvatar && headerAvatar.files.length > 0 && formData.get('avatar').size === 0) {
+                            // If 'avatar' exists but is empty (default form behavior for empty file input), replace it
+                            formData.set('avatar', headerAvatar.files[0]);
+                        }
+
                         fetch(form.action, {
                             method: form.method,
                             body: formData,
@@ -843,6 +851,8 @@
                                 }).then(() => {
                                     if (data.redirect) {
                                         window.location.href = data.redirect;
+                                    } else {
+                                        window.location.reload();
                                     }
                                 });
                             } else {

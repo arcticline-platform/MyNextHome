@@ -15,7 +15,8 @@ from django.conf import settings
 from django.utils import timezone
 from django.contrib import messages
 from django.core.cache import cache
-# from django.dispatch import receiver
+from django.dispatch import receiver
+from django.db.models.signals import pre_delete, post_delete
 from django.utils.text import slugify
 # from django.shortcuts import redirect
 from django.utils.timezone import now
@@ -26,7 +27,7 @@ from django.contrib.auth.models import AbstractUser
 from core.image_processor import CompressedImageField
 from django.utils.translation import gettext_lazy as _
 from django.contrib.gis.db import models as gis_models
-# from django.db.models.signals import pre_save, post_save
+from django.db.models.signals import pre_save, post_save
 from django.core.validators import FileExtensionValidator, RegexValidator, MinValueValidator, MaxValueValidator
 
 
@@ -208,9 +209,26 @@ class UserProfile(models.Model):
         return currency.alpha_3
 
     def save(self, *args, **kwargs):
+        if self.pk:
+            try:
+                old_profile = UserProfile.objects.get(pk=self.pk)
+                if old_profile.photo and self.photo != old_profile.photo:
+                    if os.path.isfile(old_profile.photo.path):
+                        os.remove(old_profile.photo.path)
+            except UserProfile.DoesNotExist:
+                pass
+            except Exception:
+                pass
+
         if self.unique_id == '000000001':
             self.unique_id = self.generate_unique_number()
         super(UserProfile, self).save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        if self.photo:
+            if os.path.isfile(self.photo.path):
+                os.remove(self.photo.path)
+        super(UserProfile, self).delete(*args, **kwargs)
 
 
 class VerificationToken(models.Model):
@@ -480,6 +498,12 @@ class PropertyType(models.Model):
         default='fixed',
         help_text='Default pricing model for this property type'
     )
+    
+    # Feature flags for conditional UI
+    has_bedrooms = models.BooleanField(default=True, help_text='Does this property type usually have bedrooms?')
+    has_bathrooms = models.BooleanField(default=True, help_text='Does this property type usually have bathrooms?')
+    has_floors = models.BooleanField(default=True, help_text='Does this property type have floors?')
+    has_furnishing = models.BooleanField(default=True, help_text='Can this property type be furnished?')
 
     class Meta:
         verbose_name = "Property Type"
@@ -1646,7 +1670,6 @@ class Message(TimeStampedModel):
     def mark_as_read(self):
         """Mark this message as read"""
         if not self.is_read:
-            from django.utils import timezone
             self.is_read = True
             self.read_at = timezone.now()
             self.save()
@@ -1668,3 +1691,47 @@ class PropertyPayment(models.Model):
     payment_type = models.CharField(max_length=20, choices=PAYMENT_TYPE_CHOICE, default='cash')
     price = models.DecimalField(max_digits=12, decimal_places=2, validators=[MinValueValidator(0)])
     down_payment = models.DecimalField(max_digits=12, decimal_places=2, validators=[MinValueValidator(0)], blank=True, null=True)
+
+
+@receiver(pre_delete, sender=UserProfile)
+def delete_user_profile_photo(sender, instance, **kwargs):
+    if instance.photo:
+        try:
+            if os.path.isfile(instance.photo.path):
+                os.remove(instance.photo.path)
+        except Exception:
+            pass
+
+
+@receiver(pre_delete, sender=PropertyImage)
+def delete_property_image_files(sender, instance, **kwargs):
+    # Delete original image
+    if instance.image:
+        try:
+            if os.path.isfile(instance.image.path):
+                os.remove(instance.image.path)
+        except Exception:
+            pass
+    # Delete compressed image
+    if instance.compressed_image:
+        try:
+            if os.path.isfile(instance.compressed_image.path):
+                os.remove(instance.compressed_image.path)
+        except Exception:
+            pass
+
+
+@receiver(pre_delete, sender=PropertyVideo)
+def delete_property_video_files(sender, instance, **kwargs):
+    if instance.video:
+        try:
+            if os.path.isfile(instance.video.path):
+                os.remove(instance.video.path)
+        except Exception:
+            pass
+    if instance.thumbnail:
+        try:
+            if os.path.isfile(instance.thumbnail.path):
+                os.remove(instance.thumbnail.path)
+        except Exception:
+            pass

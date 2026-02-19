@@ -5,6 +5,7 @@ from . import views
 urlpatterns = [
     # path('', views.landing_page, name='landing_page'),
     path('', views.home, name='home'),
+    path('search/', views.property_search, name='property_search'),
     path('api/properties/', views.properties_api, name='properties_api'),
     path('api/filter-options/', views.filter_options_api, name='filter_options_api'),
     path('subscriptions/', views.subscriptions, name='subscriptions'),

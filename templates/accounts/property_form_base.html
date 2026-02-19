@@ -614,29 +614,29 @@
                     
                     <!-- Residential Details -->
                     <template x-if="isResidential">
-                        <div class="contents">
-                            <div class="form-group">
-                                <label for="id_bedrooms" class="form-label">Bedrooms*</label>
-                                <input type="number" id="id_bedrooms" name="bedrooms" min="0" step="1"
-                                       x-model="formData.bedrooms" 
-                                       @blur="validateField('bedrooms')"
-                                       :class="{'is-invalid': errors.bedrooms}"
-                                       class="form-control"
-                                       :required="isResidential">
-                                <p x-show="errors.bedrooms" class="error-message" x-text="errors.bedrooms"></p>
+                            <div class="contents" x-show="hasBedrooms">
+                                <div class="form-group">
+                                    <label for="id_bedrooms" class="form-label">Bedrooms</label>
+                                    <input type="number" id="id_bedrooms" name="bedrooms" min="0" step="1"
+                                        x-model="formData.bedrooms" 
+                                        @blur="validateField('bedrooms')"
+                                        :class="{'is-invalid': errors.bedrooms}"
+                                        class="form-control">
+                                    <p x-show="errors.bedrooms" class="error-message" x-text="errors.bedrooms"></p>
+                                </div>
                             </div>
                             
-                            <div class="form-group">
-                                <label for="id_bathrooms" class="form-label">Bathrooms*</label>
-                                <input type="number" id="id_bathrooms" name="bathrooms" min="0" step="0.5"
-                                       x-model="formData.bathrooms" 
-                                       @blur="validateField('bathrooms')"
-                                       :class="{'is-invalid': errors.bathrooms}"
-                                       class="form-control"
-                                       :required="isResidential">
-                                <p x-show="errors.bathrooms" class="error-message" x-text="errors.bathrooms"></p>
+                            <div class="contents" x-show="hasBathrooms">
+                                <div class="form-group">
+                                    <label for="id_bathrooms" class="form-label">Bathrooms</label>
+                                    <input type="number" id="id_bathrooms" name="bathrooms" min="0" step="0.5"
+                                        x-model="formData.bathrooms" 
+                                        @blur="validateField('bathrooms')"
+                                        :class="{'is-invalid': errors.bathrooms}"
+                                        class="form-control">
+                                    <p x-show="errors.bathrooms" class="error-message" x-text="errors.bathrooms"></p>
+                                </div>
                             </div>
-                        </div>
                     </template>
                     
                     <!-- Commercial Details -->
@@ -645,26 +645,26 @@
                             <div class="form-group">
                                 <label for="id_shop_size" class="form-label">Shop Size (sq ft)</label>
                                 <input type="number" id="id_shop_size" name="shop_size" 
-                                       x-model="formData.shop_size" 
-                                       class="form-control">
+                                    x-model="formData.shop_size" 
+                                    class="form-control">
                             </div>
                              <div class="form-group">
                                 <label for="id_warehouse_capacity" class="form-label">Warehouse Capacity</label>
                                 <input type="number" id="id_warehouse_capacity" name="warehouse_capacity" 
-                                       x-model="formData.warehouse_capacity" 
-                                       class="form-control">
+                                    x-model="formData.warehouse_capacity" 
+                                    class="form-control">
                             </div>
                             <div class="form-group">
                                 <label for="id_office_spaces" class="form-label">Office Spaces</label>
                                 <input type="number" id="id_office_spaces" name="office_spaces" 
-                                       x-model="formData.office_spaces" 
-                                       class="form-control">
+                                    x-model="formData.office_spaces" 
+                                    class="form-control">
                             </div>
                              <div class="form-group">
                                 <label for="id_garage_slots" class="form-label">Garage Slots</label>
                                 <input type="number" id="id_garage_slots" name="garage_slots" 
-                                       x-model="formData.garage_slots" 
-                                       class="form-control">
+                                    x-model="formData.garage_slots" 
+                                    class="form-control">
                             </div>
                         </div>
                     </template>
@@ -675,29 +675,29 @@
                             <div class="form-group">
                                 <label for="id_maximum_occupancy" class="form-label">Max Occupancy*</label>
                                 <input type="number" id="id_maximum_occupancy" name="maximum_occupancy" 
-                                       x-model="formData.maximum_occupancy" 
-                                       class="form-control"
-                                       :class="{'is-invalid': errors.maximum_occupancy}"
-                                       :required="isHospitality">
+                                    x-model="formData.maximum_occupancy" 
+                                    class="form-control"
+                                    :class="{'is-invalid': errors.maximum_occupancy}"
+                                    :required="isHospitality">
                                 <p class="text-error" x-show="errors.maximum_occupancy" x-text="errors.maximum_occupancy"></p>
                             </div>
                             <div class="form-group">
                                 <label for="id_minimum_stay_nights" class="form-label">Min Stay (Nights)</label>
                                 <input type="number" id="id_minimum_stay_nights" name="minimum_stay_nights" 
-                                       x-model="formData.minimum_stay_nights" 
-                                       class="form-control">
+                                    x-model="formData.minimum_stay_nights" 
+                                    class="form-control">
                             </div>
                             <div class="form-group">
                                 <label for="id_check_in_time" class="form-label">Check-in Time</label>
                                 <input type="time" id="id_check_in_time" name="check_in_time" 
-                                       x-model="formData.check_in_time" 
-                                       class="form-control">
+                                    x-model="formData.check_in_time" 
+                                    class="form-control">
                             </div>
                              <div class="form-group">
                                 <label for="id_check_out_time" class="form-label">Check-out Time</label>
                                 <input type="time" id="id_check_out_time" name="check_out_time" 
-                                       x-model="formData.check_out_time" 
-                                       class="form-control">
+                                    x-model="formData.check_out_time" 
+                                    class="form-control">
                             </div>
                         </div>
                     </template>
@@ -705,43 +705,43 @@
                     <div class="form-group">
                         <label for="id_square_feet" class="form-label">Area (sq ft)*</label>
                         <input type="number" id="id_square_feet" name="square_feet" min="0"
-                               x-model="formData.square_feet" 
-                               @blur="validateField('square_feet')"
-                               :class="{'is-invalid': errors.square_feet}"
-                               class="form-control" required>
+                            x-model="formData.square_feet" 
+                            @blur="validateField('square_feet')"
+                            :class="{'is-invalid': errors.square_feet}"
+                            class="form-control" required>
                         <p x-show="errors.square_feet" class="error-message" x-text="errors.square_feet"></p>
                     </div>
                 </div>
                 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
-                    <div class="form-group">
+                    <div class="form-group" x-show="hasFloors">
                         <label for="id_floors" class="form-label">Floors</label>
                         <input type="number" id="id_floors" name="floors" min="0" step="1"
-                               x-model="formData.floors" 
-                               class="form-control">
+                            x-model="formData.floors" 
+                            class="form-control">
                     </div>
                     
                     <div class="form-group">
                         <label for="id_lot_size" class="form-label">Lot Size (sq ft)</label>
                         <input type="number" id="id_lot_size" name="lot_size" min="0"
-                               x-model="formData.lot_size" 
-                               class="form-control">
+                            x-model="formData.lot_size" 
+                            class="form-control">
                     </div>
 
                     <div class="form-group">
                         <label for="id_year_built" class="form-label">Year Built</label>
                         <input type="number" id="id_year_built" name="year_built" min="1800" max="{% now 'Y' %}"
-                               x-model="formData.year_built" 
-                               class="form-control">
+                            x-model="formData.year_built" 
+                            class="form-control">
                     </div>
                 </div>
                 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
-                    <div class="form-group">
+                    <div class="form-group" x-show="hasFurnishing">
                         <label for="id_furnish_status" class="form-label">Furnishing</label>
                         <select id="id_furnish_status" name="furnish_status" 
-                                x-model="formData.furnish_status" 
-                                class="form-control form-select">
+                            x-model="formData.furnish_status" 
+                            class="form-control form-select">
                             <option value="">Select furnishing</option>
                             {% for value, label in property_form.furnish_status.field.choices %}
                                 <option value="{{ value }}">{{ label }}</option>
@@ -1135,7 +1135,7 @@ document.addEventListener('alpine:init', () => {
             'TZS': 'TSh',
             'RWF': 'FRw',
             'BIF': 'FBu',
-            'SSP': '£',
+            'SSP': 'SSP',
             'USD': '$',
             'EUR': '€',
             'GBP': '£',
@@ -1153,19 +1153,35 @@ document.addEventListener('alpine:init', () => {
         },
 
         get isCommercial() {
-            return this.currentPropertyTypeConfig?.is_commercial || false;
+            return this.currentPropertyTypeConfig?.is_commercial ?? false;
         },
 
         get isResidential() {
-            return this.currentPropertyTypeConfig?.is_residential || true; // Default to true
+            return this.currentPropertyTypeConfig?.is_residential ?? false; // Default to false until type selected
         },
 
         get isHospitality() {
-            return this.currentPropertyTypeConfig?.is_hospitality || false;
+            return this.currentPropertyTypeConfig?.is_hospitality ?? false;
         },
         
         get defaultPricingModel() {
             return this.currentPropertyTypeConfig?.default_pricing_model || 'fixed';
+        },
+        
+        get hasBedrooms() {
+            return this.currentPropertyTypeConfig?.has_bedrooms ?? true;
+        },
+
+        get hasBathrooms() {
+            return this.currentPropertyTypeConfig?.has_bathrooms ?? true;
+        },
+
+        get hasFloors() {
+            return this.currentPropertyTypeConfig?.has_floors ?? true;
+        },
+
+        get hasFurnishing() {
+            return this.currentPropertyTypeConfig?.has_furnishing ?? true;
         },
         
         get currentCurrencySymbol() {
@@ -1636,20 +1652,7 @@ document.addEventListener('alpine:init', () => {
             
             // Details validation
             else if (currentTab === 'details') {
-                if (this.isResidential) {
-                    if (!this.formData.bedrooms && this.formData.bedrooms !== 0) {
-                        // Allow 0 bedrooms (studio)
-                         // But if null/undefined/empty string, it's invalid
-                         if (this.formData.bedrooms === '' || this.formData.bedrooms === null) {
-                            this.errors.bedrooms = 'Number of bedrooms is required';
-                            isValid = false;
-                         }
-                    }
-                    if (!this.formData.bathrooms) {
-                        this.errors.bathrooms = 'Number of bathrooms is required';
-                        isValid = false;
-                    }
-                }
+                // Bedrooms and bathrooms are optional - no mandatory validation
                 
                 if (this.isCommercial) {
                     // Specific commercial validation if needed
@@ -1723,6 +1726,12 @@ document.addEventListener('alpine:init', () => {
         
         // Field validation
         validateField(field) {
+            // Bedrooms and bathrooms are optional — never mark as required
+            const optionalFields = ['bedrooms', 'bathrooms', 'floors', 'furnishing_status'];
+            if (optionalFields.includes(field)) {
+                delete this.errors[field];
+                return;
+            }
             if (!this.formData[field]) {
                 this.errors[field] = 'This field is required';
             } else {
