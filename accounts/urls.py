@@ -40,8 +40,6 @@ urlpatterns = [
     path('<id>/upload_photo', views.upload_photo, name='upload_photo'),
     path('<id>/upload_cover_photo', views.upload_cover_photo, name='upload_cover_photo'),
     path('<id>/user_bio/', views.user_bio, name='user_bio'),
-    path('account_settings/', views.account_settings, name='settings'),
-	path('int:<id>/update_profile/', views.update_profile, name='update_profile'),
     path('notifications/', views.notifications, name='notifications'),
 
     path('send-otp/', utils.send_otp, name='send_otp'),

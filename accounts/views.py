@@ -1,3 +1,4 @@
+import os
 import re
 import logging
 import datetime
@@ -30,6 +31,7 @@ from django.contrib.auth import authenticate, get_user_model, login, logout
 from django.shortcuts import render, redirect, get_object_or_404 #, HttpResponseRedirect
 # from django.views.generic import CreateView, TemplateView, UpdateView, DeleteView, DetailView
 
+from PIL import UnidentifiedImageError
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
@@ -112,12 +114,18 @@ class SignupView(APIView):
 		if serializer.is_valid():
 			user = serializer.save()
 
+			# Split full name safely
+			name_parts = fullname.strip().split(' ')
+			first_name = name_parts[0] if name_parts else "New"
+			last_name = " ".join(name_parts[1:]) if len(name_parts) > 1 else "User"
+
 			user.first_name = first_name
-			user.second_name = second_name
+			user.last_name = last_name
 			user.save()
+			
 			profile = user.user_profile
 			profile.first_name = first_name
-			profile.second_name = second_name
+			profile.last_name = last_name
 			profile.save()
 
 			# Create a verification token
@@ -219,8 +227,8 @@ def update_user_profile(request):
 			if form.is_valid():
 				form.save()
 				user = request.user
-				user.first_name = profile.first_name
-				user.last_name = profile.last_name
+				user.first_name = profile.first_name or ""
+				user.last_name = profile.last_name or ""
 				user.save()
 				messages.success(request, "User profile updated successfully.")
 				return redirect("wifi_manager_dashboard")
@@ -421,6 +429,68 @@ def check_user_email(request):
 def profile(request, template_name='accounts/user_profile.html'):
 	try:
 		profile = UserProfile.objects.get(user__id=request.user.id, username=request.user.username)
+		
+		if request.method == 'POST':
+			form_type = request.POST.get('form_type')
+			
+			if form_type == 'profile_settings':
+				# Update User and Profile basic info
+				first_name = request.POST.get('first_name', '')
+				last_name = request.POST.get('last_name', '')
+				email = request.POST.get('email', '')
+				phone = request.POST.get('phone', '')
+				bio = request.POST.get('bio', '')
+				city = request.POST.get('location', '') # Map template 'location' to model 'city'
+				
+				# Update local variables for template rendering if needed
+				user = request.user
+				user.first_name = first_name
+				user.last_name = last_name
+				user.email = email
+				# user.phone = phone # User model also has phone in some versions, check if needed
+				user.save()
+				
+				profile.first_name = first_name
+				profile.last_name = last_name
+				profile.email = email
+				profile.phone = phone
+				profile.bio = bio
+				profile.city = city
+				
+				# Handle avatar/photo upload
+				if 'avatar' in request.FILES:
+					avatar = request.FILES['avatar']
+					ext = os.path.splitext(avatar.name)[1].lower()
+					if ext not in ['.jpg', '.jpeg', '.png', '.webp', '.gif']:
+						return JsonResponse({'success': False, 'message': f'Unsupported image format: {ext}. Please upload JPG, PNG, WebP, or GIF.'})
+					
+					profile.photo = avatar
+				
+				try:
+					profile.save()
+				except UnidentifiedImageError:
+					return JsonResponse({'success': False, 'message': 'The uploaded file could not be identified as a valid image.'})
+				except Exception as e:
+					logger.error(f"Save error: {str(e)}")
+					return JsonResponse({'success': False, 'message': f'Error saving profile: {str(e)}'})
+				
+				# Handle password change if requested
+				old_password = request.POST.get('old_password')
+				new_password1 = request.POST.get('new_password1')
+				new_password2 = request.POST.get('new_password2')
+				
+				if old_password and new_password1:
+					if not user.check_password(old_password):
+						return JsonResponse({'success': False, 'message': 'Current password incorrect.'})
+					if new_password1 != new_password2:
+						return JsonResponse({'success': False, 'message': 'New passwords do not match.'})
+					
+					user.set_password(new_password1)
+					user.save()
+					update_session_auth_hash(request, user)
+				
+				return JsonResponse({'success': True, 'message': 'Profile updated successfully.'})
+
 		user_listings = Property.objects.filter(listed_by=profile.user).select_related('address').prefetch_related('amenities', 'images')
 		# Get saved properties for the user
 		from .models import FavoriteProperty
@@ -430,6 +500,12 @@ def profile(request, template_name='accounts/user_profile.html'):
 	except UserProfile.DoesNotExist:
 		messages.error(request, 'User profile could not be found!')
 		return redirect(request.META.get('HTTP_REFERER', 'redirect_if_referer_not_found'))
+	except Exception as e:
+		logger.exception(f"Error in profile view: {str(e)}")
+		if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.method == 'POST':
+			return JsonResponse({'success': False, 'message': f'An error occurred: {str(e)}'})
+		raise e
+		
 	current_user = request.user
 	context = {
 		'profile': profile, 
@@ -439,28 +515,6 @@ def profile(request, template_name='accounts/user_profile.html'):
 	}
 	Tracker.objects.create_from_request(request, profile)
 	return render(request, template_name, context)
-
-
-@login_required
-def update_profile(request, id, template_name='accounts/edit_profile.html'):
-	profile = get_object_or_404(UserProfile, id=id)
-	if request.method == 'POST':
-		form = ProfileChangeForm(request.POST or None, request.FILES, instance=profile)
-		if form.is_valid():
-			profile = form.save(commit=False)
-			profile.save()
-			user = profile.user
-			user.first_name = profile.first_name
-			user.last_name = profile.last_name
-			user.save()
-			messages.success(request, 'Your profile updated successfully')
-			if not profile.photo:
-				return redirect('upload_photo', profile.id)
-			else:
-				return redirect('profile', profile.user.id, profile.username)
-	else:
-		form = ProfileChangeForm(instance=profile)
-	return render(request, template_name, {'form': form, 'profile': profile})
 
 
 def upload_photo(request, id, template_name='accounts/upload_profile_photo.html'):
@@ -511,28 +565,6 @@ def notifications(request):
 	notifications = Action.objects.filter(user=request.user)
 	return render(request, 'accounts/notifications.html', {'notifications':notifications})
 
-
-@login_required
-def account_settings(request, id, template_name='accounts/settings.html'):
-	user_profile = get_object_or_404(UserProfile, id=id)
-	context = {'user_profile': user_profile}
-	return render(request, template_name, context)
-
-
-@login_required
-def delete_user_account(request, id, template_name='core/forms/delete.html'):
-	user_account = get_object_or_404(User, id=id)
-	if request.method == 'POST':
-		user_account.delete()
-		messages.success(request, 'Account delete successful. Please write to as at <a href="mailto:support@daraza.net">support@daraza.net</a> if you faced any challenges with PayLink.')
-		return redirect('account_login')
-	return render(request, template_name, {'object': user_account, 'entity': 'your user account', 'narrative':'We hate to see you go! Are sure you can not change you mind? PayLink will continue to work to improve your user experience'})
-
-
-@login_required
-def account_settings(request):
-	profile = request.user.user_profile
-	return render(request, 'accounts/settings.html', {'profile':profile})
 
 
 def report_user(request, id, link_id):

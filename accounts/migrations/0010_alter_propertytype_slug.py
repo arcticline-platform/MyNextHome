@@ -13,6 +13,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='propertytype',
             name='slug',
-            field=models.SlugField(blank=True, null=True, unique=True),
+            field=models.SlugField(blank=True, null=True),
         ),
     ]
