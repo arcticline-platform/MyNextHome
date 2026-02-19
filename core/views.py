@@ -1,26 +1,27 @@
 from django.db.models import Q
+from django.conf import settings
 from django.shortcuts import render
+from django.http import JsonResponse
 # from django.contrib import messages
+from django.middleware.csrf import get_token
+from decimal import Decimal, InvalidOperation
+from django.urls import reverse, reverse_lazy
 # from django.template.loader import render_to_string
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
 from django.shortcuts import render, redirect #,get_object_or_404,
-from decimal import Decimal, InvalidOperation
-from django.middleware.csrf import get_token
-from django.conf import settings
 
 # from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 
 from .models import SystemUtility
-from django.urls import reverse, reverse_lazy
 from finance.models import Subscription
 from tracking_analyzer.models import Tracker
-
 from accounts.models import Property, PropertyType, Amenity, AmenityCategory
 # from accounts.models import User, UserProfile, ProfileFilter, SearchFilter
 
 channel_layer = get_channel_layer()
+
+MAPBOX_ACCESS_TOKEN = settings.MAPBOX_ACCESS_TOKEN
 
 try:
     from django.db import connection
@@ -69,7 +70,7 @@ def home(request):
         'categories': categories,
         'featured_amenities': featured_amenities,
         'map_context': map_context,
-        'MAPBOX_ACCESS_TOKEN': settings.MAPBOX_ACCESS_TOKEN,
+        'MAPBOX_ACCESS_TOKEN': MAPBOX_ACCESS_TOKEN,
     })
 
 

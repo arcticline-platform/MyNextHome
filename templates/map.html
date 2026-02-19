@@ -88,6 +88,7 @@
             bottom: 0;
             width: 100%;
             min-height: 400px;
+            touch-action: none; /* Prevent browser scrolling on map */
         }
 
         @media (max-width: 767px) {
@@ -495,6 +496,7 @@
             overflow: hidden;
             touch-action: none;
             display: block; /* Always in DOM but hidden via transform */
+            will-change: transform; /* Optimize for animations */
         }
 
         /* Property details sheet specific styling */
@@ -1913,9 +1915,11 @@
             }
             
             // Setup drag handlers for bottom sheet
+            // Setup drag handlers for bottom sheet
             function setupDragHandlers(handle, sheet) {
                 if (!handle || !sheet) return;
                 let startY, startHeight, isDragging = false;
+                let rafId = null;
                 
                 handle.addEventListener('touchstart', handleDragStart, { passive: false });
                 handle.addEventListener('mousedown', handleDragStart);
@@ -1924,6 +1928,9 @@
                     isDragging = true;
                     startY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
                     startHeight = sheet.offsetHeight;
+                    
+                    // Disable CSS transition so the sheet tracks the finger instantly
+                    sheet.style.transition = 'none';
                     
                     // Prevent scrolling when dragging
                     document.body.style.overflow = 'hidden';
@@ -1939,37 +1946,54 @@
                     if (!isDragging) return;
                     
                     const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
-                    const deltaY = clientY - startY;
-                    const newHeight = startHeight - deltaY;
-                    const sheetHeight = window.innerHeight;
                     
-                    // Calculate percentage of screen height
-                    const percentage = (newHeight / sheetHeight) * 100;
+                    // Prevent default to stop scrolling - CRITICAL for "stickiness"
+                    if (e.cancelable) e.preventDefault();
                     
-                    // Limit min and max height
-                    if (percentage < 30) {
-                        // Snap to closed position (showing just the handle)
-                        sheet.style.transform = `translateY(calc(100% - 60px))`;
-                    } else if (percentage > 85) {
-                        // Snap to fullscreen
-                        sheet.classList.add('fullscreen');
-                        sheet.style.transform = 'translateY(0)';
-                    } else {
-                        // Normal drag
-                        sheet.classList.remove('fullscreen');
-                        sheet.style.transform = `translateY(calc(100% - ${newHeight}px))`;
-                    }
+                    if (rafId) return;
+                    
+                    rafId = requestAnimationFrame(() => {
+                        const deltaY = clientY - startY;
+                        const newHeight = startHeight - deltaY;
+                        const sheetHeight = window.innerHeight;
+                        
+                        // Calculate percentage of screen height
+                        const percentage = (newHeight / sheetHeight) * 100;
+                        
+                        // Limit min and max height
+                        if (percentage < 30) {
+                            // Snap to closed position (showing just the handle)
+                            sheet.style.transform = `translateY(calc(100% - 60px))`;
+                        } else if (percentage > 85) {
+                            // Snap to fullscreen
+                            sheet.classList.add('fullscreen');
+                            sheet.style.transform = 'translateY(0)';
+                        } else {
+                            // Normal drag
+                            sheet.classList.remove('fullscreen');
+                            sheet.style.transform = `translateY(calc(100% - ${newHeight}px))`;
+                        }
+                        rafId = null;
+                    });
                 }
                 
                 function handleDragEnd(e) {
                     if (!isDragging) return;
                     isDragging = false;
                     
+                    if (rafId) {
+                        cancelAnimationFrame(rafId);
+                        rafId = null;
+                    }
+                    
                     // Remove event listeners
                     document.removeEventListener('touchmove', handleDragMove);
                     document.removeEventListener('mousemove', handleDragMove);
                     document.removeEventListener('touchend', handleDragEnd);
                     document.removeEventListener('mouseup', handleDragEnd);
+                    
+                    // Restore transition so snap animations are smooth
+                    sheet.style.transition = 'transform 0.3s ease-out';
                     
                     // Restore scrolling
                     document.body.style.overflow = '';
