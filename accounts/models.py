@@ -468,7 +468,7 @@ class PropertyType(models.Model):
     ]
     
     name = models.CharField(max_length=50, unique=True)
-    slug = models.SlugField(max_length=50, unique=True, blank=True, null=True)
+    slug = models.SlugField(max_length=50, blank=True, null=True)
     icon = models.CharField(max_length=50, blank=True, null=True, help_text='Font Awesome icon class (e.g., fa-home)')
     description = models.TextField(blank=True)
     is_commercial = models.BooleanField(default=False, help_text='Is this a commercial property type?')
@@ -492,6 +492,14 @@ class PropertyType(models.Model):
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = slugify(self.name)
+        
+        # Ensure slug is unique even if database constraint is removed
+        original_slug = self.slug
+        counter = 1
+        while PropertyType.objects.filter(slug=self.slug).exclude(id=self.id).exists():
+            self.slug = f"{original_slug}-{counter}"
+            counter += 1
+
         # Auto-set icon if name matches predefined types
         if not self.icon:
             for key, label in self.PROPERTY_TYPE_CHOICES:

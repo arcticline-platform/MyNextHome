@@ -100,10 +100,10 @@
         <div class="bg-green-600 p-6 text-white">
             <div class="flex flex-col md:flex-row items-center">
                 <div class="avatar-upload mb-4 md:mb-0 md:mr-6">
-                    <div class="avatar-preview" style="background-image: url('{% if user.profile.avatar %}{{ user.profile.avatar.url }}{% else %}{% static 'img/user.png' %}{% endif %}');"></div>
+                    <div class="avatar-preview" style="background-image: url('{% if profile.photo %}{{ profile.photo.url }}{% else %}{% static 'img/user.png' %}{% endif %}');"></div>
                     <label class="btn-upload">
                         <i class="fas fa-camera"></i>
-                        <input type="file" class="hidden" accept="image/*" @change="previewAvatar">
+                        <input type="file" class="hidden" accept=".jpg,.jpeg,.png,.webp,.gif" @change="previewAvatar">
                     </label>
                 </div>
                 <div class="text-center md:text-left">
@@ -111,7 +111,7 @@
                     <p class="text-green-100">{{ user.email }}</p>
                     <p class="text-green-100 mt-2">
                         <i class="fas fa-map-marker-alt mr-1"></i>
-                        {% if user.profile.location %}{{ user.profile.location }}{% else %}Location not set{% endif %}
+                        {% if profile.city %}{{ profile.city }}{% else %}Location not set{% endif %}
                     </p>
                     <div class="flex justify-center md:justify-start space-x-2 mt-3">
                         <span class="bg-green-700 text-xs px-2 py-1 rounded-full">Member since {{ user.date_joined|date:"M Y" }}</span>
@@ -304,7 +304,7 @@
                                 </div>
                                 <div>
                                     <label for="id_phone" class="block text-sm font-medium text-gray-700">Phone Number</label>
-                                    <input type="text" name="phone" id="id_phone" value="{{ user.profile.phone }}" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500">
+                                    <input type="text" name="phone" id="id_phone" value="{{ profile.phone }}" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500">
                                 </div>
                             </div>
                         </div>
@@ -315,15 +315,15 @@
                             <div class="space-y-4">
                                 <div>
                                     <label for="id_bio" class="block text-sm font-medium text-gray-700">Bio</label>
-                                    <textarea name="bio" id="id_bio" rows="3" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500">{{ user.profile.bio }}</textarea>
+                                    <textarea name="bio" id="id_bio" rows="3" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500">{{ profile.bio }}</textarea>
                                 </div>
                                 <div>
                                     <label for="id_location" class="block text-sm font-medium text-gray-700">Location</label>
-                                    <input type="text" name="location" id="id_location" value="{{ user.profile.location }}" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500">
+                                    <input type="text" name="location" id="id_location" value="{{ profile.city }}" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500">
                                 </div>
                                 <div>
                                     <label for="id_avatar" class="block text-sm font-medium text-gray-700">Profile Picture</label>
-                                    <input type="file" name="avatar" id="id_avatar" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100">
+                                    <input type="file" name="avatar" id="id_avatar" accept=".jpg,.jpeg,.png,.webp,.gif" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100">
                                 </div>
                             </div>
                         </div>

@@ -5,7 +5,7 @@ from django.contrib.gis.geoip2 import GeoIP2, GeoIP2Exception
 from django.db import models
 from django.http import HttpRequest
 
-from geoip2.errors import GeoIP2Error
+from geoip2.errors import GeoIP2Error, AddressNotFoundError
 from ipware.ip import get_client_ip
 
 
@@ -53,10 +53,17 @@ class TrackerManager(models.Manager):
         if not ip_address:
             logger.debug(
                 'Could not determine IP address for request %s', request)
+        elif ip_address == '127.0.0.1':
+            logger.debug('Skipping GeoIP lookup for local address 127.0.0.1')
         else:
             geo = GeoIP2()
             try:
                 city = geo.city(ip_address)
+            except AddressNotFoundError:
+                logger.warning(
+                    'Address %s was not found in the GeoIP database',
+                    ip_address
+                )
             except (GeoIP2Error, GeoIP2Exception):
                 logger.exception(
                     'Unable to determine geolocation for address %s',
