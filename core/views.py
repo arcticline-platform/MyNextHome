@@ -6,11 +6,14 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.shortcuts import render, redirect #,get_object_or_404,
 from decimal import Decimal, InvalidOperation
+from django.middleware.csrf import get_token
+from django.conf import settings
 
 # from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 
 from .models import SystemUtility
+from django.urls import reverse, reverse_lazy
 from finance.models import Subscription
 from tracking_analyzer.models import Tracker
 
@@ -45,9 +48,122 @@ def home(request):
         .prefetch_related('amenities__category', 'images', 'neighborhood_features__category')
         .order_by('-listed_date')[:15]
     )
-    property_list = [format_property_data(property) for property in properties]
+    property_list = [format_property_data(prop) for prop in properties]
+    
+    # Get filter options for the search form
+    property_types = PropertyType.objects.all().order_by('name')
+    categories = [choice[0] for choice in Property.LISTING_CATEGORY]
+    featured_amenities = Amenity.objects.filter(is_featured=True)[:10]
 
-    return render(request, 'map.html', {'properties': property_list})
+    # Map context for JS
+    map_context = {
+        'isAuthenticated': request.user.is_authenticated,
+        'loginUrl': reverse('login'),
+        'signupUrl': reverse('signup'),
+        'csrfToken': get_token(request),
+    }
+
+    return render(request, 'map.html', {
+        'properties': property_list,
+        'property_types': property_types,
+        'categories': categories,
+        'featured_amenities': featured_amenities,
+        'map_context': map_context,
+        'MAPBOX_ACCESS_TOKEN': settings.MAPBOX_ACCESS_TOKEN,
+    })
+
+
+def property_search(request):
+    query = request.GET.get('q', '')
+    property_type = request.GET.get('property_type')
+    min_price = request.GET.get('min_price')
+    max_price = request.GET.get('max_price')
+    bedrooms = request.GET.get('bedrooms')
+    bathrooms = request.GET.get('bathrooms')
+    amenities = request.GET.getlist('amenities')
+    sort_by = request.GET.get('sort_by', '-listed_date')
+
+    properties = Property.objects.filter(status='published').select_related('address', 'property_type').prefetch_related('amenities__category', 'images')
+
+    if query:
+        properties = properties.filter(
+            Q(title__icontains=query) |
+            Q(description__icontains=query) |
+            Q(address__city__icontains=query) |
+            Q(address__state__icontains=query) |
+            Q(address__country__icontains=query) |
+            Q(address__street_address__icontains=query) |
+            Q(address__place_name__icontains=query) |
+            Q(address__neighborhood__icontains=query)
+        ).distinct()
+
+    if property_type and property_type != 'All Types':
+        properties = properties.filter(property_type__name=property_type)
+
+    if min_price:
+        try:
+            properties = properties.filter(price__gte=Decimal(min_price))
+        except (ValueError, InvalidOperation):
+            pass
+    
+    if max_price:
+        try:
+            properties = properties.filter(price__lte=Decimal(max_price))
+        except (ValueError, InvalidOperation):
+            pass
+
+    if bedrooms and bedrooms != 'Any':
+        try:
+            val = int(bedrooms.replace('+', ''))
+            properties = properties.filter(bedrooms__gte=val)
+        except (ValueError, TypeError):
+            pass
+
+    if bathrooms and bathrooms != 'Any':
+        try:
+            val = int(bathrooms.replace('+', ''))
+            properties = properties.filter(bathrooms__gte=val)
+        except (ValueError, TypeError):
+            pass
+
+    if amenities:
+        properties = properties.filter(amenities__id__in=amenities).distinct()
+
+    # Apply sorting
+    if sort_by == 'price_low':
+        properties = properties.order_by('price')
+    elif sort_by == 'price_high':
+        properties = properties.order_by('-price')
+    elif sort_by == 'popular':
+        properties = properties.order_by('-view_count')
+    else:
+        properties = properties.order_by('-listed_date')
+
+    property_list = [format_property_data(prop) for prop in properties]
+    
+    # Context for filters
+    property_types = PropertyType.objects.all().order_by('name')
+    categories = [choice[0] for choice in Property.LISTING_CATEGORY]
+    featured_amenities = Amenity.objects.filter(is_featured=True)[:10]
+
+    # Map context for JS
+    map_context = {
+        'isAuthenticated': request.user.is_authenticated,
+        'loginUrl': reverse('login'),
+        'signupUrl': reverse('signup'),
+        'csrfToken': get_token(request),
+    }
+
+    return render(request, 'map.html', {
+        'properties': property_list,
+        'query': query,
+        'property_types': property_types,
+        'categories': categories,
+        'featured_amenities': featured_amenities,
+        'current_filters': request.GET,
+        'map_context': map_context,
+        'MAPBOX_ACCESS_TOKEN': settings.MAPBOX_ACCESS_TOKEN,
+    })
 
 @login_required
 def settings(request):
@@ -131,6 +247,10 @@ def format_property_data(property):
             'name': property.property_type.name if property.property_type and property.property_type.name else "",
             'icon': property.property_type.icon if property.property_type and property.property_type.icon else "",
             'description': property.property_type.description if property.property_type and property.property_type.description else "",
+            'has_bedrooms': property.property_type.has_bedrooms,
+            'has_bathrooms': property.property_type.has_bathrooms,
+            'has_floors': property.property_type.has_floors,
+            'has_furnishing': property.property_type.has_furnishing,
         } if property.property_type else None,
         'description': property.description.replace('\n', '\\u000A') if property.description else "",
         'amenities': amenities,
@@ -159,6 +279,20 @@ def properties_api(request):
         # Start with base queryset
         properties = Property.objects.filter(status='published').select_related('address', 'property_type').prefetch_related('amenities__category', 'images', 'neighborhood_features__category')
         
+        # Apply keyword search
+        query = request.GET.get('q')
+        if query:
+            properties = properties.filter(
+                Q(title__icontains=query) |
+                Q(description__icontains=query) |
+                Q(address__city__icontains=query) |
+                Q(address__state__icontains=query) |
+                Q(address__country__icontains=query) |
+                Q(address__street_address__icontains=query) |
+                Q(address__place_name__icontains=query) |
+                Q(address__neighborhood__icontains=query)
+            ).distinct()
+
         # Apply filters
         # Property Type
         property_type = request.GET.get('property_type')

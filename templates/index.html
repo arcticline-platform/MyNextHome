@@ -111,17 +111,17 @@
             <p class="mt-6 text-xl text-primary-100 max-w-3xl">
                 Discover the perfect property from our extensive collection of homes, apartments, and commercial spaces.
             </p>
-            <div class="mt-10 sm:flex">
+            <form action="{% url 'property_search' %}" method="GET" class="mt-10 sm:flex">
                 <div class="relative w-full">
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <i class="fas fa-search text-gray-400"></i>
                     </div>
-                    <input id="search" name="search" class="block w-full pl-10 pr-3 py-4 border border-transparent rounded-md leading-5 bg-white/90 placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 focus:border-transparent sm:text-sm" placeholder="Search by location, property type, or keyword" type="search">
+                    <input id="search" name="q" class="block w-full pl-10 pr-3 py-4 border border-transparent rounded-md leading-5 bg-white/90 placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 focus:border-transparent sm:text-sm" placeholder="Search by location, property type, or keyword" type="search">
                 </div>
-                <button class="mt-3 w-full px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-primary-600 shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:mt-0 sm:ml-3 sm:flex-shrink-0 sm:inline-flex sm:items-center sm:w-auto">
+                <button type="submit" class="mt-3 w-full px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-primary-600 shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:mt-0 sm:ml-3 sm:flex-shrink-0 sm:inline-flex sm:items-center sm:w-auto">
                     Search
                 </button>
-            </div>
+            </form>
         </div>
     </div>
 

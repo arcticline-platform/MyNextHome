@@ -428,7 +428,7 @@ def check_user_email(request):
 @login_required
 def profile(request, template_name='accounts/user_profile.html'):
 	try:
-		profile = UserProfile.objects.get(user__id=request.user.id, username=request.user.username)
+		profile, created = UserProfile.objects.get_or_create(user=request.user, username=request.user.username)
 		
 		if request.method == 'POST':
 			form_type = request.POST.get('form_type')
