@@ -504,6 +504,29 @@ def delete_property(request, property_id):
         return JsonResponse({'error': 'Property not found'}, status=404)
 
 
+@login_required
+@require_http_methods(["POST"])
+def toggle_property_availability(request, property_id):
+    """Toggle a property between available (published) and taken/unavailable (sold)."""
+    try:
+        prop = Property.objects.get(id=property_id, owner=request.user)
+    except Property.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Property not found or permission denied'}, status=404)
+
+    if prop.status == 'sold':
+        prop.status = 'published'
+    else:
+        prop.status = 'sold'
+
+    prop.save(update_fields=['status'])
+
+    return JsonResponse({
+        'success': True,
+        'new_status': prop.status,
+        'new_status_display': prop.get_status_display(),
+    })
+
+
 @csrf_exempt
 @require_http_methods(["POST"])
 def contact_property_owner(request, property_id):
