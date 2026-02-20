@@ -163,7 +163,7 @@ def property_search(request):
         'featured_amenities': featured_amenities,
         'current_filters': request.GET,
         'map_context': map_context,
-        'MAPBOX_ACCESS_TOKEN': settings.MAPBOX_ACCESS_TOKEN,
+        'MAPBOX_ACCESS_TOKEN': MAPBOX_ACCESS_TOKEN,
     })
 
 @login_required
